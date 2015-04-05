@@ -14,19 +14,21 @@ function handleNode(answer){if(answer instanceof VolunteerPosition){answer.creat
 ');
 
 $page->body .= '
+<div id="content">
 <div id="main_div">
-    <table height="100%" width="100%" align="center" id="main_table">
+    <table height="100%" width="100%" align="center" id="main_table" class="table">
         <tr><td colspan="3">&nbsp;</td>
         <tr><td colspan="3" align="center" id="question_cell"><h2 id="question_text">Does this shit work?</h2></td></tr>
         <tr>
-            <td id="yes" ><a href=# onclick="doYes()"><img src="images/yes.jpg"></a></td>
+            <td id="yes" ><a href=# onclick="doYes()"><img src="images/yes.jpg" class="img-responsive"></a></td>
             <td style="width:20%;">&nbsp;</td>
-            <td id="no" ><a href=# onclick="doNo()"><img src="images/no.jpg"></a></td>
+            <td id="no" ><a href=# onclick="doNo()"><img src="images/no.jpg" class="img-responsive"></a></td>
         </tr>
     </table>
 </div>
 <div id="VC_Footer">
 Confused about anything you see here?  Did you find an error or a dead link?  You might want to visit the <a href="http://wiki.burningflipside.com/wiki/Volunteer_Coordinator">Volunteer Coordinator page on Pyropedia</a> or email the volunteer team at <a href="mailto:volunteerinfo@burningflipside.com">volunteerinfo@burningflipside.com</a>
+</div>
 </div>
 <script type="text/javascript">
     init_page();

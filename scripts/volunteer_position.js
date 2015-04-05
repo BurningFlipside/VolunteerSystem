@@ -20,6 +20,7 @@ VolunteerPosition.prototype.createNode = function(){
     if(this.imageURL){
         var image = document.createElement("img");
         image.id = "volunteer_image";
+        image.className = 'img-responsive';
         image.src = this.imageURL;
         image.onerror=image_not_found;
         image.style.height="50%";
@@ -28,6 +29,7 @@ VolunteerPosition.prototype.createNode = function(){
         var image = document.createElement("img");
         image.src = "images/lostimage.png";
         image.id = "volunteer_image";
+        image.className = 'img-responsive';
         image.style.width="470px";
         div.appendChild(image);
     }
