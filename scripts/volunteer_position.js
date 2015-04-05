@@ -10,7 +10,7 @@ function VolunteerPosition(nam, desc, image, email, long_description){
 
 VolunteerPosition.prototype.createNode = function(){
     var div = document.createElement("div");
-    div.id = "div_" + this.name;
+    div.id = "result";
     div.class = "volunteer_position_div";
     var name = document.createElement("h2");    
     name.innerHTML = "You are" + getAOrAn(this.name) + this.name + " volunteer!";
@@ -33,10 +33,10 @@ VolunteerPosition.prototype.createNode = function(){
     }
     div.appendChild(description);
     var mainDiv = document.getElementById("main_div");
-    mainDiv.removeChild(document.getElementById("main_table"));
+    window.mainTable = mainDiv.removeChild(document.getElementById("main_table"));
     mainDiv.appendChild(div);
     var emailDiv = document.createElement("div");
-    emailDiv.id = "div_email_" + this.name;
+    emailDiv.id = "div_email_addr";
     var paragraph = document.createElement("p");
 //    paragraph.innerHTML = "Please email your future lead at " + this.email;
     paragraph.innerHTML = "Please email your future lead at ";
