@@ -2,9 +2,9 @@
 require_once('class.SecurePage.php');
 $page = new SecurePage('Burning Flipside - Flipside Volunteer System');
 
-$page->add_js_from_src('scripts/init_page.js');
-$page->add_js_from_src('scripts/question_node.js');
-$page->add_js_from_src('scripts/volunteer_position.js');
+$page->add_js_from_src('scripts/init_page.js', false);
+$page->add_js_from_src('scripts/question_node.js', false);
+$page->add_js_from_src('scripts/volunteer_position.js', false);
 
 $page->add_head_tag('
 <script type="text/javascript">function doYes(){var answer=window.currentNode.GetYes();handleNode(answer)}
