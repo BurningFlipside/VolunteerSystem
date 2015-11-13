@@ -1,3 +1,6 @@
 <IfModule mod_php5.c>
   php_value include_path ".:..:/var/www/common:/usr/share/pear"
 </IfModule>
+<IfModule mod_php7.c>
+  php_value include_path ".:..:/var/www/common:/usr/share/pear"
+</IfModule>
