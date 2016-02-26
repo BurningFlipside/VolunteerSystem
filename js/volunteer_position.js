@@ -12,7 +12,7 @@ VolunteerPosition.prototype.createNode = function(){
     var div = document.createElement("div");
     div.id = "result";
     div.class = "volunteer_position_div";
-    var name = document.createElement("h2");    
+    var name = document.createElement("h2");
     name.innerHTML = "You are" + getAOrAn(this.name) + this.name + " volunteer!";
     var description = document.createElement("h4");
     description.innerHTML = "You would be great for this position because " + this.description;
@@ -23,7 +23,6 @@ VolunteerPosition.prototype.createNode = function(){
         image.className = 'img-responsive';
         image.src = this.imageURL;
         image.onerror=image_not_found;
-        image.style.height="50%";
         div.appendChild(image);
     } else {
         var image = document.createElement("img");
@@ -40,7 +39,6 @@ VolunteerPosition.prototype.createNode = function(){
     var emailDiv = document.createElement("div");
     emailDiv.id = "div_email_addr";
     var paragraph = document.createElement("p");
-//    paragraph.innerHTML = "Please email your future lead at " + this.email;
     paragraph.innerHTML = "Please email your future lead at ";
     var link = document.createElement("a");
     link.href = "mailto:" +this.email;
