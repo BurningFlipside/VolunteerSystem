@@ -1,6 +1,6 @@
 <?php
-require_once('class.SecurePage.php');
-$page = new SecurePage('Burning Flipside - Flipside Volunteer System');
+require_once('class.VolunteerPage.php');
+$page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 
 $page->add_js_from_src('js/init_page.js', false);
 $page->add_js_from_src('js/question_node.js', false);
