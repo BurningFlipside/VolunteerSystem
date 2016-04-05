@@ -15,19 +15,6 @@ class VolunteerPage extends SecurePage
         $this->addJSByURI($this->volunteerRoot.'/js/volunteer.js', false);
     }
 
-    function add_links()
-    {
-        if($this->is_admin)
-        {
-            $this->add_link('Admin', $this->ticket_root.'/_admin/');
-        }
-        if($this->is_data)
-        {
-            $this->add_link('Data Entry', $this->ticket_root.'/_admin/data.php');
-        }
-        parent::add_links();
-    }
-
     function print_page($header=true)
     {
         if($this->user === false || $this->user === null)
@@ -39,6 +26,24 @@ class VolunteerPage extends SecurePage
             $this->add_login_form();
         }
         parent::print_page($header);
+    }
+
+    function isAdmin()
+    {
+        if($this->user === false || $this->user === null)
+        {
+            return false;
+        }
+        return $this->user->isInGroupNamed('VolunteerAdmins');
+    }
+
+    function isLead()
+    {
+        if($this->user === false || $this->user === null)
+        {
+            return false;
+        }
+        return $this->user->isInGroupNamed('Leads');
     }
 }
 ?>
