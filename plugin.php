@@ -1,4 +1,5 @@
 <?php
+/*
 class FVSPlugin extends SecurePlugin
 {
     function get_secure_menu_entries($page, $user)
@@ -12,4 +13,5 @@ class FVSPlugin extends SecurePlugin
         return array('name'=>'Volunteer', 'link'=>'fvs/index.php');
     }
 }
+*/
 ?>
