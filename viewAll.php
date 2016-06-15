@@ -15,5 +15,4 @@ $page->body .= '
     </div>
 </div>';
 
-$page->print_page();
-?>
+$page->printPage();

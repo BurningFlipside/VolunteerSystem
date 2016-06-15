@@ -49,5 +49,4 @@ $page->body .= '
     </form>
 </div>';
 
-$page->print_page();
-?>
+$page->printPage();

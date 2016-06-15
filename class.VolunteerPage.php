@@ -15,17 +15,17 @@ class VolunteerPage extends SecurePage
         $this->addJSByURI($this->volunteerRoot.'/js/volunteer.js', false);
     }
 
-    function print_page($header=true)
+    function printPage($header=true)
     {
         if($this->user === false || $this->user === null)
         {
             $this->body = '
 <div id="content">
-    <h1>You must <a href="https://profiles.burningflipside.com/login.php?return='.$this->current_url().'">log in <span class="fa fa-sign-in"></span></a> to access the Burning Flipside Volunteer system!</h1>
+    <h1>You must <a href="https://profiles.burningflipside.com/login.php?return='.$this->currentURL().'">log in <span class="fa fa-sign-in"></span></a> to access the Burning Flipside Volunteer system!</h1>
 </div>';
             $this->add_login_form();
         }
-        parent::print_page($header);
+        parent::printPage($header);
     }
 
     function isAdmin()
@@ -46,4 +46,3 @@ class VolunteerPage extends SecurePage
         return $this->user->isInGroupNamed('Leads');
     }
 }
-?>

@@ -15,8 +15,7 @@ function getDepartmentList()
     {
         throw new Exception('Must be logged in', ACCESS_DENIED);
     }
-    $dataSet = DataSetFactory::get_data_set('fvs');
-    $dataTable = $dataSet['departments'];
+    $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
     $ret = false;
     if($app->user->isInGroupNamed('VolunteerAdmins'))
     {
@@ -74,8 +73,7 @@ function getDepartment($id)
     {
         throw new Exception('Must be logged in', ACCESS_DENIED);
     }
-    $dataSet = DataSetFactory::get_data_set('fvs');
-    $dataTable = $dataSet['departments'];
+    $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
     $filter = new \Data\Filter("departmentID eq '$id'");
     $ret = $dataTable->read($filter, $app->odata->select);
     if($ret === false || !isset($ret[0]))
@@ -85,4 +83,3 @@ function getDepartment($id)
     echo json_encode($ret[0]);
 }
 
-?>

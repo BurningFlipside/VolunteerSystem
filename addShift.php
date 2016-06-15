@@ -3,8 +3,8 @@ require_once('class.VolunteerPage.php');
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 
 $page->addJSByURI('js/shifts.js', false);
-$page->addJS(JS_BOOTBOX);
-$page->addJS(JS_JQUERY_UI);
+$page->addWellKnownJS(JS_BOOTBOX);
+$page->addWellKnownJS(JS_JQUERY_UI);
 
 $page->body .= '
 <div id="content">
@@ -46,5 +46,4 @@ $page->body .= '
         </div>
       </div>
     </div>';
-$page->print_page();
-?>
+$page->printPage();

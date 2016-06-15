@@ -13,8 +13,7 @@ function getCurrentShiftList()
     {
         throw new Exception('Must be logged in', ACCESS_DENIED);
     }
-    $dataSet = DataSetFactory::get_data_set('fvs');
-    $dataTable = $dataSet['shifts'];
+    $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
     $ret = false;
     if($app->user->isInGroupNamed('VolunteerAdmins'))
     {
@@ -37,4 +36,3 @@ function getCurrentShiftList()
     echo json_encode($ret);
 }
 
-?>
