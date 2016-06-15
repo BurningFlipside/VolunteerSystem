@@ -1,0 +1,32 @@
+engines:
+  csslint:
+    enabled: true
+  duplication:
+    enabled: true
+    config:
+      languages:
+        javascript:
+          mass_threshold: 40
+        php:
+          mass_threshold: 40
+  eslint:
+    enabled: true
+  fixme:
+    enabled: true
+  phpmd:
+    enabled: true
+    checks:
+      CleanCode/BooleanArgumentFlag:
+        enabled: false
+ratings:
+  paths:
+  - "**.css"
+  - "**.inc"
+  - "**.js"
+  - "**.php"
+exclude_paths:
+- tests/
+- libs/
+- vendor/
+- "js/html5*"
+- "js/*.min.js"
