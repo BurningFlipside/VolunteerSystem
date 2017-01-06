@@ -6,7 +6,7 @@ $page->add_js_from_src('js/init_page.js', false);
 $page->add_js_from_src('js/question_node.js', false);
 $page->add_js_from_src('js/volunteer_position.js', false);
 
-$page->add_head_tag('
+$page->addHeadTag('
 <script type="text/javascript">function doYes(){var answer=window.currentNode.GetYes();handleNode(answer)}
 function doBack(){
         if(window.nodes.length == 1){
