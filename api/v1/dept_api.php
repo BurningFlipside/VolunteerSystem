@@ -6,6 +6,8 @@ function deptGroup()
     $app->get('(/)', 'getDepartmentList');
     $app->post('(/)', 'createDepartment');
     $app->get('/:id(/)', 'getDepartment');
+    $app->get('/:id/shifts(/)', 'getShiftsForDepartment');
+    $app->get('/:id/roles(/)', 'getRolesForDepartment');
 }
 
 function getDepartmentList()
@@ -67,7 +69,7 @@ function createDepartment()
     echo json_encode($dataTable->create($obj));
 }
 
-function getDepartment($id)
+function getDepartmentByID($id, $select = false)
 {
     global $app;
     if(!$app->user)
@@ -77,12 +79,70 @@ function getDepartment($id)
     $dataSet = DataSetFactory::get_data_set('fvs');
     $dataTable = $dataSet['departments'];
     $filter = new \Data\Filter("departmentID eq '$id'");
-    $ret = $dataTable->read($filter, $app->odata->select);
-    if($ret === false || !isset($ret[0]))
+    $ret = $dataTable->read($filter, $select);
+    if(empty($ret))
+    {
+        return false;
+    }
+    if($ret[0]['public'])
+    {
+        return $ret[0];
+    }
+    if($app->user->isInGroupNamed('VolunteerAdmins'))
+    {
+        return $ret[0];
+    }
+    //TODO Give lead access to department
+    return false;
+}
+
+function getDepartment($id)
+{
+    global $app;
+    $ret = getDepartmentByID($id, $app->odata->select);
+    if($ret === false)
     {
         $app->notFound();
     }
-    echo json_encode($ret[0]);
+    echo json_encode($ret);
+}
+
+function getShiftsForDepartment($id)
+{
+    global $app;
+    $dept = getDepartmentByID($id);
+    if($dept === false)
+    {
+        $app->notFound();
+    }
+    $filter = new \Data\Filter('departmentID eq '.$dept['departmentID']);
+    $dataSet = DataSetFactory::get_data_set('fvs');
+    $dataTable = $dataSet['shifts'];
+    $ret = $dataTable->read($filter, $app->odata->select);
+    if($ret === false || !isset($ret[0]))
+    {
+        $ret = array();
+    }
+    echo json_encode($ret);
+}
+
+function getRolesForDepartment($id)
+{
+    global $app;
+    $dept = getDepartmentByID($id);
+    if($dept === false)
+    {
+        $app->notFound();
+    }
+    $filter = new \Data\Filter('departmentID eq '.$dept['departmentID']);
+    $dataSet = DataSetFactory::get_data_set('fvs');
+    $dataTable = $dataSet['roles'];
+    $ret = $dataTable->read($filter, $app->odata->select);
+    if($ret === false || !isset($ret[0]))
+    {
+        $ret = array();
+    }
+    echo json_encode($ret);
 }
 
 ?>
