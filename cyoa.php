@@ -6,7 +6,7 @@ $page->addJSByURI('js/init_page.js', false);
 $page->addJSByURI('js/question_node.js', false);
 $page->addJSByURI('js/volunteer_position.js', false);
 
-$page->add_head_tag('
+$page->addHeadTag('
 <script type="text/javascript">function doYes(){var answer=window.currentNode.GetYes();handleNode(answer)}
 function doBack(){
         if(window.nodes.length == 1){
