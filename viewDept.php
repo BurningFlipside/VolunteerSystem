@@ -43,6 +43,22 @@ $page->body .= '
             </div>
         </fieldset>
         <div class="clearfix visible-sm visible-md visible-lg"></div>
+        <div class="panel-group" id="accordion" role="tablist">
+          <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="roleHeader">
+              <h4 class="panel-title">
+                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#roles" aria-expanded="true" aria-controls="roles">
+                  Roles
+                </a>
+              </h4>
+            </div>
+            <div id="roles" class="panel-collapse collapse" role="tabpanel" aria-labelledby="roleHeader">
+              <div class="panel-body">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="clearfix visible-sm visible-md visible-lg"></div>
         <button type="submit" class="btn btn-primary">Submit Changes</button>
         <button type="button" class="btn btn-secondary" onclick="viewShifts();">View Associated Shifts <i class="fa fa-chevron-right"></i></button>
     </fieldset>
