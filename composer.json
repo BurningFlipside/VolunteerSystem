@@ -1,0 +1,18 @@
+{
+    "name": "BurningFlipside/VolunteerSystem",
+    "version": "1.0.0",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/BurningFlipside/SecureFramework.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/BurningFlipside/CommonCode.git"
+        }
+    ],
+    "require": {
+        "BurningFlipside/SecureFramework": "dev-master",
+        "BurningFlipside/CommonCode": "dev-master"
+    }
+}

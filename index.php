@@ -73,5 +73,4 @@ $page->body .= '
 </script>
 ';
 
-$page->print_page();
-?>
+$page->printPage();
