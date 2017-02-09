@@ -63,7 +63,7 @@ function createDepartment()
         throw new Exception('Must be a volunteer admin to create a department', ACCESS_DENIED);
     }
     $obj = $app->getJSONBody();
-    $dataSet = DataSetFactory::get_data_set('fvs');
+    $dataSet = DataSetFactory::getDataSetByName('fvs');
     $dataTable = $dataSet['departments'];
     echo json_encode($dataTable->create($obj));
 }
@@ -114,7 +114,7 @@ function getShiftsForDepartment($id)
         $app->notFound();
     }
     $filter = new \Data\Filter('departmentID eq '.$dept['departmentID']);
-    $dataSet = DataSetFactory::get_data_set('fvs');
+    $dataSet = DataSetFactory::getDataSetByName('fvs');
     $dataTable = $dataSet['shifts'];
     $ret = $dataTable->read($filter, $app->odata->select);
     if($ret === false || !isset($ret[0]))
@@ -133,7 +133,7 @@ function getRolesForDepartment($id)
         $app->notFound();
     }
     $filter = new \Data\Filter('departmentID eq '.$dept['departmentID']);
-    $dataSet = DataSetFactory::get_data_set('fvs');
+    $dataSet = DataSetFactory::getDataSetByName('fvs');
     $dataTable = $dataSet['roles'];
     $ret = $dataTable->read($filter, $app->odata->select);
     if($ret === false || !isset($ret[0]))
