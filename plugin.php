@@ -4,7 +4,7 @@ class FVSPlugin extends SecurePlugin
     function get_secure_menu_entries($page, $user)
     {
         $ret = array(
-          'Volunteer' => $page->secureUrl.'fvs/index.php'
+          'Volunteer' => $page->secure_root.'fvs/index.php'
         );
         return $ret;
     }
