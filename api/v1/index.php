@@ -4,11 +4,13 @@ require_once('app/VolunteerAutoload.php');
 
 require_once('dept_api.php');
 require_once('shift_api.php');
+require_once('participant_api.php');
 
 $app = new FlipREST();
 $app->get('(/)', 'getRoot');
 $app->group('/shifts', 'shiftGroup');
 $app->group('/departments', 'deptGroup');
+$app->group('/participants', 'participantGroup');
 
 function getRoot()
 {
