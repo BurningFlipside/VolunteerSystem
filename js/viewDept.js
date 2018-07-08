@@ -1,5 +1,15 @@
 var deptData = null;
 
+function getRoleDone(jqXHR)
+{
+    if(jqXHR.status !== 200 || jqXHR.responseJSON === undefined)
+    {
+        alert('Unable to obtain roles!');
+        return;
+    }
+    console.log(jqXHR);
+}
+
 function getDepartmentDone(jqXHR)
 {
     if(jqXHR.status !== 200 || jqXHR.responseJSON === undefined)
@@ -8,19 +18,23 @@ function getDepartmentDone(jqXHR)
         return;
     }
     var data = jqXHR.responseJSON;
-    deptData = data;
-    $('#departmentNameRO').append(data.departmentName);
-    $('#departmentName').val(data.departmentName);
-    if(data.description !== undefined)
+    deptData = data[0];
+    $('#departmentNameRO').append(deptData.departmentName);
+    $('#departmentName').val(deptData.departmentName);
+    if(deptData.description !== undefined)
     {
-        $('#description').val(data.description);
+        $('#description').val(deptData.description);
     }
-    if(data.public)
+    if(deptData.public)
     {
         $('#public').prop('checked', true);
         $('#privateDept').hide();
     }
-    console.log(data);
+    $.ajax({
+        url: 'api/v1/departments/'+deptData.departmentID+'/roles',
+        type: 'GET',
+        dataType: 'json',
+        complete: getRoleDone});
 }
 
 function publicChanged()
