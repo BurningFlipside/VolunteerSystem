@@ -1,11 +1,14 @@
 <?php
-require_once('class.FlipREST.php');
-require_once('app/VolunteerAutoload.php');
-
-require_once('dept_api.php');
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+require('Autoload.php');
+require_once('class.DepartmentAPI.php');
 require_once('shift_api.php');
 require_once('participant_api.php');
 
+$site = new \Http\WebSite();
+$site->registerAPI('/departments', new DepartmentAPI());
+/*
 $app = new FlipREST();
 $app->get('(/)', 'getRoot');
 $app->group('/shifts', 'shiftGroup');
@@ -25,6 +28,6 @@ function getRoot()
     }
     echo json_encode($ret);
 }
-
-$app->run();
+*/
+$site->run();
 ?>

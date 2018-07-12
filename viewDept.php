@@ -2,8 +2,6 @@
 require_once('class.VolunteerPage.php');
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 
-$page->addJSByURI('js/viewDept.js');
-
 $page->body .= '
 <div id="content">
     <form id="department">

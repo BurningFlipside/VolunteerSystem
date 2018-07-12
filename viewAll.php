@@ -2,8 +2,6 @@
 require_once('class.VolunteerPage.php');
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 
-$page->addJSByURI('js/viewAll.js');
-
 $page->body .= '
 <div id="content">
     <div id="departments" class="list-group">';

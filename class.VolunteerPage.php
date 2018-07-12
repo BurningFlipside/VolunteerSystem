@@ -12,7 +12,7 @@ class VolunteerPage extends SecurePage
         $root = $_SERVER['DOCUMENT_ROOT'];
         $script_dir = dirname(__FILE__);
         $this->volunteerRoot = substr($script_dir, strlen($root));
-        $this->addJSByURI($this->volunteerRoot.'/js/volunteer.js', false);
+        $this->addJS($this->volunteerRoot.'/js/volunteer.js', false);
     }
 
     function printPage($header=true)

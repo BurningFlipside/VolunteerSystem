@@ -2,7 +2,6 @@
 require_once('class.VolunteerPage.php');
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 
-$page->addJSByURI('js/shifts.js', false);
 $page->addWellKnownJS(JS_BOOTBOX);
 $page->addWellKnownJS(JS_JQUERY_UI);
 
