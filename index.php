@@ -53,7 +53,7 @@ $page->body .= '
         <a href=# onclick="doBack()">Or, maybe you\'d like to go back to your previous quesiton?</a>
     </p>
     <p>
-    Confused about anything you see here?  Did you find an error or a dead link?  You might want to visit the <a href="http://wiki.burningflipside.com/wiki/Volunteer_Coordinator">Volunteer Coordinator page on Pyropedia</a> or email the volunteer team at <a href="mailto:volunteerinfo@burningflipside.com">volunteerinfo@burningflipside.com</a>
+    Confused about anything you see here?  Did you find an error or a dead link?  You might want to visit the <a href="'.$page->wikiUrl.'/wiki/Volunteer_Coordinator">Volunteer Coordinator page on Pyropedia</a> or email the volunteer team at <a href="mailto:volunteerinfo@burningflipside.com">volunteerinfo@burningflipside.com</a>
     </p>
 </div>
 </div>
