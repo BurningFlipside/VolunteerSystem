@@ -9,18 +9,7 @@ $page->body .= '
     <h1>What would you like to do?</h1>
     <ul>
         <li><a href="shifts.php">View Available Shifts</a></li>
-        <li><a href="schedule.php">View My Shift Schedule</a></li>';
-
-if($page->isAdmin())
-{
-    $page->body .= '<li><a href="viewAll.php">View All Departments</a></li>';
-}
-else if($page->isLead())
-{
-    $page->body .= '<li><a href="viewDept.php">View My Department</a></li>';
-}
-
-$page->body .= '
+        <li><a href="schedule.php">View My Shift Schedule</a></li>
     </ul>
 </div>';
 

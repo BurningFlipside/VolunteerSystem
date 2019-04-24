@@ -3,11 +3,12 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require('Autoload.php');
 require_once('class.DepartmentAPI.php');
-require_once('shift_api.php');
+require_once('class.ShiftAPI.php');
 require_once('participant_api.php');
 
 $site = new \Http\WebSite();
 $site->registerAPI('/departments', new DepartmentAPI());
+$site->registerAPI('/shifts', new ShiftAPI());
 /*
 $app = new FlipREST();
 $app->get('(/)', 'getRoot');
