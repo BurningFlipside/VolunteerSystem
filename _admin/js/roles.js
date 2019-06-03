@@ -62,24 +62,38 @@ function newRole() {
   });
 }
 
+function groupedWithEditor(cell, onRendered, success, cancel, editorParams) {
+  console.log(cell);
+}
+
 function initPage() {
   deptId = getParameterByName('dept');
-  $.ajax({
-    url: '../api/v1/departments/'+deptId,
-    complete: gotDept
-  });
+  if(deptId !== null) {
+    $.ajax({
+      url: '../api/v1/departments/'+deptId,
+      complete: gotDept
+    });
+    tableURL = '../api/v1/departments/'+deptId+'/roles';
+  }
+  else {
+    $('#deptName').html('All');
+    tableURL = '../api/v1/roles';
+    $('#newRoleBtn').attr("disabled", true).attr('title', 'Adding a new role is disabled except on the individual department pages');
+  }
   table = new Tabulator("#roles", {
-    ajaxURL: '../api/v1/departments/'+deptId+'/roles',
+    ajaxURL: tableURL,
     columns:[
       {title:"ID", field:"_id.$id", visible: false},
       {title:'Short Name', field: 'short_name'},
       {title:'Name', field: 'display_name', editor: 'input'},
-      {title:'Description', field: 'description', editor:"textarea", formatter:"html"},
+      {title:'Description', field: 'description', editor:"textarea", formatter:"html", width: 250},
       {title:'Public', field: 'publicly_visible', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Groups', field: 'groups_allowed', editor: 'tickCross', formatter: 'tickCross'}
+      {title:'Groups', field: 'groups_allowed', editor: 'tickCross', formatter: 'tickCross'},
+      {title:'Can be grouped with', field: 'grouped_with', editor: groupedWithEditor, formatter:"html"}
     ],
     cellEdited: dataChanged
   });
 }
 
 $(initPage);
+

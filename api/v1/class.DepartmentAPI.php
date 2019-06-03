@@ -12,6 +12,8 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         $app->get('/{dept}/roles[/]', array($this, 'getRolesForDepartment'));
         $app->post('/{dept}/roles[/]', array($this, 'createRoleForDepartment'));
         $app->patch('/{dept}/roles/{roleName}[/]', array($this, 'updateRoleForDepartment'));
+        $app->get('/{dept}/shifts[/]', array($this, 'getShiftsForDepartment'));
+        $app->post('/{dept}/shifts[/]', array($this, 'createShiftForDepartment'));
     }
 
     protected function isVolunteerAdmin($request)
@@ -50,13 +52,32 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
         $filter = new \Data\Filter("departmentID eq '$deptId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
-        $roles = $dataTable->read($odata->filter, $odata->select, $odata->top,
+        $roles = $dataTable->read($filter, $odata->select, $odata->top,
                                   $odata->skip, $odata->orderby);
         if($roles === false)
         {
             $roles = array();
         }
         return $response->withJson($roles);
+    }
+
+    public function getShiftsForDepartment($request, $response, $args)
+    {
+        $deptId = $args['dept'];
+        if($this->canEditDept($request, $deptId) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $filter = new \Data\Filter("departmentID eq '$deptId'");
+        $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        $shifts = $dataTable->read($filter, $odata->select, $odata->top,
+                                  $odata->skip, $odata->orderby);
+        if($shifts === false)
+        {
+            $shifts = array();
+        }
+        return $response->withJson($shifts);
     }
 
     public function createRoleForDepartment($request, $response, $args)
@@ -67,6 +88,24 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
             return $response->withStatus(401);
         }
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
+        $obj = $request->getParsedBody();
+        if($obj == NULL)
+        {
+            $obj = json_decode($request->getBody()->getContents(), true);
+        }
+        $obj['departmentID'] = $deptId;
+        $ret = $dataTable->create($obj);
+        return $response->withJson($ret);
+    }
+
+    public function createShiftForDepartment($request, $response, $args)
+    {
+        $deptId = $args['dept'];
+        if($this->canEditDept($request, $deptId) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $obj = $request->getParsedBody();
         if($obj == NULL)
         {

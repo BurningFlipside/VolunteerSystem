@@ -1,7 +1,54 @@
+var departments = {};
+
+function doneCreatingShift(jqXHR) {
+  console.log(jqXHR);
+  $('#newShift').modal('hide');
+}
+
+function createShift() {
+  var shift = {};
+  shift.departmentID = $('#departmentID').val();
+  shift.roleID = $('#role').val();
+  shift.startTime = $('#startTime').val();
+  shift.endTime = $('#endTime').val();
+  shift.enabled = $('#enabled').prop('checked');
+  shift.name = $('#shiftName').val();
+  shift.earlyLate = $('#earlyEntryWindow').val();
+  $.ajax({
+    url: '../api/v1/departments/'+shift.departmentID+'/shifts',
+    contentType: 'application/json',
+    data: JSON.stringify(shift),
+    type: 'POST',
+    dataType: 'json',
+    complete: doneCreatingShift
+  });
+}
+
+function gotDepartmentRoles(jqXHR) {
+  if(jqXHR.status !== 200) {
+    alert('Unable to obtain roles');
+    console.log(jqXHR);
+    return;
+  }
+  $('#departmentID').val(this.departmentID);
+  $('#department').val(this.departmentName);
+  $('#role').find('option').remove();
+  var array = jqXHR.responseJSON;
+  for(var i = 0; i < array.length; i++) {
+    $('#role').append('<option value="'+array[i].short_name+'">'+array[i].display_name+'</option>');
+  }
+  $('#newShift').modal('show');
+}
+
 function addNewShift(elem) {
   var href = elem.getAttribute("href");
   href = href.substring(1);
-  console.log(href);
+  $.ajax({
+    url: '../api/v1/departments/'+href+'/roles',
+    complete: gotDepartmentRoles,
+    context: departments[href]
+  });
+  //console.log(href);
   return false;
 }
 
@@ -10,6 +57,19 @@ function gotShifts(jqXHR) {
     alert('Unable to obtain shifts');
     console.log(jqXHR);
     return;
+  }
+  var array = jqXHR.responseJSON;
+  for(var i = 0; i < array.length; i++) {
+    if(array[i].name !== undefined && array[i].name.length > 0) {
+      shiftName = array[i].name;
+    }
+    else {
+      var start = new Date(array[i].startTime);
+      var end = new Date(array[i].endTime);
+      shiftName = array[i].roleID+': '+start+' to '+end;
+    }
+    $('#'+array[i].departmentID+'List').append('<a href="#'+array[i]['_id']['$id']+'" class="list-group-item list-group-item-action" onclick="return editShift(this);">'+shiftName+'</a>');
+    console.log(array[i]);
   }
 }
 
@@ -22,7 +82,8 @@ function gotDepartments(jqXHR) {
   var array = jqXHR.responseJSON;
   var accordian = $('#accordion');
   for(var i = 0; i < array.length; i++) {
-    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a></div></div></div></div>');
+    departments[array[i].departmentID] = array[i];
+    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a></div></div></div></div>');
   }
   $.ajax({
     url: '../api/v1/shifts',

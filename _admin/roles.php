@@ -9,7 +9,7 @@ $page->addWellKnownJS(JS_BOOTBOX);
 
 $page->content['pageHeader'] = 'Roles: <span id="deptName"></span>';
 $page->content['table'] = array('id' => 'roles');
-$page->content['selectors'] = '<button type="button" class="btn btn-primary" onclick="newRole();">New Role</button>';
+$page->content['selectors'] = '<button type="button" class="btn btn-primary" id="newRoleBtn" onclick="newRole();">New Role</button>';
 
 $page->printPage();
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */
