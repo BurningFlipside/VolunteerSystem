@@ -12,12 +12,12 @@ function addDone(jqXHR) {
     location.reload();
     return;
   }
-  alert('Unable to add department!');
+  alert('Unable to add event!');
   console.log(jqXHR);
 }
 
 function valueChanged(value, field, id) {
-  console.log('../api/v1/departments/'+id);
+  console.log('../api/v1/events/'+id);
   var propParts = field.split('.');
   var obj = {};
   var current = obj;
@@ -26,7 +26,7 @@ function valueChanged(value, field, id) {
   }
   current[propParts[propParts.length-1]] = value;
   $.ajax({
-    url: '../api/v1/departments/'+id,
+    url: '../api/v1/events/'+id,
     method: 'PATCH',
     data: JSON.stringify(obj),
     contentType: 'application/json',
@@ -37,6 +37,17 @@ function valueChanged(value, field, id) {
 
 function dataChanged(cell) {
   valueChanged(cell.getValue(), cell.getColumn().getField(), cell.getRow().getData()['departmentID']);
+}
+
+function privateEventChange(target) {
+  if(target.checked) {
+    $('#volList').removeAttr('disabled');
+    $('#invites').removeAttr('disabled');
+  }
+  else {
+    $('#volList').attr('disabled', true);
+    $('#invites').attr('disabled', true);
+  }
 }
 
 function gotDepartments(jqXHR) {
@@ -53,15 +64,97 @@ function gotDepartments(jqXHR) {
 }
 
 function newEvent(e) {
-  console.log(e);
+  var obj = {};
+  obj.departments = [];
+  for(var key in e) {
+    if(key.startsWith('dept_')) {
+      if(e[key] === true) {
+        obj.departments.push(key.substring(5));
+      }
+    }
+    else if(key === 'volList') {
+      if(e.private === true) {
+        obj.volList = e[key].split('\n');
+      }
+    }
+    else {
+      obj[key] = e[key];
+    }
+  }
+  $.ajax({
+    url: '../api/v1/events',
+    method: 'POST',
+    data: JSON.stringify(obj),
+    contentType: 'application/json',
+    dataType: 'json',
+    complete: addDone
+  });
 }
 
 function showEventWizard() {
   $('#eventWizard').modal('show');
 }
 
+function delIcon(cell, formatterParams, onRendered) {
+  return "<i class='fa fa-trash'></i>";
+}
+
 function editIcon(cell, formatterParams, onRendered) {
-  return "<i class='fa fa-pencil'></i>";
+  return "<i class='fa fa-pencil-alt'></i>";
+}
+
+function dateTimeView(cell, formatterParams, onRendered) {
+  var d = new Date(cell.getValue());
+  return d.toString();
+}
+
+function deleteDone(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to delete event!');
+    return;
+  }
+  location.reload();
+}
+
+function getShiftsBeforeDelete(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to determine if event has shifts!');
+    return;
+  }
+  if(jqXHR.responseJSON.length === 0) {
+    var data = this;
+    bootbox.confirm({
+      message: 'Are you sure you want to delete the event "'+this.name+'"?', 
+      buttons: {
+        confirm: {
+          label: 'Yes'
+        },
+        cancel: {
+          label: 'No'
+        }
+      },
+      callback: function(result){ 
+        $.ajax({
+           url: '../api/v1/events/'+data['_id']['$id'],
+           method: 'DELETE',
+           complete: deleteDone
+        }); 
+    }});
+  }
+  else {
+    bootbox.alert('This event has one or more shifts. All shifts must be deleted first!');
+  }
+}
+
+function delEvent(e, cell) {
+  var data = cell.getRow().getData();
+  $.ajax({
+    url: '../api/v1/events/'+data['_id']['$id']+'/shifts',
+    context: data,
+    complete: getShiftsBeforeDelete
+  });
 }
 
 function editEvent(e, cell) {
@@ -73,14 +166,16 @@ function initPage() {
   table = new Tabulator("#events", {
     ajaxURL: '../api/v1/events',
     columns:[
+      {formatter: delIcon, width:40, align:"center", cellClick: delEvent},
       {formatter: editIcon, width:40, align:"center", cellClick: editEvent},
       {title:"ID", field:"_id.$id", visible: false},
       {title:'Name', field: 'name', editor:"input"},
-      {title:'Start Date/Time', field: 'startTime', formatter:"datetime"},
-      {title:'End Date/Time', field: 'endTime', formatter:"datetime"},
+      {title:'Start Date/Time', field: 'startTime', formatter: dateTimeView},
+      {title:'End Date/Time', field: 'endTime', formatter: dateTimeView},
       {title:'Private', field: 'private', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Volunteer List', field: 'volList'},
-      {title:'Department List', field: 'departments'}
+      {title:'Department List', field: 'departments'},
+      {title:'Tickets Needed', field: 'tickets'}
     ],
     cellEdited: dataChanged
   });

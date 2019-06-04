@@ -59,7 +59,7 @@ $page->content['body'] = '
               <div class="row">
                 <label for="private" class="col-sm-2 col-form-label">Private Event:</label>
                 <div class="col-sm-2">
-                  <input class="form-control" type="checkbox" name="private" id="private" onChange="privateEventChange();"/>
+                  <input class="form-control" type="checkbox" name="private" id="private" onChange="privateEventChange(this);"/>
                 </div>
                 <div class="w-100"></div>
                 <div class="col-sm-12">
