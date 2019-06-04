@@ -10,9 +10,9 @@ function gotRoles(jqXHR) {
   }
 }
 
-function gotShifts(jqXHR) {
+function gotEvents(jqXHR) {
   if(jqXHR.responseJSON !== undefined) {
-    $('#shiftCount').html(jqXHR.responseJSON['@odata.count']);
+    $('#eventCount').html(jqXHR.responseJSON['@odata.count']);
   }
 }
 
@@ -26,8 +26,8 @@ function initIndex() {
     complete: gotRoles
   });
   $.ajax({
-    url: '../api/v1/shifts?$count=true',
-    complete: gotShifts
+    url: '../api/v1/events?$count=true',
+    complete: gotEvents
   });
 }
 
