@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 require_once('class.SecurePage.php');
 require_once('class.FlipSession.php');
 require_once('app/VolunteerAutoload.php');
@@ -13,6 +15,8 @@ class VolunteerPage extends SecurePage
         $script_dir = dirname(__FILE__);
         $this->volunteerRoot = substr($script_dir, strlen($root));
         $this->addJS($this->volunteerRoot.'/js/volunteer.js', false);
+        $this->addTemplateDir(dirname(__FILE__).'/templates', 'Volunteer');
+        $this->setTemplateName('@Volunteer/main.html');
     }
 
     function printPage($header=true)

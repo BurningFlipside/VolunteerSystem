@@ -1,0 +1,64 @@
+{% extends "@Secure/main.html" %}
+
+{% block content %}
+<div class="modal fade bd-example-modal-lg" id="profileWizard" tabindex="-1" role="dialog" aria-labelledby="profileWizardTitle" aria-hidden="true" data-backdrop="static">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="profileWizardTitle">Participlant Profile</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row flex-xl-nowrap">
+          <div class="col-12 col-md-4 col-xl-3 bd-sidebar">
+            <ul class="list-group">
+              <li class="list-group-item active">Basic Contact Info</li>
+              <li class="list-group-item">Legal Name</li>
+              <li class="list-group-item">Privacy Settings</li>
+              <li class="list-group-item">Ticket Info</li>
+              <li class="list-group-item">Review</li>
+            </ul>
+          </div>
+          <div class="col-12 col-md-8 col-xl-8 bd-content">
+            <div id="profileBasic" class="visible">
+              This is some basic information so we know who you are and can find you if we need you.
+              <div class="row">
+                <label for="displayName" class="col-sm-2 col-form-label">Burner Name:</label>
+                <div class="col-sm-9">
+                  <input class="form-control" type="text" name="displayName" id="displayName"/>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="popover" data-trigger="focus" title="Why do we need this?" data-content="This serves a few purposes. First we may need to find you on site if you are late to your shift for example. So this should be what people in your camp know you by. Also depending on your privacy settings this might be shown as who signed up for the shift.">Why?</a>
+                </div>
+                <div class="w-100"></div>
+                <label for="campName" class="col-sm-2 col-form-label">Camp Name:</label>
+                <div class="col-sm-9">
+                  <input class="form-control" type="text" name="campName" id="campName"/>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="popover" data-trigger="focus" title="Why do we need this?" data-content="We may need to find you on site if you are late to your shift for example. So this should be enough info to locate your approximate camp.">Why?</a>
+                </div>
+              </div>
+            </div>
+            <div id="profileLegal" class="invisible">
+            </div>
+            <div id="profilePrivacy" class="invisible">
+            </div>
+            <div id="profileTicket" class="invisible">
+            </div>
+            <div id="profileReview" class="invisible">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary mr-auto" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-outline-primary" disabled>Previous</button>
+        <button type="button" class="btn btn-outline-primary">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
