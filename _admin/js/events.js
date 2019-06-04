@@ -39,6 +39,23 @@ function dataChanged(cell) {
   valueChanged(cell.getValue(), cell.getColumn().getField(), cell.getRow().getData()['departmentID']);
 }
 
+function gotDepartments(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to get department list!');
+    return;
+  }
+  var array = jqXHR.responseJSON;
+  var deptList = $('#deptList');
+  for(var i = 0; i < array.length; i++) {
+    deptList.append('<div class="col-sm-2"><input class="form-control" type="checkbox" name="dept_'+array[i].departmentID+'" id="dept_'+array[i].departmentID+'"></div><div class="col-sm-10">'+array[i].departmentName+'</div>');
+  }
+}
+
+function newEvent(e) {
+  console.log(e);
+}
+
 function showEventWizard() {
   $('#eventWizard').modal('show');
 }
@@ -66,6 +83,10 @@ function initPage() {
       {title:'Department List', field: 'departments'}
     ],
     cellEdited: dataChanged
+  });
+  $.ajax({
+    url: '../api/v1/departments',
+    complete: gotDepartments
   });
 }
 

@@ -48,6 +48,15 @@ function saveWizardStep(target) {
   var inputs = dialog.find('input');
   var obj = {};
   for(var i = 0; i < inputs.length; i++) {
+    if(inputs[i].type === 'checkbox') {
+      obj[inputs[i].id] = inputs[i].checked;
+    }
+    else {
+      obj[inputs[i].id] = inputs[i].value;
+    }
+  }
+  inputs = dialog.find('textarea');
+  for(var i = 0; i < inputs.length; i++) {
     obj[inputs[i].id] = inputs[i].value;
   }
   console.log(obj);
