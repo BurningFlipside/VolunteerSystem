@@ -61,8 +61,8 @@ function initPage() {
       {title:'Name', field: 'name', editor:"input"},
       {title:'Start Date/Time', field: 'startTime', formatter:"datetime"},
       {title:'End Date/Time', field: 'endTime', formatter:"datetime"},
-      {title:'Public', field: 'public', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Volunteer List', field: 'private'},
+      {title:'Private', field: 'private', editor: 'tickCross', formatter: 'tickCross'},
+      {title:'Volunteer List', field: 'volList'},
       {title:'Department List', field: 'departments'}
     ],
     cellEdited: dataChanged

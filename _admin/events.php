@@ -36,7 +36,7 @@ $page->content['body'] = '
             </ul>
           </div>
           <div class="col-12 col-md-8 col-xl-8 bd-content">
-            <div id="eventBasic" class="visible">
+            <div id="eventBasic" class="d-block">
               This is some basic information about the event.
               <div class="row">
                 <label for="name" class="col-sm-2 col-form-label">Event Name:</label>
@@ -55,13 +55,36 @@ $page->content['body'] = '
                 </div>
               </div>
             </div>
-            <div id="eventPrivacy" class="invisible">
+            <div id="eventPrivacy" class="d-none">
+              For purposes of this system a private event is one that you only want a set of volunteers to be able to see, i.e. not everyone logged into the system can see this event.
+              <div id="row">
+                <label for="private" class="col-sm-2 col-form-label">Private Event:</label>
+                <div class="col-sm-10">
+                  <input class="form-control" type="checkbox" name="private" id="private" onChange="privateEventChange();"/>
+                </div>
+                <div class="w-100"></div>
+                <div class="col-sm-12">
+                  <p class="font-weight-lighter">
+                    For a private event you must provide a list of email addresses for volunteers who will be able to see the event. One email address per line.
+                  </p>
+                </div>
+                <div class="w-100"></div>
+                <label for="volList" class="col-sm-2 col-form-label">Volunteer List:</label>
+                <div class="col-sm-10">
+                  <textarea class="form-control" name="volList" id="volList" disabled></textarea>
+                </div>
+                <div class="w-100"></div>
+                <label for="private" class="col-sm-2 col-form-label">Send Invites:</label>
+                <div class="col-sm-10">
+                  <input class="form-control" type="checkbox" name="invites" id="invites" disabled"/>
+                </div>
+              </div>
             </div>
-            <div id="eventDepartments" class="invisible">
+            <div id="eventDepartments" class="d-none">
             </div>
-            <div id="eventTickets" class="invisible">
+            <div id="eventTickets" class="d-none">
             </div>
-            <div id="eventReview" class="invisible">
+            <div id="eventReview" class="d-none">
             </div>
           </div>
         </div>

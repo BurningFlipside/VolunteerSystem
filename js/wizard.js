@@ -11,7 +11,7 @@ function validateFields(content) {
 
 function nextWizardStep(target) {
   var dialog = $(target).parents('.modal');
-  var activeDiv = dialog.find('.visible');
+  var activeDiv = dialog.find('.d-block');
   var valid = validateFields(activeDiv);
   if(valid === false) {
     return;
@@ -19,8 +19,8 @@ function nextWizardStep(target) {
   var activeNav = dialog.find('.list-group-item.active');
   activeNav.removeClass('active');
   activeNav.next().addClass('active');
-  activeDiv.removeClass('visible').addClass('invisible');
-  var next = activeDiv.next().addClass('visible').removeClass('invisible');
+  activeDiv.removeClass('d-block').addClass('d-none');
+  var next = activeDiv.next().addClass('d-block').removeClass('d-none');
   $('#prevStep').removeAttr('disabled');
   if(next.next().length === 0) {
     $('#nextStep').html('Complete').attr('onClick', 'saveWizardStep(this);');
@@ -29,12 +29,12 @@ function nextWizardStep(target) {
 
 function prevWizardStep(target) {
   var dialog = $(target).parents('.modal');
-  var activeDiv = dialog.find('.visible');
+  var activeDiv = dialog.find('.d-block');
   var activeNav = dialog.find('.list-group-item.active');
   activeNav.removeClass('active');
   activeNav.prev().addClass('active');
-  activeDiv.removeClass('visible').addClass('invisible');
-  var prev = activeDiv.prev().addClass('visible').removeClass('invisible');
+  activeDiv.removeClass('d-block').addClass('d-none');
+  var prev = activeDiv.prev().addClass('d-block').removeClass('d-none');
   $('#nextStep').html('Next').attr('onClick', 'nextWizardStep(this);');
   if(prev.prev().length === 0) {
     $('#prevStep').attr('disabled', true);
