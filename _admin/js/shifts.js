@@ -1,11 +1,16 @@
 var departments = {};
 
 function doneCreatingShift(jqXHR) {
-  console.log(jqXHR);
+  if(jqXHR.status !== 200) {
+    alert('Unable to save shift!');
+    console.log(jqXHR);
+    return;
+  }
   $('#newShift').modal('hide');
+  location.reload();
 }
 
-function createShift() {
+function getShiftFromForm() {
   var shift = {};
   shift.departmentID = $('#departmentID').val();
   shift.roleID = $('#role').val();
@@ -14,6 +19,11 @@ function createShift() {
   shift.enabled = $('#enabled').prop('checked');
   shift.name = $('#shiftName').val();
   shift.earlyLate = $('#earlyEntryWindow').val();
+  return shift;
+}
+
+function createShift() {
+  var shift = getShiftFromForm();
   $.ajax({
     url: '../api/v1/departments/'+shift.departmentID+'/shifts',
     contentType: 'application/json',
@@ -21,6 +31,29 @@ function createShift() {
     type: 'POST',
     dataType: 'json',
     complete: doneCreatingShift
+  });
+}
+
+function createCopies() {
+  var copies = $('#copies').val();
+  var promises = [];
+  var shift = getShiftFromForm();
+  for(var i = 0; i < copies; i++) {
+    promises.push($.ajax({
+      url: '../api/v1/departments/'+shift.departmentID+'/shifts',
+      contentType: 'application/json',
+      data: JSON.stringify(shift),
+      type: 'POST',
+      dataType: 'json'
+    }));
+  }
+  Promise.all(promises).then((values) => {
+    $('#newShift').modal('hide');
+    location.reload();
+  }).catch(e => {
+    console.log(e); 
+    alert('One of more shift failed to save!'); 
+    location.reload();
   });
 }
 
@@ -69,7 +102,6 @@ function gotShifts(jqXHR) {
       shiftName = array[i].roleID+': '+start+' to '+end;
     }
     $('#'+array[i].departmentID+'List').append('<a href="#'+array[i]['_id']['$id']+'" class="list-group-item list-group-item-action" onclick="return editShift(this);">'+shiftName+'</a>');
-    console.log(array[i]);
   }
 }
 
@@ -91,11 +123,16 @@ function gotDepartments(jqXHR) {
   });
 }
 
+function setMinEndTime(e) {
+  $('#endTime').attr('min', e.target.value);
+}
+
 function initPage() {
   $.ajax({
     url: '../api/v1/departments',
     complete: gotDepartments
   });
+  $('#startTime').change(setMinEndTime);
 }
 
 $(initPage);
