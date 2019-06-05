@@ -4,6 +4,7 @@ error_reporting(E_ALL);
 require_once('class.VolunteerAdminPage.php');
 $page = new VolunteerAdminPage('Volunteer System Admin');
 $page->setTemplateName('admin-dashboard.html');
+$page->addWellKnownJS(JS_CHART);
 
 $page->addCard('fa-calendar-alt', '<div id="eventCount">?</div> Events', 'events.php', $page::CARD_GREEN);
 $page->addCard('fa-building', '<div id="deptCount">?</div> Departments', 'departments.php');
