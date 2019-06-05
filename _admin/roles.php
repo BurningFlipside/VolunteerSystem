@@ -2,7 +2,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require_once('class.VolunteerAdminPage.php');
-$page = new VolunteerAdminPage('Burning Flipside Volunteer System - Admin');
+$page = new VolunteerAdminPage('Volunteer System Admin');
 $page->setTemplateName('admin-table-new.html');
 
 $page->addWellKnownJS(JS_BOOTBOX);
