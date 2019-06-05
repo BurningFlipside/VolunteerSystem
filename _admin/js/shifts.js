@@ -83,12 +83,13 @@ function addNewShift(elem) {
     complete: gotDepartmentRoles,
     context: departments[href]
   });
-  $('#mySelect').find('option').remove();
+  $('#eventID').find('option').remove();
   for(var i = 0; i < events.length; i++) {
     if(events[i].departments === undefined || events[i].departments.length === 0 || events[i].departments.includes(href)) {
       $('#eventID').append('<option value="'+events[i]['_id']['$id']+'">'+events[i].name+'</option>');
     }
   }
+  setBoundaryTimes({target: $('#eventID')[0]});
   //console.log(href);
   return false;
 }
@@ -144,6 +145,20 @@ function setMinEndTime(e) {
   $('#endTime').attr('min', e.target.value);
 }
 
+function setBoundaryTimes(e) {
+  var id = e.target.value;
+  for(var i = 0; i < events.length; i++) {
+    if(events[i]['_id']['$id'] === id) {
+      myevent = events[i];
+      break;
+    }
+  }
+  $('#startTime').attr('min', myevent.startTime);
+  $('#startTime').attr('max', myevent.endTime);
+  $('#endTime').attr('min', myevent.startTime);
+  $('#endTime').attr('max', myevent.endTime);
+}
+
 function initPage() {
   $.ajax({
     url: '../api/v1/events',
@@ -154,6 +169,7 @@ function initPage() {
     complete: gotDepartments
   });
   $('#startTime').change(setMinEndTime);
+  $('#eventID').change(setBoundaryTimes);
 }
 
 $(initPage);
