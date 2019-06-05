@@ -25,6 +25,10 @@ $page->content['body'] = '
             <div class="col-sm-10">
               <input class="form-control" type="text" name="department" id="department" readonly>
             </div>
+            <label for="role" class="col-sm-2 col-form-label">Event:</label>
+            <div class="col-sm-10">
+              <select id="eventID" name="eventID" class="form-control"></select>
+            </div>
             <div class="w-100"></div>
             <label for="role" class="col-sm-2 col-form-label">Role:</label>
             <div class="col-sm-10">

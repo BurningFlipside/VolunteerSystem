@@ -1,4 +1,5 @@
 var departments = {};
+var events;
 
 function doneCreatingShift(jqXHR) {
   if(jqXHR.status !== 200) {
@@ -13,6 +14,7 @@ function doneCreatingShift(jqXHR) {
 function getShiftFromForm() {
   var shift = {};
   shift.departmentID = $('#departmentID').val();
+  shift.eventID = $('#eventID').val();
   shift.roleID = $('#role').val();
   shift.startTime = $('#startTime').val();
   shift.endTime = $('#endTime').val();
@@ -81,6 +83,12 @@ function addNewShift(elem) {
     complete: gotDepartmentRoles,
     context: departments[href]
   });
+  $('#mySelect').find('option').remove();
+  for(var i = 0; i < events.length; i++) {
+    if(events[i].departments === undefined || events[i].departments.length === 0 || events[i].departments.includes(href)) {
+      $('#eventID').append('<option value="'+events[i]['_id']['$id']+'">'+events[i].name+'</option>');
+    }
+  }
   //console.log(href);
   return false;
 }
@@ -103,6 +111,15 @@ function gotShifts(jqXHR) {
     }
     $('#'+array[i].departmentID+'List').append('<a href="#'+array[i]['_id']['$id']+'" class="list-group-item list-group-item-action" onclick="return editShift(this);">'+shiftName+'</a>');
   }
+}
+
+function gotEvents(jqXHR) {
+  if(jqXHR.status !== 200) {
+    alert('Unable to obtain events');
+    console.log(jqXHR);
+    return;
+  }
+  events = jqXHR.responseJSON;
 }
 
 function gotDepartments(jqXHR) {
@@ -128,6 +145,10 @@ function setMinEndTime(e) {
 }
 
 function initPage() {
+  $.ajax({
+    url: '../api/v1/events',
+    complete: gotEvents
+  });
   $.ajax({
     url: '../api/v1/departments',
     complete: gotDepartments
