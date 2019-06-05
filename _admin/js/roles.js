@@ -3,9 +3,9 @@ var table;
 
 function editDone(jqXHR) {
   if(jqXHR.status !== 200) {
+    console.log(jqXHR);
     alert('Unable to edit value!');
   }
-  console.log(jqXHR);
 }
 
 function addDone(jqXHR) {
@@ -25,8 +25,12 @@ function valueChanged(value, field, id) {
     current = current[propParts[i]] = {};
   }
   current[propParts[propParts.length-1]] = value;
+  var url = '../api/v1/departments/'+deptId+'/roles/'+id;
+  if(deptId === null) {
+    url = '../api/v1/roles/'+id;
+  }
   $.ajax({
-    url: '../api/v1/departments/'+deptId+'/roles/'+id,
+    url: url,
     method: 'PATCH',
     data: JSON.stringify(obj),
     contentType: 'application/json',
@@ -63,7 +67,50 @@ function newRole() {
 }
 
 function groupedWithEditor(cell, onRendered, success, cancel, editorParams) {
-  console.log(cell);
+  var rowData = cell.getRow().getData();
+  var departmentID = rowData.departmentID;
+  var rows = cell.getTable().getRows();
+  var editor = document.createElement("select");
+  var value = cell.getValue();
+  var values = [];
+  if(value !== undefined) {
+    values = value.split(',');
+  }
+
+  editor.setAttribute("multiple", true);
+  for(var i = 0; i < rows.length; i++) {
+    var data = rows[i].getData();
+    if(data.short_name === rowData.short_name) {
+      continue;
+    }
+    if(data.departmentID === departmentID) {
+      var opt = document.createElement("option");
+      opt.value = data.short_name;
+      if(values.includes(data.short_name)) {
+        opt.selected = true;
+      }
+      opt.text = data.display_name;
+      editor.add(opt);
+    }
+  }
+  function successFunc(){
+    var data = $(editor).select2('data');
+    var ret = '';
+    for(var i = 0; i < data.length; i++) {
+      ret+=data[i].id;
+      if(i < data.length-1) {
+        ret+=',';
+      }
+    }
+    success(ret);
+  }
+  onRendered(function(){
+    var sel2 = $(editor).select2();
+    sel2.select2('open');
+    sel2.change(successFunc);
+    sel2.on('blur', successFunc);
+  });
+  return editor;
 }
 
 function initPage() {

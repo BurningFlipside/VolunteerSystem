@@ -10,6 +10,8 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
     {
         parent::__construct($title, 'VolunteerAdmins');
         $this->addLinks();
+        $this->addCSS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css');
+        $this->addJS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js');
     }
 
     function addLinks()
