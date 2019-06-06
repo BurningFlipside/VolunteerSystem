@@ -12,6 +12,8 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $this->addLinks();
         $this->addCSS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css');
         $this->addJS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js');
+        $this->addJS('js/admin.js');
+        $this->addJS('js/dialog.js');
     }
 
     function addLinks()

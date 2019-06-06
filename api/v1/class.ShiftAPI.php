@@ -31,4 +31,9 @@ class ShiftAPI extends Http\Rest\DataTableAPI
         //TODO give access to department lead
         return false;
     }
+
+    protected function canDelete($request, $entity)
+    {
+        return $this->canUpdate($request, $entity);
+    }
 }

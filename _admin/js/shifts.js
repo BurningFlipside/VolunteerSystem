@@ -65,32 +65,152 @@ function gotDepartmentRoles(jqXHR) {
     console.log(jqXHR);
     return;
   }
-  $('#departmentID').val(this.departmentID);
-  $('#department').val(this.departmentName);
-  $('#role').find('option').remove();
+  var options = this;
+  var inputs = options.inputs;
   var array = jqXHR.responseJSON;
-  for(var i = 0; i < array.length; i++) {
-    $('#role').append('<option value="'+array[i].short_name+'">'+array[i].display_name+'</option>');
+  for(var i = 0; i < inputs.length; i++) {
+    if(inputs[i].id === 'roleID') {
+      inputs[i].options = [];
+      for(var j = 0; j < array.length; j++) {
+        inputs[i].options.push({value: array[j].short_name, text: array[j].display_name});
+      }
+    }
   }
-  $('#newShift').modal('show');
+  flipDialog.dialog(options);
 }
 
 function addNewShift(elem) {
   var href = elem.getAttribute("href");
   href = href.substring(1);
+  var eventOptions = [];
+  for(var i = 0; i < events.length; i++) {
+    var eventOption = {value: events[i]['_id']['$id'], text: events[i].name};
+    eventOptions.push(eventOption);
+  }
+  var dialogOptions = {
+    title: 'New Shift',
+    inputs: [
+      {type: 'hidden', id: 'departmentID', value: href},
+      {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[href].departmentName},
+      {label: 'Event', type: 'select', id: 'eventID', options: eventOptions},
+      {label: 'Role', type: 'select', id: 'roleID'},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime'},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime'},
+      {label: 'Enabled', type: 'checkbox', id: 'enabled'},
+      {label: 'Shift Name', type: 'text', id: 'shiftName'},
+      {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyEntryWindow', options: [
+        {value: -2, text: 'Late Stay (Monday Evening)'},
+        {value: -1, text: 'Regular Entry (Thursday Morning)', selected: true},
+        {value: 0, text: 'Wednesday Afternoon (Theme Camp/Art) Early Entry'},
+        {value: 1, text: 'Wednesday Morning Infrastructure Setup'},
+        {value: 2, text: 'Tuesday Morning Infrastructure Setup'}
+      ]}
+    ],
+    buttons: [
+      {input: {type: 'number', id: 'copies', text: 'Copies'}, text: 'Create Copies', callback: createCopies}, 
+      {text: 'Create Shift', callback: createShift}
+    ]
+  };
   $.ajax({
     url: '../api/v1/departments/'+href+'/roles',
     complete: gotDepartmentRoles,
-    context: departments[href]
+    context: dialogOptions
   });
-  $('#eventID').find('option').remove();
+  return false;
+}
+
+function shiftDeleted(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to delete shift!');
+    return;
+  }
+  location.reload();
+}
+
+function deleteShift(e) {
+  bootbox.confirm({
+    message: "Are you sure you want to delete this shift?",
+    buttons: {
+      confirm: {
+        label: 'Yes'
+      },
+      cancel: {
+        label: 'No'
+      }
+    },
+    callback: function(result){
+      if(result) {
+        $.ajax({
+          url: '../api/v1/shifts/'+e.data['_id']['$id'],
+          method: 'DELETE',
+          complete: shiftDeleted
+        });
+      }
+    }
+  });
+  console.log(e);
+}
+
+function gotShiftToEdit(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to obtain shift!');
+    return;
+  }
+  var shift = jqXHR.responseJSON;
+  var eventOptions = [];
   for(var i = 0; i < events.length; i++) {
-    if(events[i].departments === undefined || events[i].departments.length === 0 || events[i].departments.includes(href)) {
-      $('#eventID').append('<option value="'+events[i]['_id']['$id']+'">'+events[i].name+'</option>');
+    var eventOption = {value: events[i]['_id']['$id'], text: events[i].name};
+    if(shift.eventID === events[i]['_id']['$id']) {
+      eventOption.selected = true;
+    }
+    eventOptions.push(eventOption);
+  }
+  for(var i = 0; i < events.length; i++) {
+    if(events[i]['_id']['$id'] === shift.eventID) {
+      myevent = events[i];
+      break;
     }
   }
-  setBoundaryTimes({target: $('#eventID')[0]});
-  //console.log(href);
+  var dialogOptions = {
+    title: 'Edit Shift',
+    data: shift,
+    inputs: [
+      {type: 'hidden', id: 'departmentID'},
+      {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[shift.departmentID].departmentName},
+      {label: 'Event', type: 'select', id: 'eventID', options: eventOptions},
+      {label: 'Role', type: 'select', id: 'roleID'},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime},
+      {label: 'Enabled', type: 'checkbox', id: 'enabled'},
+      {label: 'Shift Name', type: 'text', id: 'shiftName'},
+      {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyEntryWindow', options: [
+        {value: -2, text: 'Late Stay (Monday Evening)'},
+        {value: -1, text: 'Regular Entry (Thursday Morning)', selected: true},
+        {value: 0, text: 'Wednesday Afternoon (Theme Camp/Art) Early Entry'},
+        {value: 1, text: 'Wednesday Morning Infrastructure Setup'},
+        {value: 2, text: 'Tuesday Morning Infrastructure Setup'}
+      ]}
+    ],
+    buttons: [
+      {text: 'Delete Shift', callback: deleteShift}
+    ]
+  };
+  $.ajax({
+    url: '../api/v1/departments/'+shift.departmentID+'/roles',
+    complete: gotDepartmentRoles,
+    context: dialogOptions
+  });
+}
+
+function editShift(elem) {
+  var href = elem.getAttribute("href");
+  href = href.substring(1);
+  $.ajax({
+    url: '../api/v1/shifts/'+href,
+    complete: gotShiftToEdit
+  });
   return false;
 }
 
