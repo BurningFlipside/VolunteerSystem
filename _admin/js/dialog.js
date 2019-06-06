@@ -94,6 +94,9 @@ function dialogButtonClick(e) {
   //Update data with the latest
   var inputs = this.dialog.find('.modal-body input');
   for(var i = 0; i < inputs.length; i++) {
+    if(inputs[i].reportValidity() === false) {
+      return;
+    }
     var name = inputs[i].name;
     if(inputs[i].type === 'checkbox') {
       e.data[name] = inputs[i].checked;

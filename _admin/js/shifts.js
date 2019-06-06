@@ -86,8 +86,8 @@ function addNewShift(elem) {
       {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[href].departmentName},
       {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
-      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: min, max: max, onChange: setMinEndTime},
-      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: min, max: max},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: min, max: max, onChange: setMinEndTime, required: true},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: min, max: max, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
       {label: 'Shift Name', type: 'text', id: 'shiftName'},
       {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyEntryWindow', options: [
@@ -173,8 +173,8 @@ function gotShiftToEdit(jqXHR) {
       {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[shift.departmentID].departmentName},
       {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
-      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime},
-      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
       {label: 'Shift Name', type: 'text', id: 'shiftName'},
       {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyEntryWindow', options: [
