@@ -2,53 +2,52 @@ window.flipDialog = {};
 window.flipDialog.dialog = function(options) {
   var dialog = $('<div class="modal fade show" aria-modal="true"><div class="modal-dialog modal-lg"><div class="modal-content"></div></div></div>');
   dialog.find('.modal-content').append('<div class="modal-header"><h4 class="modal-title">'+options.title+'</h4><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button></div>');
-  var body = '';
+  dialog.find('.modal-content').append('<div class="modal-body"><div class-"containter-fluid"><div class="row"></div></div></div>');
+  var body = dialog.find('.modal-content .row');
   for(var i = 0; i < options.inputs.length; i++) {
     var input = options.inputs[i];
-    if(input.type === 'hidden') {
-      body+='<input type="hidden" id="'+input.id+'" name="'+input.id+'"';
-      if(input.value !== undefined) {
-        body+=' value="'+input.value+'"/>';
-      }
-      else {
-        body+='/>';
-      }
+    var div = body;
+    if(input.label !== undefined) {
+      var label = $('<label for="'+input.id+'" class="col-sm-2 col-form-label">'+input.label+':</label>');
+      body.append(label);
+      div = $('<div class="col-sm-10"/>');
+      delete input.label;
     }
-    else if(input.type === 'select') {
-      var inputText = '<select class="form-control" name="'+input.id+'" id="'+input.id+'">';
+    var inputEnt = $('<input>');
+    if(input.type === 'select') {
+      inputEnt = $('<select>');
       if(input.options !== undefined) {
         for(var j = 0; j < input.options.length; j++) {
+          var option = $('<option value="'+input.options[j].value+'">'+input.options[j].text+'</option>');
           if(input.options[j].selected) {
-            inputText+= '<option value="'+input.options[j].value+'" selected>'+input.options[j].text+'</option>';
+            option.attr('selected', true);
           }
-          else {
-            inputText+= '<option value="'+input.options[j].value+'">'+input.options[j].text+'</option>';
-          }
+          inputEnt.append(option);
         }
+        delete input.options;
       }
-      inputText+='</select>';
-      body+= '<label for="'+input.id+'" class="col-sm-2 col-form-label">'+input.label+':</label><div class="col-sm-10">'+inputText+'</div>';
     }
     else {
-      var inputText = '<input class="form-control" type="'+input.type+'" name="'+input.id+'" id="'+input.id+'"';
-      if(input.readonly) {
-        inputText+= ' readonly';
-      }
-      if(input.value !== undefined) {
-        inputText+=' value="'+input.value+'"';
-      }
-      if(input.min !== undefined) {
-        inputText+=' min="'+input.min+'"';
-      }
-      if(input.max !== undefined) {
-        inputText+=' max="'+input.max+'"';
-      }
-      inputText+= '/>';
-      body+= '<label for="'+input.id+'" class="col-sm-2 col-form-label">'+input.label+':</label><div class="col-sm-10">'+inputText+'</div>';
+      inputEnt.attr('type', input.type);
     }
-    body+='<div class="w-100"></div>';
+    delete input.type;
+    inputEnt.attr('name', input.id);
+    inputEnt.attr('id', input.id);
+    delete input.id;
+    if(input.onChange !== undefined && typeof input.onChange !== 'string') {
+      inputEnt.change(input.onChange);
+      delete input.onChange;
+    }
+    inputEnt.attr('class', 'form-control');
+    for(var attr in input) {
+      inputEnt.attr(attr, input[attr]);
+    }
+    div.append(inputEnt);
+    if(div !== body) {
+      body.append(div);
+    }
+    body.append('<div class="w-100"></div>');
   }
-  dialog.find('.modal-content').append('<div class="modal-body"><div class-"containter-fluid"><div class="row">'+body+'</div></div></div>');
   var buttons = '<button type="button" class="btn btn-secondary col-sm-2" data-dismiss="modal">Close</button>';
   if(options.buttons === undefined) {
     options.buttons = [];
@@ -85,6 +84,12 @@ function dialogButtonClick(e) {
   e.data = this.data;
   if(e.data === undefined) {
     e.data = {};
+  }
+  var group = $(e.target).parents('.input-group');
+  if(group.length > 0) {
+    var inputs = group.find('input');
+    var name = inputs[0].id;
+    e.data[name] = inputs[0].value;
   }
   //Update data with the latest
   var inputs = this.dialog.find('.modal-body input');

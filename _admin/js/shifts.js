@@ -11,21 +11,8 @@ function doneCreatingShift(jqXHR) {
   location.reload();
 }
 
-function getShiftFromForm() {
-  var shift = {};
-  shift.departmentID = $('#departmentID').val();
-  shift.eventID = $('#eventID').val();
-  shift.roleID = $('#role').val();
-  shift.startTime = $('#startTime').val();
-  shift.endTime = $('#endTime').val();
-  shift.enabled = $('#enabled').prop('checked');
-  shift.name = $('#shiftName').val();
-  shift.earlyLate = $('#earlyEntryWindow').val();
-  return shift;
-}
-
-function createShift() {
-  var shift = getShiftFromForm();
+function createShift(e) {
+  var shift = e.data;
   $.ajax({
     url: '../api/v1/departments/'+shift.departmentID+'/shifts',
     contentType: 'application/json',
@@ -36,10 +23,11 @@ function createShift() {
   });
 }
 
-function createCopies() {
-  var copies = $('#copies').val();
+function createCopies(e) {
+  var shift = e.data;
+  var copies = shift.copies;
+  delete shift.copies;
   var promises = [];
-  var shift = getShiftFromForm();
   for(var i = 0; i < copies; i++) {
     promises.push($.ajax({
       url: '../api/v1/departments/'+shift.departmentID+'/shifts',
@@ -86,16 +74,20 @@ function addNewShift(elem) {
   for(var i = 0; i < events.length; i++) {
     var eventOption = {value: events[i]['_id']['$id'], text: events[i].name};
     eventOptions.push(eventOption);
+    if(i === 0) {
+      min = events[i].startTime;
+      max = events[i].endTime;
+    }
   }
   var dialogOptions = {
     title: 'New Shift',
     inputs: [
       {type: 'hidden', id: 'departmentID', value: href},
       {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[href].departmentName},
-      {label: 'Event', type: 'select', id: 'eventID', options: eventOptions},
+      {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
-      {label: 'Start Time', type: 'datetime-local', id: 'startTime'},
-      {label: 'End Time', type: 'datetime-local', id: 'endTime'},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: min, max: max, onChange: setMinEndTime},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: min, max: max},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
       {label: 'Shift Name', type: 'text', id: 'shiftName'},
       {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyEntryWindow', options: [
@@ -179,9 +171,9 @@ function gotShiftToEdit(jqXHR) {
     inputs: [
       {type: 'hidden', id: 'departmentID'},
       {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[shift.departmentID].departmentName},
-      {label: 'Event', type: 'select', id: 'eventID', options: eventOptions},
+      {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
-      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
       {label: 'Shift Name', type: 'text', id: 'shiftName'},
