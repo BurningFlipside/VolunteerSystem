@@ -83,6 +83,20 @@ window.flipDialog.dialog = function(options) {
 
 function dialogButtonClick(e) {
   e.data = this.data;
+  if(e.data === undefined) {
+    e.data = {};
+  }
+  //Update data with the latest
+  var inputs = this.dialog.find('.modal-body input');
+  for(var i = 0; i < inputs.length; i++) {
+    var name = inputs[i].name;
+    if(inputs[i].type === 'checkbox') {
+      e.data[name] = inputs[i].checked;
+    }
+    else {
+      e.data[name] = inputs[i].value;
+    }
+  }
   this.callback(e);
   if(this.close !== false) {
     this.dialog.modal('hide');
