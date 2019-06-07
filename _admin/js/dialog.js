@@ -105,6 +105,11 @@ function dialogButtonClick(e) {
       e.data[name] = inputs[i].value;
     }
   }
+  inputs = this.dialog.find('.modal-body select');
+  for(var i = 0; i < inputs.length; i++) {
+    var name = inputs[i].name;
+    e.data[name] = inputs[i].value;
+  }
   this.callback(e);
   if(this.close !== false) {
     this.dialog.modal('hide');

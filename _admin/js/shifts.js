@@ -89,8 +89,8 @@ function addNewShift(elem) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: min, max: max, onChange: setMinEndTime, required: true},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: min, max: max, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
-      {label: 'Shift Name', type: 'text', id: 'shiftName'},
-      {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyEntryWindow', options: [
+      {label: 'Shift Name', type: 'text', id: 'name'},
+      {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyLate', options: [
         {value: -2, text: 'Late Stay (Monday Evening)'},
         {value: -1, text: 'Regular Entry (Thursday Morning)', selected: true},
         {value: 0, text: 'Wednesday Afternoon (Theme Camp/Art) Early Entry'},
@@ -141,7 +141,26 @@ function deleteShift(e) {
       }
     }
   });
-  console.log(e);
+}
+
+function shiftEditDone(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to save shift');
+    return;
+  }
+  location.reload();
+}
+
+function saveShift(e) {
+  var shift = e.data;
+  $.ajax({
+    url: '../api/v1/shifts/'+shift['_id']['$id'],
+    method: 'PATCH',
+    contentType: 'application/json',
+    data: JSON.stringify(shift),
+    complete: shiftEditDone
+  });
 }
 
 function gotShiftToEdit(jqXHR) {
@@ -176,8 +195,8 @@ function gotShiftToEdit(jqXHR) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
-      {label: 'Shift Name', type: 'text', id: 'shiftName'},
-      {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyEntryWindow', options: [
+      {label: 'Shift Name', type: 'text', id: 'name'},
+      {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyLate', options: [
         {value: -2, text: 'Late Stay (Monday Evening)'},
         {value: -1, text: 'Regular Entry (Thursday Morning)', selected: true},
         {value: 0, text: 'Wednesday Afternoon (Theme Camp/Art) Early Entry'},
@@ -186,7 +205,8 @@ function gotShiftToEdit(jqXHR) {
       ]}
     ],
     buttons: [
-      {text: 'Delete Shift', callback: deleteShift}
+      {text: 'Delete Shift', callback: deleteShift},
+      {text: 'Save Shift', callback: saveShift}
     ]
   };
   $.ajax({
