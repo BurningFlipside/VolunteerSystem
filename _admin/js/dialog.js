@@ -119,7 +119,11 @@ function dialogButtonClick(e) {
 function finishDialog(dialog, options) {
   if(options.data !== undefined) {
     for(var key in options.data) {
-      var input = dialog.find('[name="'+key+'"]');
+      try {
+        var input = dialog.find('[name="'+key+'"]');
+      } catch {
+        continue;
+      }
       if(input.length > 0 && input[0].type === 'checkbox') {
         input[0].checked = options.data[key];
       }
