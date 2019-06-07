@@ -113,6 +113,28 @@ function groupedWithEditor(cell, onRendered, success, cancel, editorParams) {
   return editor;
 }
 
+function gotDeptList(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    return;
+  }
+  var array = jqXHR.responseJSON;
+  var sel = $('#deptFilter');
+  for(var i = 0; i < array.length; i++) {
+    addOptiontoSelect(sel[0], array[i].departmentID, array[i].departmentName);
+  }
+}
+
+function deptFilterChanged(e) {
+  var value = e.target.value;
+  if(value === '*') {
+    table.setData('../api/v1/roles');
+  }
+  else {
+    table.setData('../api/v1/departments/'+value+'/roles');
+  }
+}
+
 function initPage() {
   deptId = getParameterByName('dept');
   if(deptId !== null) {
@@ -126,6 +148,11 @@ function initPage() {
     $('#deptName').html('All');
     tableURL = '../api/v1/roles';
     $('#newRoleBtn').attr("disabled", true).attr('title', 'Adding a new role is disabled except on the individual department pages');
+    $.ajax({
+      url: '../api/v1/departments',
+      complete: gotDeptList
+    });
+    $('#deptFilter').change(deptFilterChanged);
   }
   table = new Tabulator("#roles", {
     ajaxURL: tableURL,
