@@ -43,6 +43,14 @@ Chart.pluginService.register({
 function gotDepartments(jqXHR) {
   if(jqXHR.responseJSON !== undefined) {
     $('#deptCount').html(jqXHR.responseJSON['@odata.count']);
+    var array = jqXHR.responseJSON.value;
+    $('#deptName').html('Unable to locate department!');
+    for(var i = 0; i < array.length; i++) {
+      console.log(array[i]);
+      if(array[i].isAdmin) {
+        $('#deptName').html(array[i].departmentName);
+      }
+    }
   }
 }
 

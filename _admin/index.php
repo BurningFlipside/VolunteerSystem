@@ -6,10 +6,16 @@ $page = new VolunteerAdminPage('Volunteer System Admin');
 $page->setTemplateName('admin-dashboard.html');
 $page->addWellKnownJS(JS_CHART);
 
-$page->addCard('fa-calendar-alt', '<div id="eventCount">?</div> Events', 'events.php', $page::CARD_GREEN);
-$page->addCard('fa-building', '<div id="deptCount">?</div> Departments', 'departments.php');
+if($page->isLead === false)
+{
+    $page->addCard('fa-calendar-alt', '<div id="eventCount">?</div> Events', 'events.php', $page::CARD_GREEN);
+    $page->addCard('fa-building', '<div id="deptCount">?</div> Departments', 'departments.php');
+}
+else
+{
+    $page->addCard('fa-building', '<div id="deptName"></div>', 'departments.php');
+}
 $page->addCard('fa-address-card', '<div id="roleCount">?</div> Roles', 'roles.php', $page::CARD_YELLOW);
-//$page->addCard('fa-tshirt', '<div id="shiftCount">?</div> Shifts', 'shifts.php', $page::CARD_GREEN);
 $page->addCard('fa-user', '<div id="volCount">?</div> Volunteers', 'volunteers.php', $page::CARD_RED);
 
 $page->content['body'] = '

@@ -1,6 +1,9 @@
 <?php
 class DepartmentAPI extends Http\Rest\DataTableAPI
 {
+    protected $isAdmin = null;
+    protected $isLead = null;
+
     public function __construct()
     {
         parent::__construct('fvs', 'departments', 'departmentID');
@@ -19,7 +22,11 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
     protected function isVolunteerAdmin($request)
     {
         $this->validateLoggedIn($request);
-        return $this->user->isInGroupNamed('VolunteerAdmins');
+        if($this->isAdmin === null)
+        {
+            $this->isAdmin = $this->user->isInGroupNamed('VolunteerAdmins');
+        }
+        return $this->isAdmin;
     }
 
     protected function canCreate($request)
@@ -27,11 +34,19 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         return $this->isVolunteerAdmin($request);
     }
 
-    protected function canEditDept($request, $deptId)
+    protected function canEditDept($request, $deptId, $dept = null)
     {
         if($this->isVolunteerAdmin($request))
         {
             return true;
+        }
+        if($this->isLead === null)
+        {
+            $this->isLead = $this->user->isInGroupNamed('Leads');
+            if($dept['lead'] === $this->user->title[0])
+            {
+                return true;
+            }
         }
         //TODO give access to department lead
         return false;
@@ -39,7 +54,13 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
 
     protected function canUpdate($request, $entity)
     {
-        return $this->canEditDept($request, false);;
+        return $this->canEditDept($request, false);
+    }
+
+    protected function processEntry($entry, $request)
+    {
+        $entry['isAdmin'] = $this->canEditDept($request, null, $entry);
+        return $entry;
     }
 
     public function getRolesForDepartment($request, $response, $args)

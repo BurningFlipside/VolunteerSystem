@@ -121,7 +121,8 @@ function finishDialog(dialog, options) {
     for(var key in options.data) {
       try {
         var input = dialog.find('[name="'+key+'"]');
-      } catch {
+      } catch(err) {
+        console.log(err);
         continue;
       }
       if(input.length > 0 && input[0].type === 'checkbox') {
