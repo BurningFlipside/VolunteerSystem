@@ -13,6 +13,13 @@ window.flipDialog.dialog = function(options) {
       div = $('<div class="col-sm-10"/>');
       delete input.label;
     }
+    if(input.type === 'html') {
+      div.append(input.text);
+      if(div !== body) {
+        body.append(div);
+      }
+      continue;
+    }
     var inputEnt = $('<input>');
     if(input.type === 'select') {
       inputEnt = $('<select>');
@@ -48,35 +55,42 @@ window.flipDialog.dialog = function(options) {
     }
     body.append('<div class="w-100"></div>');
   }
-  var buttons = '<button type="button" class="btn btn-secondary col-sm-2" data-dismiss="modal">Close</button>';
+  var footer = $('<div class="modal-footer">');
+  footer.append('<button type="button" class="btn btn-secondary col-sm-2" data-dismiss="modal">Close</button>');
   if(options.buttons === undefined) {
     options.buttons = [];
   }
   for(var i = 0; i < options.buttons.length; i++) {
     var button = options.buttons[i];
+    var clickContext = {
+      data: options.data,
+      callback: button.callback,
+      close: button.close,
+      dialog: dialog
+    };
+    var bound = dialogButtonClick.bind(clickContext);
     if(button.input !== undefined) {
-      var input = '<input type="'+button.input.type+'" id="'+button.input.id+'" class="form-control" placeholder="'+button.input.text+'" aria-label="'+button.input.text+'">'; 
-      buttons+= '<div class="input-group">'+input+'<div class="input-group-append"><button class="btn btn-outline-secondary" type="button" id="modalButton'+i+'">'+button.text+'</button></div></div>';
+      var inputElem = $('<input type="'+button.input.type+'" id="'+button.input.id+'" class="form-control" placeholder="'+button.input.text+'" aria-label="'+button.input.text+'">');
+      var inputGroup = $('<div class="input-group">');
+      inputGroup.append(inputElem);
+      var appendElem = $('<div class="input-group-append">');
+      inputGroup.append(appendElem);
+      var buttonElem = $('<button class="btn btn-outline-secondary" type="button" id="modalButton'+i+'">'+button.text+'</button>');
+      buttonElem.click(bound);
+      appendElem.append(buttonElem);
+      footer.append(inputGroup);
     }
     else {
-      buttons+= '<button type="button" class="btn btn-primary col-sm-2" id="modalButton'+i+'">'+button.text+'</button>';
+      var buttonElem = $('<button type="button" class="btn btn-primary col-sm-2">'+button.text+'</button>');
+      buttonElem.click(bound);
+      footer.append(buttonElem);
     }
   }
-  dialog.find('.modal-content').append('<div class="modal-footer">'+buttons+'</div>');
+  dialog.find('.modal-content').append(footer);
   dialog.one('hidden.bs.modal', function(e){
     dialog.remove();
   });
   $('body').append(dialog);
-  for(var i = 0; i < options.buttons.length; i++) {
-    var clickContext = {
-      data: options.data,
-      callback: options.buttons[i].callback,
-      close: options.buttons[i].close,
-      dialog: dialog
-    };
-    var bound = dialogButtonClick.bind(clickContext);
-    $('#modalButton'+i).click(bound);
-  }
   finishDialog(dialog, options);
 };
 
@@ -98,7 +112,12 @@ function dialogButtonClick(e) {
       return;
     }
     var name = inputs[i].name;
-    if(inputs[i].type === 'checkbox') {
+    if(inputs[i].type === 'radio') {
+      if(inputs[i].checked) {
+        e.data[name] = inputs[i].value;
+      }
+    }
+    else if(inputs[i].type === 'checkbox') {
       e.data[name] = inputs[i].checked;
     }
     else {

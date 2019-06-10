@@ -152,6 +152,214 @@ function shiftEditDone(jqXHR) {
   location.reload();
 }
 
+function removeOwnEvent(element) {
+  if(this.shifts) {
+    return (element.groupID !== this.groupID);
+  }
+  return (element['_id']['$id'] !== this['_id']['$id']);
+}
+
+function filterSinglesAndGroups(element) {
+  if(element.groupID === undefined) {
+    return true;
+  }
+  else {
+    if(this[element.groupID] === undefined) {
+      this[element.groupID] = [];
+    }
+    this[element.groupID].push(element);
+    return false;
+  }
+}
+
+function keepGroupsOnly(element) {
+  return (element.groupID !== undefined);
+}
+
+function removeElementsNotInOtherArray(element) {
+  return !this.includes(element);
+}
+
+function getGroupName(group) {
+  if(group[0].name !== undefined) {
+    return group[0].name;
+  }
+  var start = new Date(singles[i].startTime);
+  var end = new Date(singles[i].endTime);
+  return 'Shift Group: '+start+' to '+end;
+}
+
+function groupDone(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to group shift');
+    return;
+  }
+  location.reload();
+}
+
+function gotShiftstoReplaceGroupIDs(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to get shifts for target group!');
+    return;
+  }
+  var array = jqXHR.responseJSON;
+  var promises = [];
+  for(var i = 0; i < array.length; i++) {
+    var data = array[i];
+    data.groupID = this;
+    promises.push($.ajax({
+      url: '../api/v1/shifts/'+array[i]['_id']['$id'],
+      method: 'PATCH',
+      contentType: 'application/json',
+      data: JSON.stringify(data)
+    }));
+  }
+  Promise.all(promises).then((values) => {
+    location.reload();
+  }).catch(e => {
+    console.log(e);
+    alert('One of more shift failed to save!');
+    location.reload();
+  });
+}
+
+function replaceGroupID(newGroupID, oldGroupID) {
+  $.ajax({
+    url: '../api/v1/shifts?$filter=groupID eq '+oldGroupID,
+    complete: gotShiftstoReplaceGroupIDs,
+    context: newGroupID
+  });
+}
+
+function doGroup(e) {
+  var data = e.data;
+  if(data.group === 'single') {
+    //Create a new group...
+    var array = [];
+    array.push(data.shiftID);
+    array.push(data['_id']['$id']);
+    $.ajax({
+      url: '../api/v1/shifts/Actions/CreateGroup',
+      data: JSON.stringify(array),
+      method: 'POST',
+      contentType: 'application/json',
+      complete: groupDone
+    });
+    return;
+  }
+  else {
+    if(data.oldGroupID !== undefined) {
+      replaceGroupID(data.oldGroupID, data.groupID);
+      return;
+    }
+    delete data.group;
+    delete data.shiftID;
+    $.ajax({
+      url: '../api/v1/shifts/'+data['_id']['$id'],
+      method: 'PATCH',
+      contentType: 'application/json',
+      data: JSON.stringify(data),
+      complete: groupDone
+    });
+  }
+}
+
+function groupTypeChange(e) {
+  if(e.target.value === 'single') {
+    $('#shiftID').removeAttr('disabled');
+    $('#groupID').attr('disabled', true);
+  }
+  else {
+    $('#groupID').removeAttr('disabled');
+    $('#shiftID').attr('disabled', true);
+  }
+}
+
+function gotShiftsToGroup(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to get similar shifts!');
+    return;
+  }
+  var array = jqXHR.responseJSON;
+  var array = array.filter(removeOwnEvent, this);
+  var groups =  {};
+  var singles = array.filter(filterSinglesAndGroups, groups);
+  var groupCount = Object.keys(groups).length;
+  if(groupCount === 0 && singles.length === 0) {
+    bootbox.alert("No shifts for this department have the same start and end times as the indicated shift!");
+    return;
+  }
+  var groupOptions = {label: 'Existing Group', type: 'radio', id: 'group', value: 'group', onChange: groupTypeChange};
+  var groupSelect = {label: 'Groups', type: 'select', id: 'groupID'};
+  if(groupCount === 0) {
+    groupOptions.disabled = true;
+    groupSelect.disabled = true;
+  }
+  else {
+    groupOptions.checked = true;
+    groupSelect.options = [];
+    for(var groupID in groups) {
+      var groupName = getGroupName(groups[groupID]);
+      groupSelect.options.push({value: groupID, text: groupName});
+    }
+  }
+  var singleOptions = {label: 'Other Shift', type: 'radio', id: 'group', value: 'single', onChange: groupTypeChange};
+  var singleSelect = {label: 'Shifts', type: 'select', id: 'shiftID'};
+  if(singles.length === 0) {
+    singleOptions.disabled = true;
+    singleSelect.disabled = true;
+  }
+  else {
+    if(groupCount === 0) {
+      singleOptions.checked = true;
+    }
+    else {
+      singleSelect.disabled = true;
+    }
+    singleSelect.options = [];
+    for(var i = 0; i < singles.length; i++) {
+      if(singles[i].name !== undefined && singles[i].name.length > 0) {
+        shiftName = singles[i].name+': '+singles[i].roleID;
+      }
+      else {
+        var start = new Date(singles[i].startTime);
+        var end = new Date(singles[i].endTime);
+        shiftName = singles[i].roleID+': '+start+' to '+end;
+      }
+      singleSelect.options.push({value: singles[i]['_id']['$id'], text: shiftName});
+    }
+  }
+  if(this.shifts !== undefined) {
+    this.oldGroupID = this.groupID;
+    delete this.groupID;
+  }
+  var dialogOptions = {
+    title: 'Edit Shift',
+    data: this,
+    inputs: [
+      groupOptions,
+      groupSelect,
+      singleOptions,
+      singleSelect
+    ],
+    buttons: [
+      {text: 'Group', callback: doGroup}
+    ]
+  };
+  flipDialog.dialog(dialogOptions);
+}
+
+function groupShift(e) {
+  $.ajax({
+    url: '../api/v1/shifts?$filter=departmentID eq '+e.data.departmentID+' and startTime eq '+e.data.startTime+' and endTime eq '+e.data.endTime,
+    complete: gotShiftsToGroup,
+    context: e.data
+  });
+}
+
 function saveShift(e) {
   var shift = e.data;
   $.ajax({
@@ -160,6 +368,118 @@ function saveShift(e) {
     contentType: 'application/json',
     data: JSON.stringify(shift),
     complete: shiftEditDone
+  });
+}
+
+function isEquivalent(a, b) {
+    // Create arrays of property names
+    var aProps = Object.getOwnPropertyNames(a);
+    var bProps = Object.getOwnPropertyNames(b);
+    
+    // If number of properties is different,
+    // objects are not equivalent
+    if (aProps.length != bProps.length) {
+      return false;
+    }
+
+    for (var i = 0; i < aProps.length; i++) {
+      var propName = aProps[i];
+    
+      // If values of same property are not equal,
+      // objects are not equivalent
+      if (a[propName] !== b[propName]) {
+        return false;
+      }
+    }
+    
+    // If we made it this far, objects
+    // are considered equivalent
+    return true;
+}
+
+function saveGroup(e) {
+  var shifts = e.data.shifts;
+  var roles = {};
+  for(var i = 0; i < shifts.length; i++) {
+    shifts[i].department = e.data.department;
+    shifts[i].departmentID = e.data.departmentID;
+    shifts[i].earlyLate = e.data.earlyLate;
+    shifts[i].enabled = e.data.enabled;
+    shifts[i].endTime = e.data.endTime;
+    shifts[i].name = e.data.name;
+    shifts[i].startTime = e.data.startTime;
+    shifts[i].eventID = e.data.eventID;
+    if(roles[shifts[i].roleID] === undefined) {
+      roles[shifts[i].roleID] = 0;
+    }
+    roles[shifts[i].roleID]++;
+  }
+  delete e.data.department;
+  delete e.data.departmentID;
+  delete e.data.earlyLate;
+  delete e.data.enabled;
+  delete e.data.endTime;
+  delete e.data.groupID;
+  delete e.data.name;
+  delete e.data.startTime;
+  delete e.data.eventID;
+  delete e.data.shifts;
+  for(var role in e.data) {
+    e.data[role] = e.data[role]*1;
+  }
+  if(!isEquivalent(e.data, roles)) {
+    //TODO Create more copies of the role...
+    for(var role in roles) {
+      e.data[role] = e.data[role] - roles[role];
+      if(e.data[role] === 0) {
+        delete e.data[role];
+      }
+      if(e.data[role] > 0) {
+        while(e.data[role] > 0) {
+          var newShift = Object.assign({}, shifts[0]);
+          newShift.roleID = role;
+          shifts.push(newShift);
+          e.data[role]--;
+        }
+      }
+      else{
+        while(e.data[role] < 0) {
+          for(var i = 0; i < shifts.length; i++) {
+            if(shifts[i].roleID === role) {
+              shifts.splice(i, 1);
+              e.data[role]++;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  var promises = [];
+  for(var i = 0; i < shifts.length; i++) {
+    if(shifts[i]['_id'] !== undefined) {
+      promises.push($.ajax({
+        url: '../api/v1/shifts/'+shifts[i]['_id']['$id'],
+        method: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify(shifts[i])
+      }));
+    }
+    else {
+      promises.push($.ajax({
+        url: '../api/v1/shifts/',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(shifts[i])
+      }));
+    }
+  }
+  Promise.all(promises).then((values) => {
+    location.reload();
+  }).catch(e => {
+    console.log(e);
+    alert('One of more shift failed to save!');
+    location.reload();
   });
 }
 
@@ -175,14 +495,9 @@ function gotShiftToEdit(jqXHR) {
     var eventOption = {value: events[i]['_id']['$id'], text: events[i].name};
     if(shift.eventID === events[i]['_id']['$id']) {
       eventOption.selected = true;
+      myevent = events[i];
     }
     eventOptions.push(eventOption);
-  }
-  for(var i = 0; i < events.length; i++) {
-    if(events[i]['_id']['$id'] === shift.eventID) {
-      myevent = events[i];
-      break;
-    }
   }
   var dialogOptions = {
     title: 'Edit Shift',
@@ -206,6 +521,7 @@ function gotShiftToEdit(jqXHR) {
     ],
     buttons: [
       {text: 'Delete Shift', callback: deleteShift},
+      {text: 'Group Shift', callback: groupShift},
       {text: 'Save Shift', callback: saveShift}
     ]
   };
@@ -214,6 +530,63 @@ function gotShiftToEdit(jqXHR) {
     complete: gotDepartmentRoles,
     context: dialogOptions
   });
+}
+
+function gotGroupToEdit(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to obtain shifts for group!');
+    return;
+  }
+  var shifts = jqXHR.responseJSON;
+  var eventOptions = [];
+  for(var i = 0; i < events.length; i++) {
+    var eventOption = {value: events[i]['_id']['$id'], text: events[i].name};
+    if(shifts[0].eventID === events[i]['_id']['$id']) {
+      eventOption.selected = true;
+      myevent = events[i];
+    }
+    eventOptions.push(eventOption);
+  }
+  var group = {shifts: shifts};
+  var roleText = '';
+  var roles = {};
+  for(var i = 0; i < shifts.length; i++) {
+    if(roles[shifts[i].roleID] === undefined) {
+      roles[shifts[i].roleID] = 0;
+    }
+    roles[shifts[i].roleID]++;
+  }
+  for(var role in roles) {
+    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[role]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+role+'</span></div></div>';
+  }
+  var dialogOptions = {
+    title: 'Edit Group',
+    data: group,
+    inputs: [
+      {type: 'hidden', id: 'departmentID', value: shifts[0].departmentID},
+      {type: 'hidden', id: 'groupID', value: shifts[0].groupID},
+      {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[shifts[0].departmentID].departmentName},
+      {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes, value: shifts[0].eventID},
+      {label: 'Roles', type: 'html', text: roleText},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true, value: shifts[0].startTime},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true, value: shifts[0].endTime},
+      {label: 'Enabled', type: 'checkbox', id: 'enabled', checked: shifts[0].enabled},
+      {label: 'Shift Name', type: 'text', id: 'name', value: shifts[0].name},
+      {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyLate', options: [
+        {value: -2, text: 'Late Stay (Monday Evening)', selected: (shifts[0].earlyLate === '-2')},
+        {value: -1, text: 'Regular Entry (Thursday Morning)', selected: (shifts[0].earlyLate === '-1')},
+        {value: 0, text: 'Wednesday Afternoon (Theme Camp/Art) Early Entry', selected: (shifts[0].earlyLate === '0')},
+        {value: 1, text: 'Wednesday Morning Infrastructure Setup', selected: (shifts[0].earlyLate === '1')},
+        {value: 2, text: 'Tuesday Morning Infrastructure Setup', selected: (shifts[0].earlyLate === '2')}
+      ]}
+    ],
+    buttons: [
+      {text: 'Add Shift/Merge Group', callback: groupShift},
+      {text: 'Save Group', callback: saveGroup}
+    ]
+  }
+  flipDialog.dialog(dialogOptions);
 }
 
 function editShift(elem) {
@@ -226,6 +599,17 @@ function editShift(elem) {
   return false;
 }
 
+function editGroup(elem) {
+  var href = elem.getAttribute("href");
+  href = href.substring(1);
+  $.ajax({
+    url: '../api/v1/shifts?$filter=groupID eq '+href,
+    complete: gotGroupToEdit
+  });
+  return false;
+}
+
+
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     alert('Unable to obtain shifts');
@@ -233,16 +617,23 @@ function gotShifts(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
-  for(var i = 0; i < array.length; i++) {
-    if(array[i].name !== undefined && array[i].name.length > 0) {
-      shiftName = array[i].name;
+  var groups =  {};
+  var singles = array.filter(filterSinglesAndGroups, groups);
+  for(var groupID in groups) {
+    var group = groups[groupID];
+    var groupName = getGroupName(group);
+    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+'</a>');
+  }
+  for(var i = 0; i < singles.length; i++) {
+    if(singles[i].name !== undefined && singles[i].name.length > 0) {
+      shiftName = singles[i].name+': '+singles[i].roleID;
     }
     else {
-      var start = new Date(array[i].startTime);
-      var end = new Date(array[i].endTime);
-      shiftName = array[i].roleID+': '+start+' to '+end;
+      var start = new Date(singles[i].startTime);
+      var end = new Date(singles[i].endTime);
+      shiftName = singles[i].roleID+': '+start+' to '+end;
     }
-    $('#'+array[i].departmentID+'List').append('<a href="#'+array[i]['_id']['$id']+'" class="list-group-item list-group-item-action" onclick="return editShift(this);">'+shiftName+'</a>');
+    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$id']+'" class="list-group-item list-group-item-action" onclick="return editShift(this);">'+shiftName+'</a>');
   }
 }
 
