@@ -1,6 +1,50 @@
 var deptId;
 var table;
 
+function roleNameUpdated() {
+  var disp_name = $('#display_name').val();
+  var id = disp_name.replace(/ /g, "_");
+  var full_id = deptId+'_'+id;
+  $('#short_name').val(full_id);
+}
+
+function groupsAllowedUpdated() {
+  var allowed = $('#groups_allowed')[0].checked;
+  if(allowed) {
+    $('#grouped_with').removeAttr('disabled');
+  }
+  else {
+    $('#grouped_with').attr('disabled', true);
+  }
+}
+
+function publiclyVisibleUpdated() {
+  var allowed = $('#publicly_visible')[0].checked;
+  var email = $('#onEmailList')[0].checked;
+  var inputs = $('#roleReqs input[name!="publicly_visible"]');
+  var textareas = $('#roleReqs textarea');
+  if(allowed) {
+    inputs.attr('disabled', true);
+    textareas.attr('disabled', true);
+  }
+  else {
+    inputs.removeAttr('disabled');
+    if(email) {
+      textareas.removeAttr('disabled');
+    }
+  }
+}
+
+function onEmailListUpdated() {
+  var allowed = $('#onEmailList')[0].checked;
+  if(allowed) {
+    $('[id="requirements.email_list"]').removeAttr('disabled');
+  }
+  else {
+    $('[id="requirements.email_list"]').attr('disabled', true);
+  }
+}
+
 function editDone(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -52,18 +96,31 @@ function gotDept(jqXHR) {
   $('#deptName').html(jqXHR.responseJSON.departmentName);
 }
 
-function newRole() {
-  bootbox.prompt("Please enter the new role's short name", function(result){
-    var obj = {short_name: result};
-    $.ajax({
-      url: '../api/v1/departments/'+deptId+'/roles',
-      method: 'POST',
-      data: JSON.stringify(obj),
-      contentType: 'application/json',
-      dataType: 'json',
-      complete: addDone
-    });
+function newRole(role) {
+  delete role.onEmailList;
+  $.ajax({
+    url: '../api/v1/departments/'+deptId+'/roles/',
+    method: 'POST',
+    data: JSON.stringify(role),
+    contentType: 'application/json',
+    dataType: 'json',
+    complete: addDone
   });
+}
+
+function showRoleWizard() {
+  $('#roleWizard').modal('show');
+}
+
+function groupFormatter(cell, formatterParams, onRendered) {
+  var value = cell.getValue();
+  if(value === undefined) {
+    return '';
+  }
+  if(Array.isArray(value)) {
+    return value.join(',');
+  }
+  return value;
 }
 
 function groupedWithEditor(cell, onRendered, success, cancel, editorParams) {
@@ -74,7 +131,12 @@ function groupedWithEditor(cell, onRendered, success, cancel, editorParams) {
   var value = cell.getValue();
   var values = [];
   if(value !== undefined) {
-    values = value.split(',');
+    if(Array.isArray(value)) {
+      values = value;
+    }
+    else {
+      values = value.split(',');
+    }
   }
 
   editor.setAttribute("multiple", true);
@@ -135,6 +197,18 @@ function deptFilterChanged(e) {
   }
 }
 
+function gotRoles(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    return;
+  }
+  var array = jqXHR.responseJSON;
+  for(var i = 0; i < array.length; i++) {
+    var newOption = new Option(array[i].display_name, array[i].short_name, false, false);
+    $('#grouped_with').append(newOption);
+  }
+}
+
 function initPage() {
   deptId = getParameterByName('dept');
   if(deptId !== null) {
@@ -143,6 +217,11 @@ function initPage() {
       complete: gotDept
     });
     tableURL = '../api/v1/departments/'+deptId+'/roles';
+    $('#grouped_with').select2({width: '100%'});
+    $.ajax({
+      url: tableURL,
+      complete: gotRoles
+    });
   }
   else {
     $('#deptName').html('All');
@@ -158,12 +237,17 @@ function initPage() {
     ajaxURL: tableURL,
     columns:[
       {title:"ID", field:"_id.$id", visible: false},
-      {title:'Short Name', field: 'short_name'},
+      {title:'Short Name', field: 'short_name', visible: false},
       {title:'Name', field: 'display_name', editor: 'input'},
       {title:'Description', field: 'description', editor:"textarea", formatter:"html", width: 250},
       {title:'Public', field: 'publicly_visible', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Groups', field: 'groups_allowed', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Can be grouped with', field: 'grouped_with', editor: groupedWithEditor, formatter:"html"}
+      {title:'Can be grouped with', field: 'grouped_with', editor: groupedWithEditor, formatter: groupFormatter},
+      {title:'Hours between shifts', field: 'down_time', editor: 'number'},
+      {title:'Needs ICS 100', field: 'requirements.ics100', editor: 'tickCross', formatter: 'tickCross'},
+      {title:'Needs ICS 200', field: 'requirements.ics200', editor: 'tickCross', formatter: 'tickCross'},
+      {title:'Needs Basic Life Support', field: 'requirements.bls', editor: 'tickCross', formatter: 'tickCross'},
+      {title:'Restricted To Emails', field: 'requirements.email_list', editor:"textarea", formatter:"html", width: 250}
     ],
     cellEdited: dataChanged
   });

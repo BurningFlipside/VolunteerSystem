@@ -41,6 +41,20 @@ function prevWizardStep(target) {
   }
 }
 
+function addToObj(obj, id, value) {
+  var split = id.split('.');
+  if(split.length > 1) {
+    if(obj[split[0]] === undefined) {
+      obj[split[0]] = {};
+    }
+    obj[split[0]][split[1]] = value;
+  }
+  else {
+    obj[id] = value;
+  }
+  return obj;
+}
+
 function saveWizardStep(target) {
   var dialog = $(target).parents('.modal');
   var complete = dialog.data('complete');
@@ -48,16 +62,23 @@ function saveWizardStep(target) {
   var inputs = dialog.find('input');
   var obj = {};
   for(var i = 0; i < inputs.length; i++) {
+    if(inputs[i].id === '') {
+      continue;
+    }
     if(inputs[i].type === 'checkbox') {
-      obj[inputs[i].id] = inputs[i].checked;
+      obj = addToObj(obj, inputs[i].id, inputs[i].checked);
     }
     else {
-      obj[inputs[i].id] = inputs[i].value;
+      obj = addToObj(obj, inputs[i].id, inputs[i].value);
     }
   }
   inputs = dialog.find('textarea');
   for(var i = 0; i < inputs.length; i++) {
-    obj[inputs[i].id] = inputs[i].value;
+    obj = addToObj(obj, inputs[i].id, inputs[i].value);
+  }
+  inputs = dialog.find('select');
+  for(var i = 0; i < inputs.length; i++) {
+    obj = addToObj(obj, inputs[i].id, $(inputs[i]).val());
   }
   console.log(obj);
   fn(obj);
