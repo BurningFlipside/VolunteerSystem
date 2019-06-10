@@ -136,11 +136,13 @@ function getShiftsBeforeDelete(jqXHR) {
         }
       },
       callback: function(result){ 
-        $.ajax({
-           url: '../api/v1/events/'+data['_id']['$id'],
-           method: 'DELETE',
-           complete: deleteDone
-        }); 
+        if(result) {
+          $.ajax({
+            url: '../api/v1/events/'+data['_id']['$id'],
+            method: 'DELETE',
+            complete: deleteDone
+          });
+        }
     }});
   }
   else {
