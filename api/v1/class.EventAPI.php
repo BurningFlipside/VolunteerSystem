@@ -56,6 +56,19 @@ class EventAPI extends Http\Rest\DataTableAPI
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $filter = new \Data\Filter("eventID eq '$eventId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        if($odata->filter !== false)
+        {
+            $clause = $odata->filter->getClause('eventID');
+            if($clause !== null)
+            {
+                return $response->withStatus(409);
+            }
+            else
+            {
+                $filter->appendChild('and');
+                $filter->appendChild($odata->filter);
+            }
+        }
         $shifts = $dataTable->read($filter, $odata->select, $odata->top,
                                   $odata->skip, $odata->orderby);
         if($shifts === false)

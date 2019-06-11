@@ -10,6 +10,7 @@ if($page->isLead === false)
 {
     $page->addCard('fa-calendar-alt', '<div id="eventCount">?</div> Events', 'events.php', $page::CARD_GREEN);
     $page->addCard('fa-building', '<div id="deptCount">?</div> Departments', 'departments.php');
+    $deptOptions = '<option value="*">All Departments</option>';
 }
 else
 {
@@ -25,6 +26,14 @@ $page->content['body'] = '
   </div>
   <div class="col-lg-10">
     <select class="form-control" id="events">
+    </select>
+  </div>
+  <div class="col-lg-2">
+    <h1 class="page-header">Departments</h1>
+  </div>
+  <div class="col-lg-10">
+    <select class="form-control" id="departments">
+      '.$deptOptions.'
     </select>
   </div>
 </div>

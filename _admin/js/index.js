@@ -45,10 +45,12 @@ function gotDepartments(jqXHR) {
     $('#deptCount').html(jqXHR.responseJSON['@odata.count']);
     var array = jqXHR.responseJSON.value;
     $('#deptName').html('Unable to locate department!');
+    var departments = $('#departments');
+    departments.change(showDepartmentDetails);
     for(var i = 0; i < array.length; i++) {
-      console.log(array[i]);
       if(array[i].isAdmin) {
         $('#deptName').html(array[i].departmentName);
+        addOptiontoSelect(departments[0], array[i].departmentID, array[i].departmentName);
       }
     }
   }
@@ -103,6 +105,19 @@ function showEventDetails(e) {
   var eventID = e.target.value;
   $.ajax({
     url: '../api/v1/events/'+eventID+'/shifts',
+    complete: gotShifts
+  });
+}
+
+function showDepartmentDetails(e) {
+  var eventID = $('#events').val();
+  var deptID = e.target.value;
+  var url = '../api/v1/events/'+eventID+'/shifts?$filter=departmentID eq '+deptID;
+  if(deptID === '*') {
+    url = '../api/v1/events/'+eventID+'/shifts';
+  }
+  $.ajax({
+    url: url,
     complete: gotShifts
   });
 }
