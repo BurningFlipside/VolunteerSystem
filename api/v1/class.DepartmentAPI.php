@@ -17,6 +17,7 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         $app->patch('/{dept}/roles/{roleName}[/]', array($this, 'updateRoleForDepartment'));
         $app->get('/{dept}/shifts[/]', array($this, 'getShiftsForDepartment'));
         $app->post('/{dept}/shifts[/]', array($this, 'createShiftForDepartment'));
+        $app->get('/{dept}/shifts/Actions/GenerateShiftSchedule', array($this, 'generateShiftSchedule'));
     }
 
     protected function isVolunteerAdmin($request)
@@ -169,6 +170,120 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         }
         $ret = $dataTable->update($filter, $obj);
         return $response->withJson($ret);
+    }
+
+    public function generateShiftSchedule($request, $response, $args)
+    {
+        $deptId = $args['dept'];
+        if($this->canEditDept($request, $deptId) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
+        $depts = $dataTable->read(new \Data\Filter('departmentID eq '.$deptId));
+        if(empty($depts))
+        {
+            return $response->withStatus(404);
+        }
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $eventId = $request->getParam('eventID');
+        $filter = new \Data\Filter('eventID eq '.$eventId.' and departmentID eq '.$deptId);
+        $shifts = $dataTable->read($filter);
+        if(empty($shifts))
+        {
+            return $response->withStatus(404);
+        }
+        switch($request->getParam('type'))
+        {
+            case 'simplePDF':
+               return $this->generateSimplePDFSchedule($depts[0], $shifts, $request, $response);
+        }
+        return $response->withJson($shifts);
+    }
+
+    public function getRoleNameFromID($roleID)
+    {
+        static $roles = null;
+        if($roles === null)
+        {
+            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
+            $tmp = $dataTable->read();
+            $roles = array();
+            $count = count($tmp);
+            for($i = 0; $i < $count; $i++)
+            {
+                if(isset($tmp[$i]['display_name']))
+                {
+                    $roles[$tmp[$i]['short_name']] = $tmp[$i]['display_name'];
+                }
+                else
+                {
+                    $roles[$tmp[$i]['short_name']] = $tmp[$i]['short_name'];
+                }
+            }
+        }
+        return $roles[$roleID];
+    }
+
+    public function generateSimplePDFSchedule($dept, $shifts, $request, $response)
+    {
+        $pdf = new \PDF\PDF();
+        $html = '<body>';
+        $html.= '<style type="text/css">table {border-collapse: collapse;} table, th, td {border: 1px solid black;}</style>';
+        $html.= '<h1 style="text-align: center;">'.$dept['departmentName'].' Shift Schedule</h1>';
+        //Group shifts by day...
+        $days = array();
+        $count = count($shifts);
+        for($i = 0; $i < $count; $i++)
+        {
+            $start = new DateTime($shifts[$i]['startTime']);
+            $end = new DateTime($shifts[$i]['endTime']);
+            $shifts[$i]['startTime'] = $start;
+            $shifts[$i]['endTime'] = $end;
+            $dateStr = $start->format('l (n/j/Y)');
+            $timeStr = $start->format('g:i A').' till '.$end->format('g:i A');
+            if(strlen($shifts[$i]['name']) > 0)
+            {
+                $timeStr.=' - <i>'.$shifts[$i]['name'].'</i>';
+            }
+            if(!isset($days[$dateStr]))
+            {
+                $days[$dateStr] = array();
+            }
+            if(!isset($days[$dateStr][$timeStr]))
+            {
+                $days[$dateStr][$timeStr] = array();
+            }
+            array_push($days[$dateStr][$timeStr], $shifts[$i]);
+        }
+        ksort($days);
+        foreach($days as $dateStr=>$day)
+        {
+            $html.='<h2>'.$dateStr.'</h2>';
+            ksort($day);
+            foreach($day as $shiftStr=>$shifts)
+            {
+                usort($shifts, array($this, 'shiftSort'));
+                $html.='<h3>'.$shiftStr.'</h3>';
+                $html.='<table width="100%"><tr><th style="width: 20%">Role</th><th>Volunteer Name</th><th>Volunteer Camp</th></tr>';
+                foreach($shifts as $shift)
+                {
+                    //TODO Volunteer info for shift...
+                    $html.='<tr><td>'.$this->getRoleNameFromID($shift['roleID']).'</td><td></td><td></td></tr>';
+                }
+                $html.='</table>';
+            }
+        }
+        $html.='</body>';
+        $pdf->setPDFFromHTML($html);
+        $response = $response->withHeader('Content-Type', 'application/pdf');
+        $response->getBody()->write($pdf->toPDFBuffer());
+        return $response;
+    }
+
+    public function shiftSort($a, $b)
+    {
+        return strcmp($this->getRoleNameFromID($a['roleID']), $this->getRoleNameFromID($b['roleID']));
     }
 }
 

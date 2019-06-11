@@ -52,8 +52,40 @@ function leadDropDown(cell) {
   return {values:values};
 }
 
+function areaDropDown(cell) {
+  var values = {};
+  var cache = window.localStorage.getItem('FlipsideAreaCache');
+  if(!cache) {
+    return false;
+  }
+  var areas = JSON.parse(cache);
+  for(var i = 0; i < areas.length; i++) {
+    values[areas[i].short_name] = areas[i].name;
+  }
+  return {values:values};
+}
+
+function areaDisplay(cell) {
+  var value = cell.getValue();
+  var cache = window.localStorage.getItem('FlipsideAreaCache');
+  if(!cache) {
+    return value;
+  }
+  var areas = JSON.parse(cache);
+  for(var i = 0; i < areas.length; i++) {
+    if(areas[i].short_name === value) {
+      return areas[i].name;
+    }
+  }
+  return value;
+}
+
 function saveLeads(jqXHR) {
    window.localStorage.setItem('FlipsideLeadCache', jqXHR.responseText);
+}
+
+function saveAreas(jqXHR) {
+   window.localStorage.setItem('FlipsideAreaCache', jqXHR.responseText);
 }
 
 function refreshCache() {
@@ -61,6 +93,11 @@ function refreshCache() {
     url: 'https://profiles.burningflipside.com/api/v1/areas/*/leads',
     xhrFields: {withCredentials: true},
     complete: saveLeads
+  });
+  $.ajax({
+    url: 'https://profiles.burningflipside.com/api/v1/areas',
+    xhrFields: {withCredentials: true},
+    complete: saveAreas
   });
 }
 
@@ -80,7 +117,8 @@ function newDepartment() {
 
 function initPage() {
   var cache = window.localStorage.getItem('FlipsideLeadCache');
-  if(!cache) {
+  var cache2 = window.localStorage.getItem('FlipsideAreaCache');
+  if(!cache || !cache2) {
     refreshCache();
   }
   table = new Tabulator("#depts", {
@@ -91,9 +129,14 @@ function initPage() {
       {title:'Name', field: 'departmentName', editor:"input"},
       {title:'Public', field: 'public', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Lead', field: 'lead', editor:'select', editorParams: leadDropDown},
+      {title:'Area', field: 'area', editor:'select', editorParams: areaDropDown, formatter: areaDisplay},
       {title:'Other Admins', field: 'others', editor:'input'}
     ],
-    cellEdited: dataChanged
+    cellEdited: dataChanged,
+    initialSort:[
+      {column:"departmentName", dir:"asc"},
+      {column:"area", dir:"asc"}
+    ]
   });
 }
 
