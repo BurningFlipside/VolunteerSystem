@@ -67,6 +67,15 @@ function gotDepartmentRoles(jqXHR) {
   flipDialog.dialog(options);
 }
 
+function gotGroupDepartmentRoles(jqXHR) {
+  var mySelect = $('#groupAddRole').select2();
+  var array = jqXHR.responseJSON;
+  for(var i = 0; i < array.length; i++) {
+    var newOption = new Option(array[i].display_name, array[i].short_name, false, false);
+    mySelect.append(newOption);
+  }
+}
+
 function addNewShift(elem) {
   var href = elem.getAttribute("href");
   href = href.substring(1);
@@ -109,6 +118,63 @@ function addNewShift(elem) {
     context: dialogOptions
   });
   return false;
+}
+
+function addRoleToShift() {
+  var roleID = $('#groupAddRole').val();
+  var roleText = $('#groupAddRole').find(':selected')[0].text;
+  var tbody = $('#groupRoleTable tbody');
+  tbody.append('<tr><td>'+roleText+'</td><td><input class="form-control" type="number" min="1" id="roles.'+roleID+'"</td><td><button type="button" class="btn btn-link" onClick="removeRole(\''+roleID+'\')"><i class="fas fa-minus-circle"></i></button></td></tr>');
+}
+
+function removeRole(roleID) {
+  var tbody = $('#groupRoleTable tbody');
+  var input = tbody.find('[id="roles.'+roleID+'"]');
+  var row = input.parents('tr');
+  row.remove();
+}
+
+function newGroup(data) {
+  $.ajax({
+    url: '../api/v1/shifts/Actions/NewGroup',
+    contentType: 'application/json',
+    data: JSON.stringify(data),
+    type: 'POST',
+    dataType: 'json',
+    complete: doneCreatingShift
+  });
+  $('#groupWizard').modal('hide');
+}
+
+function addNewGroup(elem) {
+  var href = elem.getAttribute("href");
+  href = href.substring(1);
+  $('#groupDepartmentID').val(href);
+  $('#groupDepartmentName').val(departments[href].departmentName);
+  var mySelect = $('#groupEvent')[0];
+  for(var i = 0; i < events.length; i++) {
+    addOptiontoSelect(mySelect, events[i]['_id']['$id'], events[i].name);
+  }
+  groupEventChanged(mySelect);
+  $.ajax({
+    url: '../api/v1/departments/'+href+'/roles',
+    complete: gotGroupDepartmentRoles
+  });
+  $('#groupWizard').modal('show');
+}
+
+function groupEventChanged(elem) {
+  var eventID = elem.value;
+  for(var i = 0; i < events.length; i++) {
+    if(events[i]['_id']['$id'] === eventID) {
+      myevent = events[i];
+      break;
+    }
+  }
+  $('#groupStartTime').attr('min', myevent.startTime);
+  $('#groupStartTime').attr('max', myevent.endTime);
+  $('#groupEndTime').attr('min', myevent.startTime);
+  $('#groupEndTime').attr('max', myevent.endTime);
 }
 
 function shiftDeleted(jqXHR) {
@@ -656,7 +722,7 @@ function gotDepartments(jqXHR) {
   var accordian = $('#accordion');
   for(var i = 0; i < array.length; i++) {
     departments[array[i].departmentID] = array[i];
-    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a></div></div></div></div>');
+    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift group</a></div></div></div></div>');
   }
   $.ajax({
     url: '../api/v1/shifts',

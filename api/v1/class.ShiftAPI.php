@@ -10,6 +10,7 @@ class ShiftAPI extends Http\Rest\DataTableAPI
     {
         parent::setup($app);
         $app->post('/Actions/CreateGroup', array($this, 'createGroup'));
+        $app->post('/Actions/NewGroup', array($this, 'newGroup'));
     }
 
     protected function isVolunteerAdmin($request)
@@ -110,5 +111,38 @@ class ShiftAPI extends Http\Rest\DataTableAPI
         {
             return $response->withJson(array('res'=>$myRet, 'errors'=>$errors));
         }
+    }
+
+    public function newGroup($request, $response, $args)
+    {
+        if(!$this->canCreate($request))
+        {
+            return $response->withStatus(401);
+        }
+        $data = $request->getParsedBody();
+        $shift = array();
+        $shift['groupID'] = $this->genUUID();
+        $shift['departmentID'] = $data['groupDepartmentID'];
+        $shift['earlyLate'] = $data['groupEarlyLate'];
+        $shift['enabled'] = $data['groupEnabled'];
+        $shift['endTime'] = $data['groupEndTime'];
+        $shift['eventID'] = $data['groupEvent'];
+        $shift['name'] = $data['groupName'];
+        $shift['startTime'] = $data['groupStartTime'];
+        $dataTable = $this->getDataTable();
+        $ret = true;
+        foreach($data['roles'] as $role=>$count)
+        {
+            $count = intval($count);
+            for($i = 0; $i < $count; $i++)
+            {
+                $shift['roleID'] = $role;
+                if($dataTable->create($shift) === false)
+                {
+                    $ret = false;
+                }
+            }
+        }
+        return $response->withJSON($ret);
     }
 }
