@@ -92,6 +92,9 @@ function newEvent(e) {
 }
 
 function showEventWizard() {
+  if(!browser_supports_input_type('datetime-local')) {
+    $('[type="datetime-local"]').flatpickr({enableTime: true});
+  }
   $('#eventWizard').modal('show');
 }
 
@@ -177,7 +180,7 @@ function initPage() {
       {title:'Private', field: 'private', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Volunteer List', field: 'volList'},
       {title:'Department List', field: 'departments'},
-      {title:'Tickets Needed', field: 'tickets'}
+      {title:'Tickets Needed', field: 'tickets', formatter: 'tickCross'}
     ],
     cellEdited: dataChanged
   });

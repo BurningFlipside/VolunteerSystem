@@ -2,6 +2,18 @@ function validateFields(content) {
   var res = true;
   var elements = content.find('input');
   for(var i = 0; i < elements.length; i++) {
+    if(elements[i].hasAttribute('required') && elements[i].classList.contains('flatpickr-input')) {
+      //Work around for Firefox and Safari
+      if(elements[i].value == '') {
+        res = false;
+        $(elements[i]).popover({
+          content: 'Please enter a valid date!',
+          title: 'Required field',
+          tigger: 'click'
+        }).popover('show');
+        continue;
+      }
+    }
     if(elements[i].reportValidity() !== true) {
       res = false;
     }

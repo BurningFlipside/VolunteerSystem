@@ -742,6 +742,7 @@ function setBoundaryTimes(e) {
       break;
     }
   }
+  console.log($('#startTime'));
   $('#startTime').attr('min', myevent.startTime);
   $('#startTime').attr('max', myevent.endTime);
   $('#endTime').attr('min', myevent.startTime);

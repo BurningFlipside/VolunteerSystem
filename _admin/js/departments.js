@@ -42,7 +42,7 @@ function dataChanged(cell) {
 function leadDropDown(cell) {
   var values = {};
   var cache = window.localStorage.getItem('FlipsideLeadCache');
-  if(!cache) {
+  if(cache === undefined || !cache || cache === 'undefined') {
     return false;
   }
   var leads = JSON.parse(cache);
@@ -55,7 +55,7 @@ function leadDropDown(cell) {
 function areaDropDown(cell) {
   var values = {};
   var cache = window.localStorage.getItem('FlipsideAreaCache');
-  if(!cache) {
+  if(cache === undefined || !cache || cache === 'undefined') {
     return false;
   }
   var areas = JSON.parse(cache);
@@ -68,7 +68,7 @@ function areaDropDown(cell) {
 function areaDisplay(cell) {
   var value = cell.getValue();
   var cache = window.localStorage.getItem('FlipsideAreaCache');
-  if(!cache) {
+  if(cache === undefined || !cache || cache === 'undefined') {
     return value;
   }
   var areas = JSON.parse(cache);
@@ -118,7 +118,7 @@ function newDepartment() {
 function initPage() {
   var cache = window.localStorage.getItem('FlipsideLeadCache');
   var cache2 = window.localStorage.getItem('FlipsideAreaCache');
-  if(!cache || !cache2) {
+  if(!cache || cache === 'undefined' || !cache2 || cache2 === 'undefined') {
     refreshCache();
   }
   table = new Tabulator("#depts", {

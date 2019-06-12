@@ -37,6 +37,16 @@ window.flipDialog.dialog = function(options) {
     else {
       inputEnt.attr('type', input.type);
     }
+    if(!browser_supports_input_type('datetime-local') && input.type === 'datetime-local') {
+      var myOptions = {enableTime: true};
+      if(input.min !== undefined) {
+        myOptions.minDate = new Date(input.min);
+      }
+      if(input.max !== undefined) {
+        myOptions.maxDate = new Date(input.max);
+      }
+      inputEnt.flatpickr(myOptions);
+    }
     delete input.type;
     inputEnt.attr('name', input.id);
     inputEnt.attr('id', input.id);

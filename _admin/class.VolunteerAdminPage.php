@@ -15,6 +15,9 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $this->addLinks();
         $this->addCSS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css');
         $this->addJS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js');
+        //Neither Firefox nor Safari have support for datetime-local. This is roughly equivalent
+        $this->addCSS('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
+        $this->addJS('https://cdn.jsdelivr.net/npm/flatpickr');
         $this->addJS('js/admin.js');
         $this->addJS('js/dialog.js');
         $this->secure_root = $this->getSecureRoot();
