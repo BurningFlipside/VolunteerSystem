@@ -59,7 +59,7 @@ function initVolPage() {
     url: 'api/v1/participants/me',
     complete: gotMyProfile
   });
-  $('[data-toggle="popover"]').popover();
+  $('[data-toggle="tooltip"]').tooltip();
 }
 
 $(initVolPage);
