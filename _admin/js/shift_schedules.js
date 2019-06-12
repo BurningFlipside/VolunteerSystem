@@ -1,5 +1,6 @@
 function generatePDF(e) {
   var type = e.target.id;
+  console.log(type);
   var event = $('#event').val();
   if(event === null) {
     bootbox.alert('Please select event first!');
@@ -48,6 +49,7 @@ function initPage() {
   });
   $('#simplePDF').click(generatePDF);
   $('#gridXLSX').click(generatePDF);
+  $('#gridPDF').click(generatePDF);
 }
 
 $(initPage);

@@ -2,6 +2,7 @@
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf;
 
 class DepartmentAPI extends Http\Rest\DataTableAPI
 {
@@ -202,7 +203,9 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
             case 'simplePDF':
                return $this->generateSimplePDFSchedule($depts[0], $shifts, $request, $response);
             case 'gridXLSX':
-               return $this->generateGridXLSXSchedule($depts[0], $shifts, $request, $response);
+               return $this->generateGridSchedule($depts[0], $shifts, $request, $response, 'XLSX');
+            case 'gridPDF':
+               return $this->generateGridSchedule($depts[0], $shifts, $request, $response, 'PDF');
         }
         return $response->withJson($shifts);
     }
@@ -287,7 +290,7 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         return $response;
     }
 
-    public function generateGridXLSXSchedule($dept, $shifts, $request, $response)
+    public function generateGridSchedule($dept, $shifts, $request, $response, $type)
     {
         $ssheat = new Spreadsheet();
         $sheat = $ssheat->getActiveSheet();
@@ -473,12 +476,25 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
             }
         }
         $sheat->getColumnDimension('A')->setAutoSize(true);
-        $writer = new Xlsx($ssheat);
+        if($type === 'XLSX')
+        {
+            $writer = new Xlsx($ssheat);
+            $content = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            $extension = '.xlsx';
+        }
+        else if($type === 'PDF')
+        {
+            $sheat->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+            $writer = new mpdf($ssheat);
+            $writer->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+            $content = 'application/pdf';
+            $extension = '.pdf';
+        }
         ob_start();
         $writer->save('php://output');
         $str = ob_get_clean();
-        $response = $response->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        $response = $response->withHeader('Content-Disposition', 'attachment; filename='.$dept['departmentName'].'.xlsx');
+        $response = $response->withHeader('Content-Type', $content);
+        $response = $response->withHeader('Content-Disposition', 'attachment; filename='.$dept['departmentName'].$extension);
         $response->getBody()->write($str);
         return $response;
     }
