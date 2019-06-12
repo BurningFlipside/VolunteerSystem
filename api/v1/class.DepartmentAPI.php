@@ -1,4 +1,8 @@
 <?php
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 class DepartmentAPI extends Http\Rest\DataTableAPI
 {
     protected $isAdmin = null;
@@ -197,6 +201,8 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         {
             case 'simplePDF':
                return $this->generateSimplePDFSchedule($depts[0], $shifts, $request, $response);
+            case 'gridXLSX':
+               return $this->generateGridXLSXSchedule($depts[0], $shifts, $request, $response);
         }
         return $response->withJson($shifts);
     }
@@ -260,7 +266,7 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         foreach($days as $dateStr=>$day)
         {
             $html.='<h2>'.$dateStr.'</h2>';
-            ksort($day);
+            uksort($day, array($this, 'groupSort'));
             foreach($day as $shiftStr=>$shifts)
             {
                 usort($shifts, array($this, 'shiftSort'));
@@ -281,9 +287,242 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         return $response;
     }
 
+    public function generateGridXLSXSchedule($dept, $shifts, $request, $response)
+    {
+        $ssheat = new Spreadsheet();
+        $sheat = $ssheat->getActiveSheet();
+        $sheat->setCellValue('A1', $dept['departmentName']);
+        $count = count($shifts);
+        $days = array();
+        $roles = array();
+        $roles2 = array();
+        for($i = 0; $i < $count; $i++)
+        {
+            $start = new DateTime($shifts[$i]['startTime']);
+            $end = new DateTime($shifts[$i]['endTime']);
+            $shifts[$i]['startTime'] = $start;
+            $shifts[$i]['endTime'] = $end;
+            $startDateStr = $start->format('l (n/j/Y)');
+            $endDateStr = $end->format('l (n/j/Y)');
+            $days[$startDateStr] = 1;
+            $days[$endDateStr] = 1;
+            $diff = $start->diff($end);
+            $shifts[$i]['length'] = $diff->h;
+            if(!isset($roles[$shifts[$i]['roleID']]))
+            {
+                 $roles[$shifts[$i]['roleID']] = $shifts[$i]['length'];
+                 $roles2[$shifts[$i]['roleID']] = array();
+            }
+            else
+            {
+                 if($roles[$shifts[$i]['roleID']] < $shifts[$i]['length'])
+                 {
+                     $roles[$shifts[$i]['roleID']] = $shifts[$i]['length'];
+                 }
+            }
+            array_push($roles2[$shifts[$i]['roleID']], array('start'=>$start, 'end'=>$end));
+        }
+        arsort($roles);
+        usort($shifts, array($this, 'shiftTimeSort'));
+        $originalStartTime = $shifts[0]['startTime'];
+        $str = $shifts[0]['startTime']->format('c');
+        $start = date_parse($str);
+        $lastShift = $shifts[$count-1];
+        $interval = $lastShift['endTime']->diff($shifts[0]['startTime']);
+        $hourCount = ($interval->d*24)+$interval->h;
+        $simpleHours = array();
+        $militaryHours = array();
+        $hour = $start['hour'];
+        for($i = 0; $i < $hourCount; $i++)
+        {
+            if($hour < 12)
+            {
+                if($hour === 0)
+                {
+                    array_push($simpleHours, '12a');
+                }
+                else
+                {
+                    array_push($simpleHours, $hour.'a');
+                }
+            }
+            else
+            {
+                if($hour === 12)
+                {
+                    array_push($simpleHours, $hour.'p');
+                }
+                else
+                {
+                    array_push($simpleHours, ($hour-12).'p');
+                }
+            }
+            array_push($militaryHours, $hour.':00');
+            $hour++;
+            if($hour === 24)
+            {
+                $hour = 0;
+            }
+        }
+        $sheat->fromArray($simpleHours, null, 'B2');
+        $sheat->fromArray($militaryHours, null, 'B3');
+        $mergeCount = 24-$start['hour'];
+        if($mergeCount > $hourCount)
+        {
+            $mergeCount = $hourCount;
+        }
+        $days = array_keys($days);
+        $cellIndex = 2;
+        while($mergeCount)
+        {
+            $sheat->mergeCellsByColumnAndRow($cellIndex, 1, $cellIndex+$mergeCount-1, 1);
+            $sheat->setCellValueByColumnAndRow($cellIndex, 1, array_shift($days));
+            $cell = $sheat->getCellByColumnAndRow($cellIndex, 1);
+            $cell->getStyle()->getAlignment()->setHorizontal('center');
+            $cellIndex+=$mergeCount;
+            $hourCount-=$mergeCount;
+            $mergeCount = $hourCount;
+            if($mergeCount > 24)
+            {
+                $mergeCount = 24;
+            }
+        }
+        $i = 0;
+        $rows = array();
+        foreach($roles as $role=>$hour)
+        {
+            $sheat->setCellValueByColumnAndRow(1, 4+$i, $this->getRoleNameFromID($role));
+            array_push($rows, $role);
+            $overlaps = array();
+            for($j = 0; $j < count($roles2[$role])-1; $j++)
+            {
+                $currRole = $roles2[$role][$j];
+                $nextRole = $roles2[$role][$j+1];
+                if($currRole['end'] > $nextRole['start'])
+                {
+                    $str = $currRole['start']->format('c');
+                    if(!isset($overlaps[$str]))
+                    {
+                        $overlaps[$str] = 0;
+                    }
+                    $overlaps[$str]++;
+                }
+            }
+            if(!empty($overlaps))
+            {
+                $overlapCount = max(array_values($overlaps));
+                for($j = 0; $j < $overlapCount+1; $j++)
+                {
+                    $i++;
+                    $sheat->setCellValueByColumnAndRow(1, 4+$i, $this->getRoleNameFromID($role));
+                    if($j > 0)
+                    {
+                        array_push($rows, $role);
+                    }
+                }
+            }
+            else
+            {
+                $i++;
+            }
+        }
+        $shift = array_shift($shifts);
+        while($shift)
+        {
+            $i = 1;
+            $timeDiff = $originalStartTime->diff($shift['startTime']);
+            $hoursFromStart = ($timeDiff->d*24)+$timeDiff->h;
+            $firstRow = array_search($shift['roleID'], $rows);
+            $cell = $sheat->getCellByColumnAndRow($hoursFromStart+2, $firstRow+4);
+            if($cell->isInMergeRange())
+            {
+                while($rows[$firstRow+$i] === $shift['roleID'])
+                {
+                    $cell = $sheat->getCellByColumnAndRow($hoursFromStart+2, $firstRow+4+$i);
+                    if(!$cell->isInMergeRange())
+                    {
+                        break;
+                    }
+                    $i++;
+                }
+                $sheat->mergeCellsByColumnAndRow($hoursFromStart+2, $firstRow+4+$i, $hoursFromStart+1+$shift['length'], $firstRow+4+$i);
+            }
+            else
+            {
+                $sheat->mergeCellsByColumnAndRow($hoursFromStart+2, $firstRow+4, $hoursFromStart+1+$shift['length'], $firstRow+4);
+            }
+            $shift = array_shift($shifts);
+        }
+        $style = $sheat->getStyleByColumnAndRow(2, 4, 1+count($simpleHours), 3+count($rows));
+        $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        for($i = 0; $i < count($simpleHours); $i++)
+        {
+            for($j = 0; $j < count($rows); $j++)
+            {
+                 $cell = $sheat->getCellByColumnAndRow($i+2, $j+4);
+                 if($cell->isInMergeRange())
+                 {
+                      continue;
+                 }
+                 else
+                 {
+                     $style = $cell->getStyle();
+                     $style->getBorders()->getAllBorders()->setBorderStyle(false);
+                     $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_PATTERN_LIGHTGRAY);
+                 }
+            }
+        }
+        $sheat->getColumnDimension('A')->setAutoSize(true);
+        $writer = new Xlsx($ssheat);
+        ob_start();
+        $writer->save('php://output');
+        $str = ob_get_clean();
+        $response = $response->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response = $response->withHeader('Content-Disposition', 'attachment; filename='.$dept['departmentName'].'.xlsx');
+        $response->getBody()->write($str);
+        return $response;
+    }
+
     public function shiftSort($a, $b)
     {
         return strcmp($this->getRoleNameFromID($a['roleID']), $this->getRoleNameFromID($b['roleID']));
+    }
+
+    public function groupSort($a, $b)
+    {
+        $aArr = explode(' ', $a);
+        $bArr = explode(' ', $b);
+        if($aArr[1] === 'PM' && $bArr[1] === 'AM')
+        {
+            return 1;
+        }
+        else if($aArr[1] === 'AM' && $bArr[1] === 'PM')
+        {
+            return -1;
+        }
+        return strcmp($a, $b);
+    }
+
+    public function shiftTimeSort($a, $b)
+    {
+        $interval = $a['startTime']->diff($b['startTime']);
+        if($interval->invert === 0)
+        {
+            if($interval->h || $interval->i)
+            {
+                return -1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else if($interval->invert === 1 && $interval->h)
+        {
+            return 1;
+        }
+        print_r($interval);
+        die();
     }
 }
 

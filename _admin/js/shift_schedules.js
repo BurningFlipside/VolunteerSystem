@@ -1,5 +1,5 @@
-
-function simplePDF() {
+function generatePDF(e) {
+  var type = e.target.id;
   var event = $('#event').val();
   if(event === null) {
     bootbox.alert('Please select event first!');
@@ -10,7 +10,7 @@ function simplePDF() {
     bootbox.alert('Please select department first!');
     return;
   }
-  location.href = '../api/v1/departments/'+dept+'/shifts/Actions/GenerateShiftSchedule?type=simplePDF&eventID='+event;
+  location.href = '../api/v1/departments/'+dept+'/shifts/Actions/GenerateShiftSchedule?type='+type+'&eventID='+event;
 }
 
 function initPage() {
@@ -46,7 +46,8 @@ function initPage() {
       }
     }
   });
-  $('#simplePDF').click(simplePDF);
+  $('#simplePDF').click(generatePDF);
+  $('#gridXLSX').click(generatePDF);
 }
 
 $(initPage);
