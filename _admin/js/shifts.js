@@ -155,6 +155,9 @@ function addNewGroup(elem) {
   for(var i = 0; i < events.length; i++) {
     addOptiontoSelect(mySelect, events[i]['_id']['$id'], events[i].name);
   }
+  if(!browser_supports_input_type('datetime-local')) {
+    $('[type="datetime-local"]').flatpickr({enableTime: true});
+  }
   groupEventChanged(mySelect);
   $.ajax({
     url: '../api/v1/departments/'+href+'/roles',
@@ -170,6 +173,15 @@ function groupEventChanged(elem) {
       myevent = events[i];
       break;
     }
+  }
+  if($('#groupStartTime')[0]._flatpickr !== undefined) {
+    var start = $('#groupStartTime')[0]._flatpickr;
+    var end = $('#groupEndTime')[0]._flatpickr;
+    start.set('minDate', myevent.startTime);
+    start.set('maxDate', myevent.endTime);
+    end.set('minDate', myevent.startTime);
+    end.set('maxDate', myevent.endTime);
+    return;
   }
   $('#groupStartTime').attr('min', myevent.startTime);
   $('#groupStartTime').attr('max', myevent.endTime);
