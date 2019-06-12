@@ -10,7 +10,7 @@ $page->addJS('../js/wizard.js');
 
 $page->content['pageHeader'] = 'Events';
 $page->content['table'] = array('id' => 'events');
-if($page->user->isInGroupNamed('VolunteerAdmins'))
+if($page->user && $page->user->isInGroupNamed('VolunteerAdmins'))
 {
     $page->content['selectors'] = '<button type="button" class="btn btn-primary" onclick="showEventWizard();">New Event</button>';
 }

@@ -37,7 +37,7 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
     protected function addLinks()
     {
         $this->content['header']['sidebar'] = array();
-        if($this->user === false && $this->user === null)
+        if($this->user === false || $this->user === null)
         {
             return;
         }

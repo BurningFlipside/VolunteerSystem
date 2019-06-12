@@ -9,7 +9,7 @@ $page->addWellKnownJS(JS_BOOTBOX);
 
 $page->content['pageHeader'] = 'Departments';
 $page->content['table'] = array('id' => 'depts');
-if($page->user->isInGroupNamed('VolunteerAdmins'))
+if($page->user && $page->user->isInGroupNamed('VolunteerAdmins'))
 {
     $page->content['selectors'] = '<button type="button" class="btn btn-primary" onclick="newDepartment();">New Department</button>';
 }
