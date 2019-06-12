@@ -37,6 +37,11 @@ function nextWizardStep(target) {
   if(next.next().length === 0) {
     $('#nextStep').html('Complete').attr('onClick', 'saveWizardStep(this);');
   }
+  var shown = next.data('onshow');
+  if(shown !== undefined) {
+    var fn = window[shown];
+    fn(next);
+  }
 }
 
 function prevWizardStep(target) {
@@ -50,6 +55,11 @@ function prevWizardStep(target) {
   $('#nextStep').html('Next').attr('onClick', 'nextWizardStep(this);');
   if(prev.prev().length === 0) {
     $('#prevStep').attr('disabled', true);
+  }
+  var shown = prev.data('onshow');
+  if(shown !== undefined) {
+    var fn = window[shown];
+    fn(prev);
   }
 }
 

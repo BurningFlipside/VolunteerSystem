@@ -17,6 +17,8 @@ class VolunteerPage extends SecurePage
         $this->addJS($this->volunteerRoot.'/js/volunteer.js', false);
         $this->addTemplateDir(dirname(__FILE__).'/templates', 'Volunteer');
         $this->setTemplateName('@Volunteer/main.html');
+        $this->addCSS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css');
+        $this->addJS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js');
     }
 
     function printPage($header=true)
