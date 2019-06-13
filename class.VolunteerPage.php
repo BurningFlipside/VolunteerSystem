@@ -29,7 +29,6 @@ class VolunteerPage extends SecurePage
 <div id="content">
     <h1>You must <a href="https://profiles.burningflipside.com/login.php?return='.$this->currentURL().'">log in <span class="fa fa-sign-in"></span></a> to access the Burning Flipside Volunteer system!</h1>
 </div>';
-            $this->add_login_form();
         }
         parent::printPage($header);
     }
