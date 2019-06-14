@@ -124,13 +124,15 @@ function addRoleToShift() {
   var roleID = $('#groupAddRole').val();
   var roleText = $('#groupAddRole').find(':selected')[0].text;
   var tbody = $('#groupRoleTable tbody');
-  tbody.append('<tr><td>'+roleText+'</td><td><input class="form-control" type="number" min="1" id="roles.'+roleID+'"</td><td><button type="button" class="btn btn-link" onClick="removeRole(\''+roleID+'\')"><i class="fas fa-minus-circle"></i></button></td></tr>');
+  tbody.append('<tr><td>'+roleText+'</td><td><input class="form-control" type="number" min="1" value="1" id="roles.'+roleID+'"</td><td><button type="button" class="btn btn-link" onClick="removeRole(\''+roleID+'\')"><i class="fas fa-minus-circle"></i></button></td></tr>');
+  $("#groupAddRole option[value='"+roleID+"']").remove();
 }
 
 function removeRole(roleID) {
   var tbody = $('#groupRoleTable tbody');
   var input = tbody.find('[id="roles.'+roleID+'"]');
   var row = input.parents('tr');
+  addOptiontoSelect($('#groupAddRole')[0], roleID, row.find('td').first()[0].innerHTML);
   row.remove();
 }
 
