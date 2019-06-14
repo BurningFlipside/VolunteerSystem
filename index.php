@@ -10,8 +10,11 @@ $page->body .= '
     <select class="form-control" id="event"></select>
   </div>
   <div class="w-100"></div>
-  <label for="departments" class="col-sm-2 col-form-label">Departments:</label>
-  <div class="col-sm-10">
+  <div class="d-lg-none d-xl-none col-sm-12">
+    <button type="button" class="btn btn-info" onClick="unhideFilters();">Filters</button>
+  </div>
+  <label for="departments" class="d-none d-lg-block col-sm-2 col-form-label">Departments:</label>
+  <div class="d-none d-lg-block col-sm-10">
     <select class="form-control" id="departments" multiple></select>
   </div>
   <div class="w-100"></div>

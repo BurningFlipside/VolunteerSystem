@@ -128,6 +128,9 @@ function gotShifts(jqXHR) {
   }
   calendar.setOption('validRange.start', myStart);
   calendar.render();
+  if(window.innerWidth <= 1024) {
+    $('#calendar .fc-center h2').css('font-size', '1.0em');
+  }
   $('#departments').change(deptChanged);
 }
 
@@ -228,6 +231,18 @@ function gotRoles(jqXHR) {
   }
 }
 
+function unhideFilters() {
+  var div = $('#departments').parent('.d-none');
+  if(div.length > 0) {
+    div.removeClass('d-none');
+    $('[for=departments]').removeClass('d-none');
+  }
+  else {
+    $('#departments').parent(':not(.d-none)').addClass('d-none');
+    $('[for=departments]').addClass('d-none');
+  }
+}
+
 function initPage() {
   $.ajax({
     url: 'api/v1/events',
@@ -240,7 +255,7 @@ function initPage() {
   var header = {
     left: 'prev,next today',
     center: 'title',
-    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,resourceTimelineWeek'
+    right: 'dayGridMonth,timeGridDay,listWeek,resourceTimelineWeek'
   };
   var defaultView = 'resourceTimelineWeek';
   if(window.innerWidth <= 1024) {

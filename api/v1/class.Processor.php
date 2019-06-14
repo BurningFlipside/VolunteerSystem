@@ -52,9 +52,7 @@ trait Processor
         {
             return 'Shift requires Basic Life Support certification and you do not have that certification';
         }
-        var_dump($user);
-        var_dump($role);
-        die();
+        return true;
     }
 
     protected function processShift($entry, $request)
