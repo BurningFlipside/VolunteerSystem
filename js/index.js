@@ -68,17 +68,32 @@ function filterEvents() {
   for(var i = 0; i < depts.length; i++) {
     validDepts.push(depts[i].id);
   }
-  console.log(validDepts);
   var events = allEvents;
+  var newStart = new Date('2100-01-01T01:00:00');
   for(var i = 0; i < events.length; i++) {
     if(!validDepts.includes(events[i].extendedProps.departmentID)) {
-      events[i].setExtendedProp('hidden', true);
-      events[i].remove();
+      events[i].setProp('classNames', 'd-none');
     }
-    else if(events[i].extendedProps.hidden && validDepts.includes(events[i].extendedProps.departmentID)) {
-      calendar.addEvent(events[i]);
-      events[i].setExtendedProp('hidden', false);
+    else if(events[i].classNames.includes('d-none') && validDepts.includes(events[i].extendedProps.departmentID)) {
+      var myStart = events[i].start;
+      if(myStart < newStart) {
+        newStart = myStart;
+      }
+      events[i].setProp('classNames', '');
     }
+    else if(validDepts.includes(events[i].extendedProps.departmentID)) {
+      var myStart = events[i].start;
+      var myEnd = events[i].end;
+      if(myStart < newStart) {
+        newStart = myStart;
+      }
+    }
+  }
+  console.log(calendar.view.currentStart);
+  console.log(newStart);
+  if(calendar.view.currentStart < newStart) {
+    console.log('Scrolling...');
+    console.log(calendar.view.currentStart);
   }
 }
 
@@ -255,12 +270,12 @@ function initPage() {
   var header = {
     left: 'prev,next today',
     center: 'title',
-    right: 'dayGridMonth,timeGridDay,listWeek,resourceTimelineWeek'
+    right: 'dayGridMonth,timeGridDay,listWeek,resourceTimelineDay'
   };
-  var defaultView = 'resourceTimelineWeek';
+  var defaultView = 'resourceTimelineDay';
   if(window.innerWidth <= 1024) {
     header.left = 'prev,next';
-    header.right = 'timeGridDay,listWeek,resourceTimelineWeek';
+    header.right = 'timeGridDay,listWeek,resourceTimelineDay';
     defaultView = 'list';
   }
   calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -272,7 +287,13 @@ function initPage() {
       timeGridWeek: 'Week Grid',
       timeGridDay: 'Day Grid',
       listWeek: 'List',
-      resourceTimelineWeek: 'Week Timeline'
+      resourceTimelineDay: 'Timeline'
+    },
+    titleFormat: { // will produce something like "Tuesday, September 18, 2018"
+      month: 'long',
+      year: 'numeric',
+      day: 'numeric',
+      weekday: 'long'
     },
     defaultView: defaultView,
     validRange: getDateRange,
