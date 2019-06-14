@@ -103,6 +103,7 @@ function refreshCache() {
 
 function newDepartment() {
   bootbox.prompt("Please enter the new department's ID", function(result){
+    result = result.replace(/\s/g, '_');
     var obj = {departmentID: result};
     $.ajax({
       url: '../api/v1/departments/',
