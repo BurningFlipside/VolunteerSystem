@@ -95,7 +95,8 @@ class ShiftAPI extends Http\Rest\DataTableAPI
             {
                 return $response->withStatus(404);
             }
-            else if(!$this->canUpdate($request, $entity))
+            $entity = $entity[0];
+            if(!$this->canUpdate($request, $entity))
             {
                 return $response->withStatus(401);
             }
