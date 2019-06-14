@@ -689,6 +689,9 @@ function editGroup(elem) {
   return false;
 }
 
+function sortEvents(a, b) {
+  return a.startTime.localeCompare(b.startTime);
+}
 
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
@@ -704,6 +707,7 @@ function gotShifts(jqXHR) {
     var groupName = getGroupName(group);
     $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+'</a>');
   }
+  singles.sort(sortEvents);
   for(var i = 0; i < singles.length; i++) {
     if(singles[i].name !== undefined && singles[i].name.length > 0) {
       shiftName = singles[i].name+': '+singles[i].roleID;
