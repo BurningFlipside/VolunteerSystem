@@ -1,16 +1,21 @@
 <?php
 require_once('class.VolunteerPage.php');
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
+$page->addJS('js/index.js');
 
 $page->body .= '
-<div id="content">
-    <h1>Welcome to the Burning Flipside Volunteer System</h1>
-    <p></p>
-    <h1>What would you like to do?</h1>
-    <ul>
-        <li><a href="shifts.php">View Available Shifts</a></li>
-        <li><a href="schedule.php">View My Shift Schedule</a></li>
-    </ul>
+<div class="row">
+  <label for="event" class="col-sm-2 col-form-label">Event</label>
+  <div class="col-sm-10">
+    <select class="form-control" id="event"></select>
+  </div>
+  <div class="w-100"></div>
+  <label for="departments" class="col-sm-2 col-form-label">Departments:</label>
+  <div class="col-sm-10">
+    <select class="form-control" id="departments" multiple></select>
+  </div>
+  <div class="w-100"></div>
+  <div id="calendar"></div>
 </div>';
 
 $page->printPage();

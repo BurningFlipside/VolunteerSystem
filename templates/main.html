@@ -2,17 +2,29 @@
 
 {% block headBlock %}
 <script type="text/javascript" src="js/wizard.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/core/main.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/list/main.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/daygrid/main.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/timegrid/main.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/timeline/main.css" rel='stylesheet' />
+<link href="/js/common/fullcalendar/resource-timeline/main.css" rel='stylesheet' />
+<script type="text/javascript" src="/js/common/fullcalendar/core/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/list/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/daygrid/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/timegrid/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/timeline/main.min.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/resource-common/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/resource-timeline/main.js"></script>
+<script type="text/javascript" src="https://unpkg.com/tooltip.js/dist/umd/tooltip.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="modal fade bd-example-modal-lg" id="profileWizard" tabindex="-1" role="dialog" aria-labelledby="profileWizardTitle" aria-hidden="true" data-backdrop="static">
+<div class="modal fade bd-example-modal-lg" id="profileWizard" tabindex="-1" role="dialog" aria-labelledby="profileWizardTitle" aria-hidden="true" data-backdrop="static" data-complete="saveProfile">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="profileWizardTitle">Participant Profile</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
       </div>
       <div class="modal-body">
         <div class="row flex-xl-nowrap">
@@ -126,7 +138,6 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary mr-auto" data-dismiss="modal">Close</button>
         <button id="prevStep" type="button" class="btn btn-outline-primary" disabled onClick="prevWizardStep(this);">Previous</button>
         <button id="nextStep" type="button" class="btn btn-outline-primary" onClick="nextWizardStep(this);">Next</button>
       </div>

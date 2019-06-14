@@ -1,6 +1,8 @@
 <?php
 class EventAPI extends Http\Rest\DataTableAPI
 {
+    use Processor;
+
     public function __construct()
     {
         parent::__construct('fvs', 'events', '_id');
@@ -46,13 +48,32 @@ class EventAPI extends Http\Rest\DataTableAPI
         return false;
     }
 
+    public function processEntry($entry, $request)
+    {
+        $entry['available'] = true;
+        $endTime = new DateTime($entry['endTime']);
+        $now = new DateTime();
+        if($endTime < $now)
+        {
+            $entry['available'] = false;
+            $entry['why'] = 'Event is in the past';
+        }
+        if($entry['private'] && !in_array($this->user->mail, $entry['volList']))
+        {
+            $entry['available'] = false;
+            $entry['why'] = 'Event is private and you are not invited';
+        }
+        if(!$entry['available'] && !$this->isVolunteerAdmin($request))
+        {
+            return null;
+        }
+        return $entry;
+    }
+
     public function getShiftsForEvent($request, $response, $args)
     {
+        $this->validateLoggedIn($request);
         $eventId = $args['event'];
-        if($this->canUpdate($request, null) === false)
-        {
-            return $response->withStatus(401);
-        }
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $filter = new \Data\Filter("eventID eq '$eventId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
@@ -75,6 +96,12 @@ class EventAPI extends Http\Rest\DataTableAPI
         {
             $shifts = array();
         }
+        $count = count($shifts);
+        for($i = 0; $i < $count; $i++)
+        {
+            $shifts[$i] = $this->processShift($shifts[$i], $request);
+        }
+        $shifts = array_values(array_filter($shifts));
         return $response->withJson($shifts);
     }
 

@@ -65,7 +65,21 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
 
     protected function processEntry($entry, $request)
     {
+        $entry['available'] = true;
         $entry['isAdmin'] = $this->canEditDept($request, null, $entry);
+        if(isset($entry['public']) && $entry['public'] === false)
+        {
+            if($this->user->title[0] !== $entry['lead'])
+            {
+                //TODO determine if user is in other admins or not...
+                $entry['available'] = false;
+                $entry['why'] = 'Not lead of department';
+            }
+            if(!$entry['available'] && !$entry['isAdmin'])
+            {
+                return null;
+            }
+        }
         return $entry;
     }
 

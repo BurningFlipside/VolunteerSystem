@@ -1,6 +1,8 @@
 <?php
 class ShiftAPI extends Http\Rest\DataTableAPI
 {
+    use Processor;
+
     public function __construct()
     {
         parent::__construct('fvs', 'shifts', '_id');
@@ -42,6 +44,11 @@ class ShiftAPI extends Http\Rest\DataTableAPI
     protected function canDelete($request, $entity)
     {
         return $this->canUpdate($request, $entity);
+    }
+
+    protected function processEntry($entry, $request)
+    {
+        return $this->processShift($entry, $request);
     }
 
     protected function genUUID()

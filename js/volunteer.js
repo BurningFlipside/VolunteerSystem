@@ -2,12 +2,52 @@ function showProfileWizard() {
   $('#profileWizard').modal('show');
 }
 
+function createdProfile(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to create volunteer profile!');
+    return;
+  }
+  location.reload();
+}
+
+function saveProfile(profile) {
+  for(var key in profile) {
+    if(key.includes('DisplayName')) {
+      delete profile[key];
+    }
+  }
+  //convert from profile standard to fvs
+  profile.burnerName = profile.displayName;
+  delete profile.displayName;
+  if(profile.givenName && profile.givenName.length > 0 && profile.givenName !== 'false') {
+    profile.firstName = profile.givenName;
+  }
+  delete profile.givenName;
+  if(profile.sn && profile.sn.length > 0 && profile.sn !== 'false') {
+    profile.lastName = profile.sn;
+  }
+  delete profile.sn;
+  profile.email = profile.mail;
+  delete profile.mail;
+  $.ajax({
+    url: 'api/v1/participants',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(profile),
+    complete: createdProfile
+  });
+  $('#profileWizard').modal('hide');
+}
+
 function gotMyProfile(jqXHR) {
   if(jqXHR.status === 404) {
     showProfileWizard();
     return;
   }
-  console.log(jqXHR);
+  var profile = jqXHR.responseJSON;
+  $('body').data('profile', profile);
+  $('body').trigger('fvs:ready');
 }
 
 function privacyShown(page) {
