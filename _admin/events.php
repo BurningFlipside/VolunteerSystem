@@ -26,7 +26,7 @@ $page->content['body'] = '
       </div>
       <div class="modal-body">
         <div class="row flex-xl-nowrap">
-          <div class="col-12 col-md-4 col-xl-3 bd-sidebar">
+          <div class="d-none d-sm-none d-md-none d-lg-none d-xl-block col-xl-3 bd-sidebar">
             <ul class="list-group">
               <li class="list-group-item active">Basic Info</li>
               <li class="list-group-item">Private Event</li>
