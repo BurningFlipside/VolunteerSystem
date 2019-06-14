@@ -17,8 +17,13 @@ class EventAPI extends Http\Rest\DataTableAPI
 
     protected function isVolunteerAdmin($request)
     {
-        $this->validateLoggedIn($request);
-        return $this->user->isInGroupNamed('VolunteerAdmins');
+        static $isVolAdmin = null;
+        if($isVolAdmin === null)
+        {
+            $this->validateLoggedIn($request);
+            $isVolAdmin = $this->user->isInGroupNamed('VolunteerAdmins');
+        }
+        return $isVolAdmin;
     }
 
     protected function canCreate($request)
