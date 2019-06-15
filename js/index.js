@@ -3,6 +3,7 @@ var start;
 var end;
 var allEvents = [];
 var roles = {};
+var validDepts = [];
 
 function getDateRange() {
   return {
@@ -26,7 +27,7 @@ function getTimeStr(date) {
 
 function getRoleName(roleID) {
   if(roles[roleID] !== undefined) {
-    return roles[roleID];
+    return roles[roleID].display_name;
   }
   return roleID;
 }
@@ -34,29 +35,50 @@ function getRoleName(roleID) {
 function eventRenderHelper(info) {
   var evnt = info.event;
   var shift = evnt.extendedProps;
-  if(shift.available) {
-    $(info.el).popover({
-      animation:true,
-      delay: 300,
-      title: shift.name,
-      html: true,
-      content: 'Department: '+getDeptName(shift.departmentID)+'<br/>Role: '+getRoleName(shift.roleID)+'<br/>Start: '+getTimeStr(shift.startTime)+'<br/>End: '+getTimeStr(shift.endTime),
-      trigger: 'hover'
-    });
+  if(window.matchMedia('(hover: none)').matches === false) {
+    if(shift.available) {
+      $(info.el).popover({
+        animation:true,
+        delay: 300,
+        title: shift.name,
+        html: true,
+        content: 'Department: '+getDeptName(shift.departmentID)+'<br/>Role: '+getRoleName(shift.roleID)+'<br/>Start: '+getTimeStr(shift.startTime)+'<br/>End: '+getTimeStr(shift.endTime),
+        trigger: 'hover'
+      });
+    }
+    else {
+      $(info.el).popover({
+        animation:true,
+        delay: 300,
+        title: 'Shift Unavailable',
+        content: shift.why,
+        trigger: 'hover'
+      });
+    }
+  }
+  if(info.view.type === 'listWeek' || info.view.type === 'list') {
+    var anchor = $(info.el).find('.fc-list-item-title a')[0];
+    anchor.innerHTML = getDeptName(shift.departmentID)+': '+anchor.innerHTML;
+  }
+}
+
+function renderResource(info) {
+  var resource = info.resource;
+  if(resource.getParent() === null) {
+    if(!validDepts.includes(resource.id)) {
+      calendar.dispatch({type: 'SET_RESOURCE_ENTITY_EXPANDED', id: resource.id, isExpanded: false});
+    }
+    return;
+  }
+  var role = roles[resource.id];
+  if(!validDepts.includes(role.departmentID)) {
+    console.log(resource);
   }
   else {
-    $(info.el).popover({
-      animation:true,
-      delay: 300,
-      title: 'Shift Unavailable',
-      content: shift.why,
-      trigger: 'hover'
-    });
   }
 }
 
 function eventClick(info) {
-  console.log(info);
   if(!info.event.extendedProps.available) {
     info.jsEvent.preventDefault();
   }
@@ -64,14 +86,15 @@ function eventClick(info) {
 
 function filterEvents() {
   var depts = $('#departments').select2('data');
-  var validDepts = [];
+  validDepts = [];
   for(var i = 0; i < depts.length; i++) {
     validDepts.push(depts[i].id);
   }
   var events = allEvents;
   var newStart = new Date('2100-01-01T01:00:00');
+  calendar.renderingPauseDepth = true;
   for(var i = 0; i < events.length; i++) {
-    if(!validDepts.includes(events[i].extendedProps.departmentID)) {
+    if(!validDepts.includes(events[i].extendedProps.departmentID) && !events[i].classNames.includes('d-none')) {
       events[i].setProp('classNames', 'd-none');
     }
     else if(events[i].classNames.includes('d-none') && validDepts.includes(events[i].extendedProps.departmentID)) {
@@ -89,12 +112,11 @@ function filterEvents() {
       }
     }
   }
-  console.log(calendar.view.currentStart);
-  console.log(newStart);
-  if(calendar.view.currentStart < newStart) {
-    console.log('Scrolling...');
-    console.log(calendar.view.currentStart);
+  if(calendar.view.currentEnd < newStart) {
+    calendar.next();
   }
+  calendar.renderingPauseDepth = false;
+  calendar.render();
 }
 
 function deptChanged(e) {
@@ -205,6 +227,7 @@ function gotDepartments(jqXHR) {
       groups[depts[i]['area']] = [];
     }
     groups[depts[i]['area']].push({id: depts[i]['departmentID'], text: depts[i]['departmentName'], selected: true});
+    validDepts.push(depts[i]['departmentID']);
   }
   var data = [];
   for(var group in groups) {
@@ -231,7 +254,7 @@ function gotRoles(jqXHR) {
   var deptsForResources = {};
   for(var i = 0; i < array.length; i++) {
     var role = array[i];
-    roles[role.short_name] = role.display_name;
+    roles[role.short_name] = role;
     if(deptsForResources[role.departmentID] === undefined) {
       var deptName = getDeptName(role.departmentID);
       if(deptName === null) {
@@ -305,7 +328,9 @@ function initPage() {
         field: 'title'
       }
     ],
-    resources: []
+    resources: [],
+    resourceRender: renderResource,
+    filterResourcesWithEvents: true
   });
 }
 
