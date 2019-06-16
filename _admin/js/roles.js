@@ -3,7 +3,8 @@ var table;
 
 function roleNameUpdated() {
   var disp_name = $('#display_name').val();
-  var id = disp_name.replace(/ /g, "_");
+  var id = disp_name.replace(/\w/g, "_");
+  id = id.replace(/[\/\\]/g, '_');
   var full_id = deptId+'_'+id;
   $('#short_name').val(full_id);
 }
@@ -98,6 +99,8 @@ function gotDept(jqXHR) {
 
 function newRole(role) {
   delete role.onEmailList;
+  role.short_name = role.short_name.replace(/\w/g, "_");
+  role.short_name = role.short_name.replace(/[\/\\]/g, '_');
   $.ajax({
     url: '../api/v1/departments/'+deptId+'/roles/',
     method: 'POST',

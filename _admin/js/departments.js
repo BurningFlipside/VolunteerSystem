@@ -2,9 +2,10 @@ var table;
 
 function editDone(jqXHR) {
   if(jqXHR.status !== 200) {
+    console.log(jqXHR);
     alert('Unable to edit value!');
+    return;
   }
-  console.log(jqXHR);
 }
 
 function addDone(jqXHR) {
@@ -17,7 +18,6 @@ function addDone(jqXHR) {
 }
 
 function valueChanged(value, field, id) {
-  console.log('../api/v1/departments/'+id);
   var propParts = field.split('.');
   var obj = {};
   var current = obj;
