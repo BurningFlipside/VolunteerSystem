@@ -3,7 +3,7 @@ var table;
 
 function roleNameUpdated() {
   var disp_name = $('#display_name').val();
-  var id = disp_name.replace(/\w/g, "_");
+  var id = disp_name.replace(/ /g, "_");
   id = id.replace(/[\/\\]/g, '_');
   var full_id = deptId+'_'+id;
   $('#short_name').val(full_id);
@@ -99,7 +99,7 @@ function gotDept(jqXHR) {
 
 function newRole(role) {
   delete role.onEmailList;
-  role.short_name = role.short_name.replace(/\w/g, "_");
+  role.short_name = role.short_name.replace(/ /g, "_");
   role.short_name = role.short_name.replace(/[\/\\]/g, '_');
   $.ajax({
     url: '../api/v1/departments/'+deptId+'/roles/',
@@ -194,9 +194,13 @@ function deptFilterChanged(e) {
   var value = e.target.value;
   if(value === '*') {
     table.setData('../api/v1/roles');
+    $('#newRoleBtn').attr("disabled", true).attr('title', 'Adding a new role is disabled except on the individual department pages');
+    deptId = null;
   }
   else {
     table.setData('../api/v1/departments/'+value+'/roles');
+    $('#newRoleBtn').removeAttr("disabled").removeAttr('title');
+    deptId = value;
   }
 }
 
