@@ -116,6 +116,61 @@ function newDepartment() {
   });
 }
 
+function deleteDone(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to delete department!');
+    return;
+  }
+  location.reload();
+}
+
+function delIcon(cell, formatterParams, onRendered) {
+  return "<i class='fa fa-trash'></i>";
+}
+
+function gotRolesBeforeDelete(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to obtain roles!');
+    return;
+  }
+  var roles = jqXHR.responseJSON;
+  if(roles.length > 0) {
+    bootbox.alert('This department has one or more roles. The roles must be deleted first!');
+    return;
+  }
+  var data = this;
+  bootbox.confirm({
+    message: 'Are you sure you want to delete the department "'+this.departmentName+'"?',
+    buttons: {
+      confirm: {
+        label: 'Yes'
+      },
+      cancel: {
+        label: 'No'
+      }
+    },
+    callback: function(result){
+      if(result) {
+        $.ajax({
+          url: '../api/v1/departments/'+data.departmentID,
+          method: 'DELETE',
+          complete: deleteDone
+        });
+      }
+  }});
+}
+
+function delDepartment(e, cell) {
+  var data = cell.getRow().getData();
+  $.ajax({
+    url: '../api/v1/roles?$filter=departmentID eq '+data.departmentID,
+    context: data,
+    complete: gotRolesBeforeDelete
+  });
+}
+
 function initPage() {
   var cache = window.localStorage.getItem('FlipsideLeadCache');
   var cache2 = window.localStorage.getItem('FlipsideAreaCache');
@@ -125,6 +180,7 @@ function initPage() {
   table = new Tabulator("#depts", {
     ajaxURL: '../api/v1/departments',
     columns:[
+      {formatter: delIcon, width:40, align:"center", cellClick: delDepartment},
       {title:"ID", field:"_id.$id", visible: false},
       {title:"Department ID", field: 'departmentID', formatter:"link", formatterParams:{urlPrefix:'roles.php?dept='}},
       {title:'Name', field: 'departmentName', editor:"input"},

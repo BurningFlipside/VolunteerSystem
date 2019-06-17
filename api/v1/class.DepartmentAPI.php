@@ -63,6 +63,15 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         return $this->canEditDept($request, false);
     }
 
+    protected function canDelete($request, $entity)
+    {
+        if($this->isVolunteerAdmin($request))
+        {
+            return true;
+        }
+        return false;
+    }
+
     protected function processEntry($entry, $request)
     {
         $entry['available'] = true;
