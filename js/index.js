@@ -129,6 +129,10 @@ function gotShifts(jqXHR) {
     return;
   }
   allEvents = [];
+  var events = calendar.getEvents();
+  for(var i = 0; i < events.length; i++) {
+    events[i].remove();
+  }
   var shifts = jqXHR.responseJSON;
   start = new Date('2100-01-01T01:00:00');
   end = new Date('2000-01-01T01:00:00');
@@ -173,6 +177,10 @@ function gotShifts(jqXHR) {
 
 function eventChanged(e) {
   var eventID = e.target.value;
+  if(allEvents.length > 0) {
+    //Calendar doesn't reinit well... reload the page
+    location.href = location.origin + location.pathname + "?event=" + eventID;
+  }
   $.ajax({
     url: 'api/v1/events/'+eventID+'/shifts',
     complete: gotShifts
@@ -197,11 +205,16 @@ function gotEvents(jqXHR) {
     alert('Unable to get events!');
     return;
   }
+  var id = getParameterByName('event');
   var events = jqXHR.responseJSON;
   var data = [];
   for(var i = 0; i < events.length; i++) {
     if(events[i]['available']) {
-      data.push({id: events[i]['_id']['$id'], text: events[i]['name']});
+      var option = {id: events[i]['_id']['$id'], text: events[i]['name']};
+      if(id !== null && id === events[i]['_id']['$id']) {
+        option.selected = true;
+      }
+      data.push(option);
     }
   }
   var boundRetry = retrySelect2.bind({id: '#event', data: data, change: eventChanged});
