@@ -343,7 +343,8 @@ function initPage() {
     ],
     resources: [],
     resourceRender: renderResource,
-    filterResourcesWithEvents: true
+    filterResourcesWithEvents: true,
+    resourceOrder: 'title'
   });
 }
 
