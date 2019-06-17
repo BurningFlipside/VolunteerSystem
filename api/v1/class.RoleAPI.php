@@ -36,4 +36,9 @@ class RoleAPI extends Http\Rest\DataTableAPI
     {
         return $this->canEditDept($request, false);;
     }
+
+    protected function canDelete($request, $entity)
+    {
+        return $this->canUpdate($request, $entity);
+    }
 }

@@ -216,6 +216,61 @@ function gotRoles(jqXHR) {
   }
 }
 
+function delIcon(cell, formatterParams, onRendered) {
+  return "<i class='fa fa-trash'></i>";
+}
+
+function deleteDone(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to delete department!');
+    return;
+  }
+  location.reload();
+}
+
+function gotShiftsBeforeDelete(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to obtain shifts!');
+    return;
+  }
+  var shifts = jqXHR.responseJSON;
+  if(shifts.length > 0) {
+    bootbox.alert('This role has one or more shifts. The shifts must be deleted first!');
+    return;
+  }
+  var data = this;
+  bootbox.confirm({
+    message: 'Are you sure you want to delete the role "'+this.display_name+'"?',
+    buttons: {
+      confirm: {
+        label: 'Yes'
+      },
+      cancel: {
+        label: 'No'
+      }
+    },
+    callback: function(result){
+      if(result) {
+        $.ajax({
+          url: '../api/v1/roles/'+data.short_name,
+          method: 'DELETE',
+          complete: deleteDone
+        });
+      }
+  }});
+}
+
+function delRole(e, cell) {
+  var data = cell.getRow().getData();
+  $.ajax({
+    url: '../api/v1/shifts?$filter=roleID eq '+data.short_name,
+    context: data,
+    complete: gotShiftsBeforeDelete
+  });
+}
+
 function initPage() {
   deptId = getParameterByName('dept');
   if(deptId !== null) {
@@ -243,6 +298,7 @@ function initPage() {
   table = new Tabulator("#roles", {
     ajaxURL: tableURL,
     columns:[
+      {formatter: delIcon, width:40, align:"center", cellClick: delRole},
       {title:"ID", field:"_id.$id", visible: false},
       {title:'Short Name', field: 'short_name', visible: false},
       {title:'Name', field: 'display_name', editor: 'input'},
