@@ -13,6 +13,7 @@ class ShiftAPI extends Http\Rest\DataTableAPI
         parent::setup($app);
         $app->post('/Actions/CreateGroup', array($this, 'createGroup'));
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
+        $app->post('/{shift}/Actions/Signup[/]', array($this, 'signup'));
     }
 
     protected function isVolunteerAdmin($request)
@@ -157,5 +158,34 @@ class ShiftAPI extends Http\Rest\DataTableAPI
             }
         }
         return $response->withJSON($ret);
+    }
+
+    public function signup($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        if(isset($entity['participant']))
+        {
+            return $response->withStatus(401);
+        }
+        $entity = $this->processShift($entity, $request);
+        if(isset($entity['overlap']) && $entity['overlap'])
+        {
+            print_r($entity); die();
+        }
+        if(isset($entity['available']) && $entity['available'])
+        {
+            $entity['participant'] = $this->user->uid;
+            return $response->withJSON($dataTable->update($filter, $entity));
+        }
+        print_r($entity); die();
     }
 }

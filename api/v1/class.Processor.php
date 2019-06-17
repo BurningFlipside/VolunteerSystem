@@ -10,7 +10,7 @@ trait Processor
         return false;
     }
 
-    protected function canUserDoRole($user, $role)
+    public function canUserDoRole($user, $role)
     {
         if($role['publicly_visible'] === true)
         {
@@ -38,21 +38,99 @@ trait Processor
             {
                 return true;
             }
-            return 'Shift is invite only.';
+            return array('whyClass' => 'INVITE', 'whyMsg' => 'Shift is invite only.');
         }
         if($this->certCheck($requirements, $certs, 'ics100'))
         {
-            return 'Shift requires ICS 100 and you do not have that certification';
+            return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires ICS 100 and you do not have that certification');
         }
         if($this->certCheck($requirements, $certs, 'ics200'))
         {
-            return 'Shift requires ICS 200 and you do not have that certification';
+            return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires ICS 200 and you do not have that certification');
         }
         if($this->certCheck($requirements, $certs, 'bls'))
         {
-            return 'Shift requires Basic Life Support certification and you do not have that certification';
+            return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires Basic Life Support certification and you do not have that certification');
         }
         return true;
+    }
+
+    protected function getParticipantDiplayName($uid)
+    {
+        static $uids = array();
+        static $dataTable = null;
+        if($dataTable === null)
+        {
+            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'participants');
+        }
+        if(!isset($uids[$uid]))
+        {
+            $filter = new \Data\Filter("uid eq '$uid'");
+            $profile = $dataTable->read($filter);
+            if(empty($profile))
+            {
+                $uids[$uid] = $uid;
+                return $uid;
+            }
+            $profile = $profile[0];
+            switch($profile['webName'])
+            {
+                case 'anonymous':
+                    $uids[$uid] = 'Anonymous';
+                    break;
+                case 'full':
+                    $uids[$uid] = $profile['firstName'].' "'.$profile['burnerName'].'" '.$profile['lastName'];
+                    break;
+                case 'burnerLast':
+                    $uids[$uid] = $profile['burnerName'].' '.$profile['lastName'];
+                    break;
+                case 'firstBurner':
+                    $uids[$uid] = $profile['firstName'].' '.$profile['burnerName'];
+                    break;
+                case 'burner':
+                    $uids[$uid] = $profile['burnerName'];
+                    break;
+            }
+        }
+        return $uids[$uid];
+    }
+
+    public function shiftOverlaps($shift, $uid)
+    {
+        static $userShifts = null;
+        if($userShifts === null)
+        {
+            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
+            $filter = new \Data\Filter("participant eq '$uid'");
+            $userShifts = $dataTable->read($filter);
+        }
+        $count = count($userShifts);
+        if($count === 0)
+        {
+            return false;
+        }
+        $ret = false;
+        $shiftStart = new \DateTime($shift['startTime']);
+        $shiftEnd = new \DateTime($shift['endTime']);
+        for($i = 0; $i < $count; $i++)
+        {
+            //Can't overlap with itself
+            if($userShifts[$i]['_id']->{'$id'} === $shift['_id']->{'$id'})
+            {
+                return false;
+            }
+            $otherStart = new \DateTime($userShifts[$i]['startTime']);
+            $otherEnd = new \DateTime($userShifts[$i]['endTime']);
+            if($shiftStart >= $otherStart && $shiftStart < $otherEnd)
+            {
+                $ret = true;
+            }
+            else if($shiftEnd <= $otherEnd && $shiftEnd > $otherStart)
+            {
+                $ret = true;
+            }
+        }
+        return $ret;
     }
 
     protected function processShift($entry, $request)
@@ -92,6 +170,7 @@ trait Processor
             }
         }
         $entry['isAdmin'] = $this->canUpdate($request, $entry);
+        $entry['overlap'] = $this->shiftOverlaps($entry, $this->user->uid);
         if(in_array($entry['departmentID'], $privateDepts) && !$entry['isAdmin'])
         {
             return null;
@@ -122,7 +201,28 @@ trait Processor
         if($canDoRole[$entry['roleID']] !== true)
         {
             $entry['available'] = false;
-            $entry['why'] = $canDoRole[$entry['roleID']];
+            $entry['why'] = $canDoRole[$entry['roleID']]['whyMsg'];
+            $entry['whyClass'] = $canDoRole[$entry['roleID']]['whyClass'];
+        }
+        if(isset($entry['participant']))
+        {
+            $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
+            if($entry['participant'] === $profile['uid'])
+            {
+                $entry['available'] = false;
+                $entry['why'] = 'Shift is already taken, by you';
+                $entry['whyClass'] = 'MINE';
+            }
+            else
+            {
+                $entry['available'] = false;
+                $entry['why'] = 'Shift is already taken';
+                $entry['whyClass'] = 'TAKEN';
+            }
+            if(!$entry['isAdmin'])
+            {
+                unset($entry['participant']);
+            }
         }
         return $entry;
     }

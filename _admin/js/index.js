@@ -81,10 +81,21 @@ function gotShifts(jqXHR) {
     else {
       var filled = 0;
       var unfilled = data.length;
+      for(var i = 0; i < data.length; i++) {
+        if(data[i].participant) {
+          filled++;
+          unfilled--;
+        }
+      }
+      var percent = filled/unfilled;
+      var text = Number.parseFloat(filled/unfilled).toPrecision(4)+'%';
+      if(percent !== 0 && percent < 1) {
+        text = '<1%';
+      }
       var options = {
         elements: {
           center: {
-            text: filled/unfilled+'%'
+            text: text
           }
         }
       };

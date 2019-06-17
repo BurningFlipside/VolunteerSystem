@@ -36,13 +36,17 @@ function eventRenderHelper(info) {
   var evnt = info.event;
   var shift = evnt.extendedProps;
   if(window.matchMedia('(hover: none)').matches === false) {
+    var content = 'Department: '+getDeptName(shift.departmentID)+'<br/>Role: '+getRoleName(shift.roleID)+'<br/>Start: '+getTimeStr(shift.startTime)+'<br/>End: '+getTimeStr(shift.endTime);
+    if(shift.overlap) {
+      content += '<br/><b>You have a shift that overlaps this one!</b>';
+    }
     if(shift.available) {
       $(info.el).popover({
         animation:true,
         delay: 300,
         title: shift.name,
         html: true,
-        content: 'Department: '+getDeptName(shift.departmentID)+'<br/>Role: '+getRoleName(shift.roleID)+'<br/>Start: '+getTimeStr(shift.startTime)+'<br/>End: '+getTimeStr(shift.endTime),
+        content: content,
         trigger: 'hover'
       });
     }
@@ -79,8 +83,10 @@ function renderResource(info) {
 }
 
 function eventClick(info) {
-  if(!info.event.extendedProps.available) {
-    info.jsEvent.preventDefault();
+  if(window.matchMedia('(hover: none)').matches === false) {
+    if(!info.event.extendedProps.available) {
+      info.jsEvent.preventDefault();
+    }
   }
 }
 
@@ -153,9 +159,17 @@ function gotShifts(jqXHR) {
     if(shifts[i]['groupID']) {
       //evnt.groupId = shifts[i]['groupID'];
     }
+    if(shifts[i].overlap) {
+      evnt.backgroundColor = 'gold';
+      evnt.borderColor = 'gold';
+    }
     if(!shifts[i].available) {
       evnt.backgroundColor = 'lightGray';
       evnt.borderColor = 'lightGray';
+      if(shifts[i].whyClass === 'MINE') {
+        evnt.backgroundColor = 'SpringGreen';
+        evnt.borderColor = 'SpringGreen';
+      }
     }
     if(shifts[i].name === '') {
       shifts[i].name = getRoleName(shifts[i].roleID);

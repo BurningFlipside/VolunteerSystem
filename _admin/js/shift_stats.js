@@ -16,6 +16,18 @@ function gotShifts(jqXHR) {
     var hours = (minutes*1.0)/60;
     tableData['total'].hours += hours;
     tableData[shifts[i].departmentID].hours += hours;
+    if(shifts[i].participant) {
+      tableData['total'].filled++;
+      tableData[shifts[i].departmentID].filled++;
+      tableData['total'].filledHours += hours;
+      tableData[shifts[i].departmentID].filledHours += hours;
+    }
+    else {
+      tableData['total'].unfilled++;
+      tableData[shifts[i].departmentID].unfilled++;
+      tableData['total'].unfilledHours += hours;
+      tableData[shifts[i].departmentID].unfilledHours += hours;
+    }
   }
   var array = [];
   for(var key in tableData) {
@@ -27,6 +39,10 @@ function gotShifts(jqXHR) {
       {title:'Name', field: 'name'},
       {title:'Shift Count', field: 'shifts'},
       {title:'Total Hours', field: 'hours'},
+      {title:'Filled Shift Count', field: 'filled'},
+      {title:'Filled Shift Hours', field: 'filledHours'},
+      {title:'Unfilled Shift Count', field: 'unfilled'},
+      {title:'Unfilled Shift Hours', field: 'unfilledHours'}
     ]
   });
   table.setData(array);
@@ -79,10 +95,10 @@ function gotDepartments(jqXHR) {
   }
   var depts = jqXHR.responseJSON;
   tableData = {
-    'total': {name: 'Total', shifts: 0, hours: 0}
+    'total': {name: 'Total', shifts: 0, hours: 0, unfilled: 0, unfilledHours: 0, filled: 0, filledHours: 0}
   };
   for(var i = 0; i < depts.length; i++) {
-    tableData[depts[i]['departmentID']] = {name: depts[i]['departmentName'], shifts: 0, hours: 0};
+    tableData[depts[i]['departmentID']] = {name: depts[i]['departmentName'], shifts: 0, hours: 0, unfilled: 0, unfilledHours: 0, filled: 0, filledHours: 0};
   }
 }
 
