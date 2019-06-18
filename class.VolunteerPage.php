@@ -19,6 +19,14 @@ class VolunteerPage extends SecurePage
         $this->setTemplateName('@Volunteer/main.html');
         $this->addCSS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css');
         $this->addJS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js');
+        if($this->isAdmin() || $this->isLead())
+        {
+            $this->addLink('Admin', '_admin/');
+        }
+        if($this->user !== false && $this->user !== null)
+        {
+            $this->addLink('Settings', 'settings.php');
+        }
     }
 
     function printPage($header=true)
