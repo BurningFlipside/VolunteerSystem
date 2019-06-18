@@ -90,27 +90,52 @@ function eventClick(info) {
   }
 }
 
+function eventShouldBeShown(shift, validDepts, validShifts) {
+  if(validDepts.includes(shift.departmentID)) {
+    if(shift.whyClass === 'MINE' && validShifts.includes('mine')) {
+      return true;
+    }
+    else if(shift.available && validShifts.includes('unfilled') && !shift.overlap) {
+      return true;
+    }
+    else if(shift.overlap && validShifts.includes('overlap') && shift.whyClass !== 'TAKEN') {
+      return true;
+    }
+    else if(shift.why && validShifts.includes('unavailable') && shift.whyClass !== 'MINE' && shift.whyClass !== 'TAKEN') {
+      return true;
+    }
+    return false;
+  }
+  return false;
+}
+
 function filterEvents() {
   var depts = $('#departments').select2('data');
+  var shifts = $('#shiftTypes').select2('data');
+  var validShifts = [];
   validDepts = [];
   for(var i = 0; i < depts.length; i++) {
     validDepts.push(depts[i].id);
+  }
+  for(var i = 0; i < shifts.length; i++) {
+    validShifts.push(shifts[i].id);
   }
   var events = allEvents;
   var newStart = new Date('2100-01-01T01:00:00');
   calendar.renderingPauseDepth = true;
   for(var i = 0; i < events.length; i++) {
-    if(!validDepts.includes(events[i].extendedProps.departmentID) && !events[i].classNames.includes('d-none')) {
+    var valid = eventShouldBeShown(events[i].extendedProps, validDepts, validShifts);
+    if(!valid && !events[i].classNames.includes('d-none')) {
       events[i].setProp('classNames', 'd-none');
     }
-    else if(events[i].classNames.includes('d-none') && validDepts.includes(events[i].extendedProps.departmentID)) {
+    else if(events[i].classNames.includes('d-none') && valid) {
       var myStart = events[i].start;
       if(myStart < newStart) {
         newStart = myStart;
       }
       events[i].setProp('classNames', '');
     }
-    else if(validDepts.includes(events[i].extendedProps.departmentID)) {
+    else if(valid) {
       var myStart = events[i].start;
       var myEnd = events[i].end;
       if(myStart < newStart) {
@@ -122,10 +147,16 @@ function filterEvents() {
     calendar.next();
   }
   calendar.renderingPauseDepth = false;
-  calendar.render();
+  if(calendar.needsRerender) {
+    calendar.render();
+  }
 }
 
 function deptChanged(e) {
+  filterEvents();
+}
+
+function shiftChanged(e) {
   filterEvents();
 }
 
@@ -171,6 +202,10 @@ function gotShifts(jqXHR) {
         evnt.borderColor = 'SpringGreen';
       }
     }
+    if(shifts[i].status === 'filled' && shifts[i].whyClass !== 'MINE') {
+      evnt.backgroundColor = 'fireBrick';
+      evnt.borderColor = 'fireBrick';
+    }
     if(shifts[i].name === '') {
       shifts[i].name = getRoleName(shifts[i].roleID);
     }
@@ -205,8 +240,10 @@ function retrySelect2() {
   if($(this.id).select2 !== undefined) {
     var sel2 = $(this.id).select2({data: this.data});
     if(this.change !== undefined) {
-      sel2.change(eventChanged);
-      eventChanged({target: $(this.id)[0]});
+      sel2.change(this.change);
+      if(this.callFirst !== false) {
+        this.change({target: $(this.id)[0]});
+      }
     }
     return;
   }
@@ -216,7 +253,6 @@ function retrySelect2() {
 
 function gotEvents(jqXHR) {
   if(jqXHR.status !== 200) {
-    alert('Unable to get events!');
     return;
   }
   var id = getParameterByName('event');
@@ -241,7 +277,6 @@ function gotEvents(jqXHR) {
 
 function gotDepartments(jqXHR) {
   if(jqXHR.status !== 200) {
-    alert('Unable to get departments!');
     return;
   }
   var depts = jqXHR.responseJSON;
@@ -360,6 +395,12 @@ function initPage() {
     filterResourcesWithEvents: true,
     resourceOrder: 'title'
   });
+  var boundRetry = retrySelect2.bind({id: '#shiftTypes', change: shiftChanged, callFirst: false});
+  if($('#shiftTypes').select2 === undefined) {
+    setTimeout(boundRetry, 100);
+    return;
+  }
+  boundRetry();
 }
 
 $(() => {

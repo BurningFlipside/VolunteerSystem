@@ -18,6 +18,17 @@ $page->body .= '
     <select class="form-control" id="departments" multiple></select>
   </div>
   <div class="w-100"></div>
+  <label for="shiftTypes" class="d-none d-lg-block col-sm-2 col-form-label">Shift Types:</label>
+  <div class="d-none d-lg-block col-sm-10">
+    <select class="form-control" id="shiftTypes" multiple>
+      <option value="unfilled" selected>Unfilled</option>
+      <option value="filled" selected>Filled</option>
+      <option value="unavailable" selected>Unavailable</option>
+      <option value="mine" selected>Mine</option>
+      <option value="overlap" selected>Overlapping</option>
+    </select>
+  </div>
+  <div class="w-100"></div>
   <div id="calendar"></div>
 </div>';
 

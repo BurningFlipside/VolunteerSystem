@@ -65,10 +65,15 @@ function gotRoles(jqXHR) {
   }
 }
 
+var chart = null;
+
 function gotShifts(jqXHR) {
   var canvas = document.getElementById('shiftsFilled');
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if(chart !== null) {
+    chart.destroy();
+  }
   if(jqXHR.status !== 200) {
     ctx.fillText('Unable to obtain shift data', 10, 50);
     console.log(jqXHR);
@@ -82,13 +87,13 @@ function gotShifts(jqXHR) {
       var filled = 0;
       var unfilled = data.length;
       for(var i = 0; i < data.length; i++) {
-        if(data[i].participant) {
+        if(data[i].status && data[i].status === 'filled') {
           filled++;
           unfilled--;
         }
       }
-      var percent = filled/unfilled;
-      var text = Number.parseFloat(filled/unfilled).toPrecision(4)+'%';
+      var percent = (filled/unfilled)*100;
+      var text = Number.parseFloat(percent).toPrecision(4)+'%';
       if(percent !== 0 && percent < 1) {
         text = '<1%';
       }
@@ -106,7 +111,7 @@ function gotShifts(jqXHR) {
         }],
         labels: ['Unfilled', 'Filled']
       };
-      var myDoughnutChart = new Chart(ctx, {
+      chart = new Chart(ctx, {
         type: 'doughnut',
         data: data,
         options: options

@@ -179,11 +179,22 @@ class ShiftAPI extends Http\Rest\DataTableAPI
         $entity = $this->processShift($entity, $request);
         if(isset($entity['overlap']) && $entity['overlap'])
         {
-            print_r($entity); die();
+            $overlaps = $this->findOverlaps($entity, $this->user->uid);
+            $count = count($overlaps);
+            $leads = array();
+            for($i = 0; $i < $count; $i++)
+            {
+            	array_push($leads, $this->getLeadForDepartment($overlaps[$i]['departmentID']));
+                $overlaps[$i]['status'] = 'pending';
+            }
+            $entity['participant'] = $this->user->uid;
+            $entity['status'] = 'pending';
+            return $response->withJSON($overlaps, 500);
         }
         if(isset($entity['available']) && $entity['available'])
         {
             $entity['participant'] = $this->user->uid;
+            $entity['status'] = 'filled';
             return $response->withJSON($dataTable->update($filter, $entity));
         }
         print_r($entity); die();

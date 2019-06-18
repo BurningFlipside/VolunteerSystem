@@ -16,7 +16,7 @@ function gotShifts(jqXHR) {
     var hours = (minutes*1.0)/60;
     tableData['total'].hours += hours;
     tableData[shifts[i].departmentID].hours += hours;
-    if(shifts[i].participant) {
+    if(shifts[i].status && shifts[i].status === 'filled') {
       tableData['total'].filled++;
       tableData[shifts[i].departmentID].filled++;
       tableData['total'].filledHours += hours;

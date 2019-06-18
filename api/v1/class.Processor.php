@@ -133,6 +133,35 @@ trait Processor
         return $ret;
     }
 
+    public function findOverlaps($shift, $uid)
+    {
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $filter = new \Data\Filter("participant eq '$uid'");
+        $userShifts = $dataTable->read($filter);
+        $res = array();
+        $count = count($userShifts);
+        $shiftStart = new \DateTime($shift['startTime']);
+        $shiftEnd = new \DateTime($shift['endTime']);
+        for($i = 0; $i < $count; $i++)
+        {
+            if($userShifts[$i]['_id']->{'$id'} === $shift['_id']->{'$id'})
+            {
+                continue;
+            }
+            $otherStart = new \DateTime($userShifts[$i]['startTime']);
+            $otherEnd = new \DateTime($userShifts[$i]['endTime']);
+            if($shiftStart >= $otherStart && $shiftStart < $otherEnd)
+            {
+                array_push($res, $userShifts[$i]);
+            }
+            else if($shiftEnd <= $otherEnd && $shiftEnd > $otherStart)
+            {
+                array_push($res, $userShifts[$i]);
+            }
+        }
+        return $res;
+    }
+
     protected function processShift($entry, $request)
     {
         static $profile = null;

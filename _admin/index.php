@@ -21,17 +21,13 @@ $page->addCard('fa-user', '<div id="volCount">?</div> Volunteers', 'volunteers.p
 
 $page->content['body'] = '
 <div class="row">
-  <div class="col-lg-2">
-    <h1 class="page-header">Events</h1>
-  </div>
-  <div class="col-lg-10">
+  <label for="events" class="col-sm-2 col-form-label">Events:</label>
+  <div class="col-sm-10">
     <select class="form-control" id="events">
     </select>
   </div>
-  <div class="col-lg-2">
-    <h1 class="page-header">Departments</h1>
-  </div>
-  <div class="col-lg-10">
+  <label for="departments" class="col-sm-2 col-form-label">Departments:</label> 
+  <div class="col-sm-10">
     <select class="form-control" id="departments">
       '.$deptOptions.'
     </select>
