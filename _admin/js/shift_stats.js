@@ -37,12 +37,15 @@ function gotShifts(jqXHR) {
   var table = new Tabulator("#shift_stats", {
     columns: [
       {title:'Name', field: 'name'},
-      {title:'Shift Count', field: 'shifts'},
-      {title:'Total Hours', field: 'hours'},
-      {title:'Filled Shift Count', field: 'filled'},
-      {title:'Filled Shift Hours', field: 'filledHours'},
-      {title:'Unfilled Shift Count', field: 'unfilled'},
-      {title:'Unfilled Shift Hours', field: 'unfilledHours'}
+      {title:'Shift Count', field: 'shifts', sorter:"number"},
+      {title:'Total Hours', field: 'hours', sorter:"number"},
+      {title:'Filled Shift Count', field: 'filled', sorter:"number"},
+      {title:'Filled Shift Hours', field: 'filledHours', sorter:"number"},
+      {title:'Unfilled Shift Count', field: 'unfilled', sorter:"number"},
+      {title:'Unfilled Shift Hours', field: 'unfilledHours', sorter:"number"}
+    ],
+    initialSort:[
+      {column:"hours", dir:"desc"}
     ]
   });
   table.setData(array);
