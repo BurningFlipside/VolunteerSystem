@@ -261,11 +261,11 @@ function removeElementsNotInOtherArray(element) {
 }
 
 function getGroupName(group) {
-  if(group[0].name !== undefined) {
+  if(group[0].name !== undefined && group[0].name !== '') {
     return group[0].name;
   }
-  var start = new Date(singles[i].startTime);
-  var end = new Date(singles[i].endTime);
+  var start = new Date(group[0].startTime);
+  var end = new Date(group[0].endTime);
   return 'Shift Group: '+start+' to '+end;
 }
 
@@ -746,6 +746,9 @@ function gotDepartments(jqXHR) {
     url: '../api/v1/shifts',
     complete: gotShifts
   });
+  if(window.location.hash !== '') {
+    accordian.find(':not(#collapse'+window.location.hash.substr(1)+')').collapse('hide');
+  }
 }
 
 function setMinEndTime(e) {
