@@ -154,7 +154,7 @@ if($canDo !== true)
 $start = new \DateTime($shift['startTime']);
 $end = new \DateTime($shift['endTime']);
 $diff = $end->diff($start);
-$shiftLength = $diff->h + ($diff->i/60.0);
+$shiftLength = $diff->h + ($diff->i / 60.0);
 
 $page->body .= '<div id="signupContent" ';
 if($overlap)

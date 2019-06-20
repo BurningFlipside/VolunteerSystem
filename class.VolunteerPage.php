@@ -29,7 +29,7 @@ class VolunteerPage extends SecurePage
         }
     }
 
-    function printPage($header=true)
+    function printPage($header = true)
     {
         if($this->user === false || $this->user === null)
         {

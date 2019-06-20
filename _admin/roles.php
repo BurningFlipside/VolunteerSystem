@@ -13,7 +13,7 @@ $page->content['table'] = array('id' => 'roles');
 $page->content['selectors'] = '<div class="col-sm2"><button type="button" class="btn btn-primary" id="newRoleBtn" onclick="showRoleWizard();">New Role</button></div>';
 if(!isset($_GET['dept']))
 {
-    $page->content['selectors'].='<div class="col-sm4"><select class="form-control" id="deptFilter"><option value="*"></option></select></div>';
+    $page->content['selectors'] .= '<div class="col-sm4"><select class="form-control" id="deptFilter"><option value="*"></option></select></div>';
 }
 $page->content['body'] = '
 <div class="modal fade bd-example-modal-lg" id="roleWizard" tabindex="-1" role="dialog" aria-labelledby="roleWizardTitle" aria-hidden="true" data-backdrop="static" data-complete="newRole">

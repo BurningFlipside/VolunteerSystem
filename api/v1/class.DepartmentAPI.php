@@ -262,8 +262,8 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
     {
         $pdf = new \PDF\PDF();
         $html = '<body>';
-        $html.= '<style type="text/css">table {border-collapse: collapse;} table, th, td {border: 1px solid black;}</style>';
-        $html.= '<h1 style="text-align: center;">'.$dept['departmentName'].' Shift Schedule</h1>';
+        $html .= '<style type="text/css">table {border-collapse: collapse;} table, th, td {border: 1px solid black;}</style>';
+        $html .= '<h1 style="text-align: center;">'.$dept['departmentName'].' Shift Schedule</h1>';
         //Group shifts by day...
         $days = array();
         $count = count($shifts);
@@ -277,7 +277,7 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
             $timeStr = $start->format('g:i A').' till '.$end->format('g:i A');
             if(strlen($shifts[$i]['name']) > 0)
             {
-                $timeStr.=' - <i>'.$shifts[$i]['name'].'</i>';
+                $timeStr .=' - <i>'.$shifts[$i]['name'].'</i>';
             }
             if(!isset($days[$dateStr]))
             {
@@ -292,22 +292,22 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         ksort($days);
         foreach($days as $dateStr=>$day)
         {
-            $html.='<h2>'.$dateStr.'</h2>';
+            $html .='<h2>'.$dateStr.'</h2>';
             uksort($day, array($this, 'groupSort'));
             foreach($day as $shiftStr=>$shifts)
             {
                 usort($shifts, array($this, 'shiftSort'));
-                $html.='<h3>'.$shiftStr.'</h3>';
-                $html.='<table width="100%"><tr><th style="width: 20%">Role</th><th>Volunteer Name</th><th>Volunteer Camp</th></tr>';
+                $html .='<h3>'.$shiftStr.'</h3>';
+                $html .='<table width="100%"><tr><th style="width: 20%">Role</th><th>Volunteer Name</th><th>Volunteer Camp</th></tr>';
                 foreach($shifts as $shift)
                 {
                     //TODO Volunteer info for shift...
-                    $html.='<tr><td>'.$this->getRoleNameFromID($shift['roleID']).'</td><td></td><td></td></tr>';
+                    $html .='<tr><td>'.$this->getRoleNameFromID($shift['roleID']).'</td><td></td><td></td></tr>';
                 }
-                $html.='</table>';
+                $html .='</table>';
             }
         }
-        $html.='</body>';
+        $html .='</body>';
         $pdf->setPDFFromHTML($html);
         $response = $response->withHeader('Content-Type', 'application/pdf');
         $response->getBody()->write($pdf->toPDFBuffer());
@@ -354,9 +354,9 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         $originalStartTime = $shifts[0]['startTime'];
         $str = $shifts[0]['startTime']->format('c');
         $start = date_parse($str);
-        $lastShift = $shifts[$count-1];
+        $lastShift = $shifts[$count - 1];
         $interval = $lastShift['endTime']->diff($shifts[0]['startTime']);
-        $hourCount = ($interval->d*24)+$interval->h;
+        $hourCount = ($interval->d*24) + $interval->h;
         $simpleHours = array();
         $militaryHours = array();
         $hour = $start['hour'];
@@ -381,7 +381,7 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
                 }
                 else
                 {
-                    array_push($simpleHours, ($hour-12).'p');
+                    array_push($simpleHours, ($hour - 12).'p');
                 }
             }
             array_push($militaryHours, $hour.':00');
@@ -393,7 +393,7 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         }
         $sheat->fromArray($simpleHours, null, 'B2');
         $sheat->fromArray($militaryHours, null, 'B3');
-        $mergeCount = 24-$start['hour'];
+        $mergeCount = 24 - $start['hour'];
         if($mergeCount > $hourCount)
         {
             $mergeCount = $hourCount;
@@ -402,12 +402,12 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         $cellIndex = 2;
         while($mergeCount)
         {
-            $sheat->mergeCellsByColumnAndRow($cellIndex, 1, $cellIndex+$mergeCount-1, 1);
+            $sheat->mergeCellsByColumnAndRow($cellIndex, 1, $cellIndex + $mergeCount - 1, 1);
             $sheat->setCellValueByColumnAndRow($cellIndex, 1, array_shift($days));
             $cell = $sheat->getCellByColumnAndRow($cellIndex, 1);
             $cell->getStyle()->getAlignment()->setHorizontal('center');
-            $cellIndex+=$mergeCount;
-            $hourCount-=$mergeCount;
+            $cellIndex += $mergeCount;
+            $hourCount -= $mergeCount;
             $mergeCount = $hourCount;
             if($mergeCount > 24)
             {
@@ -418,13 +418,13 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         $rows = array();
         foreach($roles as $role=>$hour)
         {
-            $sheat->setCellValueByColumnAndRow(1, 4+$i, $this->getRoleNameFromID($role));
+            $sheat->setCellValueByColumnAndRow(1, 4 + $i, $this->getRoleNameFromID($role));
             array_push($rows, $role);
             $overlaps = array();
-            for($j = 0; $j < count($roles2[$role])-1; $j++)
+            for($j = 0; $j < count($roles2[$role]) - 1; $j++)
             {
                 $currRole = $roles2[$role][$j];
-                $nextRole = $roles2[$role][$j+1];
+                $nextRole = $roles2[$role][$j + 1];
                 if($currRole['end'] > $nextRole['start'])
                 {
                     $str = $currRole['start']->format('c');
@@ -438,10 +438,10 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
             if(!empty($overlaps))
             {
                 $overlapCount = max(array_values($overlaps));
-                for($j = 0; $j < $overlapCount+1; $j++)
+                for($j = 0; $j < $overlapCount + 1; $j++)
                 {
                     $i++;
-                    $sheat->setCellValueByColumnAndRow(1, 4+$i, $this->getRoleNameFromID($role));
+                    $sheat->setCellValueByColumnAndRow(1, 4 + $i, $this->getRoleNameFromID($role));
                     if($j > 0)
                     {
                         array_push($rows, $role);
