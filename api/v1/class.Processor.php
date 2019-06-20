@@ -186,12 +186,19 @@ trait Processor
 
     protected function isUserDepartmentLead2($dept, $user)
     {
-        if($user->isInGroupNamed('Leads') && $user->title === $dept['lead'])
+        if($user->isInGroupNamed('Leads'))
         {
-            return true;
+            if(in_array($dept['lead'], $user->title))
+            {
+                return true;
+            }
+        }
+        if(!isset($dept['others']))
+        {
+            return false;
         }
         $email = $user->mail;
-        $otherAdmins = $dept['others'];
+        $otherAdmins = explode(',', $dept['others']);
         return in_array($email, $otherAdmins);
     }
 

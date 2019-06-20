@@ -1,6 +1,8 @@
 <?php
 class RoleAPI extends Http\Rest\DataTableAPI
 {
+    use Processor;
+
     public function __construct()
     {
         parent::__construct('fvs', 'roles', 'short_name');
@@ -28,8 +30,7 @@ class RoleAPI extends Http\Rest\DataTableAPI
         {
             return true;
         }
-        //TODO give access to department lead
-        return false;
+        return $this->isUserDepartmentLead($deptId, $this->user);
     }
 
     protected function canUpdate($request, $entity)

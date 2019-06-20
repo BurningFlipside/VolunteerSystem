@@ -6,6 +6,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf;
 
 class DepartmentAPI extends Http\Rest\DataTableAPI
 {
+    use Processor;
+
     protected $isAdmin = null;
     protected $isLead = null;
 
@@ -46,16 +48,11 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         {
             return true;
         }
-        if($this->isLead === null)
+        if($dept !== null)
         {
-            $this->isLead = $this->user->isInGroupNamed('Leads');
-            if($dept['lead'] === $this->user->title[0])
-            {
-                return true;
-            }
+            return $this->isUserDepartmentLead2($dept, $this->user);
         }
-        //TODO give access to department lead
-        return false;
+        return $this->isUserDepartmentLead($deptId, $this->user);
     }
 
     protected function canUpdate($request, $entity)
@@ -78,9 +75,8 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         $entry['isAdmin'] = $this->canEditDept($request, null, $entry);
         if(isset($entry['public']) && $entry['public'] === false)
         {
-            if($this->user->title[0] !== $entry['lead'])
+            if(!$this->isUserDepartmentLead2($entry, $this->user))
             {
-                //TODO determine if user is in other admins or not...
                 $entry['available'] = false;
                 $entry['why'] = 'Not lead of department';
             }
