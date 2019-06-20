@@ -84,7 +84,7 @@ class EventAPI extends VolunteerAPI
         $count = count($shifts);
         for($i = 0; $i < $count; $i++)
         {
-            $shifts[$i] = $this->processShift($shifts[$i], $request);
+            $shifts[$i] = $this->processShift($shifts[$i]);
         }
         $shifts = array_values(array_filter($shifts));
         return $response->withJson($shifts);

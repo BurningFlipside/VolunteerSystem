@@ -35,4 +35,22 @@ class VolunteerDepartment
         }
         return $users;
     }
+
+    public static function getPrivateDepartments()
+    {
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
+        $filter = new \Data\Filter('public eq false');
+        $depts = $dataTable->read($filter);
+        $res = array();
+        if(empty($depts))
+        {
+            return $res;
+        }
+        $count = count($depts);
+        for($i = 0; $i < $count; $i++)
+        {
+            array_push($res, $depts[$i]['departmentID']);
+        }
+        return $res;
+    }
 }

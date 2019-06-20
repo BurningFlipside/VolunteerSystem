@@ -144,34 +144,44 @@ trait Processor
         return $this->isAdminForShift($role, $user);
     }
 
-    protected function processShift($entry, $request)
+    protected function shouldShowDepartment($deptId, $isAdmin)
+    {
+        static $privateDepts = null;
+        if($privateDepts === null)
+        {
+            $privateDepts = VolunteerDepartment::getPrivateDepartments();
+        }
+        if($isAdmin)
+        {
+            return true;
+        }
+        return !in_array($deptId, $privateDepts);
+    }
+
+    protected function getParticipantProfile($uid)
+    {
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'participants');
+        $filter = new \Data\Filter("uid eq '$uid'");
+        $profile = $dataTable->read($filter);
+        if(empty($profile))
+        {
+            return null;
+        }
+        return $profile[0];
+    }
+
+    protected function processShift($entry)
     {
         static $profile = null;
         static $eeAvailable = false;
-        static $privateDepts = array();
         static $canDoRole = array();
         static $roles = array();
         if($profile === null)
         {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'participants');
-            $uid = $this->user->uid;
-            $filter = new \Data\Filter("uid eq '$uid'");
-            $profile = $dataTable->read($filter);
-            if(empty($profile) && !$this->isAdmin)
-            {
-                return null;
-            }
-            $profile = $profile[0];
+            $profile = $this->getParticipantProfile($this->user->uid);
             if(isset($profile['firstName']) && isset($profile['lastName']))
             {
                 $eeAvailable = true;
-            }
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
-            $filter = new \Data\Filter('public eq false');
-            $depts = $dataTable->read($filter);
-            foreach($depts as $dept)
-            {
-                array_push($privateDepts, $dept['departmentID']);
             }
             $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
             $tmp = $dataTable->read();
@@ -183,7 +193,7 @@ trait Processor
         $shift = new \VolunteerShift(false, $entry);
         $entry['isAdmin'] = $this->isAdminForShift($entry, $this->user);
         $entry['overlap'] = $shift->findOverlaps($this->user->uid, true);
-        if(in_array($entry['departmentID'], $privateDepts) && !$entry['isAdmin'])
+        if(!$this->shouldShowDepartment($entry['departmentID'], $entry['isAdmin']))
         {
             return null;
         }
