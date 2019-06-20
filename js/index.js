@@ -162,6 +162,11 @@ function gotShifts(jqXHR) {
   for(var i = 0; i < events.length; i++) {
     events[i].remove();
   }
+  var depts = $('#departments').select2('data');
+  var deptHasShifts = {};
+  for(var i = 0; i < depts.length; i++) {
+    deptHasShifts[depts[i].id] = false;
+  }
   var shifts = jqXHR.responseJSON;
   start = new Date('2100-01-01T01:00:00');
   end = new Date('2000-01-01T01:00:00');
@@ -207,12 +212,19 @@ function gotShifts(jqXHR) {
     var calEvent = calendar.addEvent(evnt);
     calEvent.setResources([shifts[i].roleID]);
     allEvents.push(calEvent);
+    deptHasShifts[shifts[i].departmentID] = true;
   }
   calendar.setOption('validRange.start', myStart);
   calendar.render();
   if(window.innerWidth <= 1024) {
     $('#calendar .fc-center h2').css('font-size', '1.0em');
   }
+  for(var dept in deptHasShifts) {
+    if(deptHasShifts[dept] === false) {
+      $('#departments').find("option[value='"+dept+"']").remove();
+    }
+  }
+  $('#departments').trigger('change');
   $('#departments').change(deptChanged);
 }
 
