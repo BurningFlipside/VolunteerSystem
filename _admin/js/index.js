@@ -56,6 +56,15 @@ function gotDepartments(jqXHR) {
         addOptiontoSelect(departments[0], array[i].departmentID, array[i].departmentName);
       }
     }
+    if(chart === null) {
+      var eventID = $('#events').val();
+      var deptID = $('#departments').val();
+      var url = '../api/v1/events/'+eventID+'/shifts?$filter=departmentID eq '+deptID;
+      $.ajax({
+        url: url,
+        complete: gotShifts
+      });
+    }
   }
 }
 
@@ -122,10 +131,12 @@ function gotShifts(jqXHR) {
 
 function showEventDetails(e) {
   var eventID = e.target.value;
-  $.ajax({
-    url: '../api/v1/events/'+eventID+'/shifts',
-    complete: gotShifts
-  });
+  if($('#departments').val() !== null) {
+    $.ajax({
+      url: '../api/v1/events/'+eventID+'/shifts',
+      complete: gotShifts
+    });
+  }
 }
 
 function showDepartmentDetails(e) {

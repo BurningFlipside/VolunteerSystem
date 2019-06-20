@@ -15,6 +15,7 @@ if($page->isLead === false)
 else
 {
     $page->addCard('fa-building', '<div id="deptName"></div>', 'departments.php');
+    $deptOptions = '';
 }
 $page->addCard('fa-address-card', '<div id="roleCount">?</div> Roles', 'roles.php', $page::CARD_YELLOW);
 $page->addCard('fa-user', '<div id="volCount">?</div> Volunteers', 'volunteers.php', $page::CARD_RED);
