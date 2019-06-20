@@ -157,7 +157,6 @@ if($canDo !== true)
   $page->body .= '</div>';
   $page->printPage();
   return;  
-  var_dump($canDo); die();
 }
 
 $start = new \DateTime($shift['startTime']);
