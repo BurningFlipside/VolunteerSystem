@@ -43,12 +43,16 @@ if(empty($profiles))
 $profile = $profiles[0];
 
 //Is shift already taken?
-if(isset($shift['participant']))
+if(isset($entry['status']) && ($entry['status'] === 'pending' || $entry['status'] === 'filled'))
 {
-  if($shift['participant'] === $page->user->uid)
+  if(isset($shift['participant']) && $shift['participant'] === $page->user->uid)
   {
     $page->body .= '<div class="alert alert-success" role="alert">
       You already have this shift!
+    </div>
+    <div class="row">
+      <button type="button" class="btn btn-secondary mr-auto" onClick="window.history.back();">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="abandon();">Abandon Shift</button>
     </div>';
   }
   else

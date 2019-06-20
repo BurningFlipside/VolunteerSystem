@@ -233,7 +233,7 @@ trait Processor
             $entry['why'] = $canDoRole[$entry['roleID']]['whyMsg'];
             $entry['whyClass'] = $canDoRole[$entry['roleID']]['whyClass'];
         }
-        if(isset($entry['participant']))
+        if(isset($entry['status']) && ($entry['status'] === 'pending' || $entry['status'] === 'filled'))
         {
             $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
             if($entry['participant'] === $profile['uid'])
@@ -254,6 +254,30 @@ trait Processor
             }
         }
         return $entry;
+    }
+
+    protected function getLeadForDepartment($departmentID)
+    {
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
+        $filter = new \Data\Filter('departmentID eq '.$departmentID);
+        $depts = $dataTable->read($filter);
+        if(empty($depts))
+        {
+            return null;
+        }
+        $leadTitle = $depts[0]['lead'];
+        $auth = \AuthProvider::getInstance();
+        $users = $auth->getUsersByFilter(new \Data\Filter('title eq '.$leadTitle), array('mail'));
+        if(empty($users))
+        {
+            return null;
+        }
+        $count = count($users);
+        for($i = 0; $i < $count; $i++)
+        {
+            $users[$i] = $users[$i]['mail'];
+        }
+        return $users;
     }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */

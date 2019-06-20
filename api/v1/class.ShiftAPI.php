@@ -14,6 +14,7 @@ class ShiftAPI extends Http\Rest\DataTableAPI
         $app->post('/Actions/CreateGroup', array($this, 'createGroup'));
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
         $app->post('/{shift}/Actions/Signup[/]', array($this, 'signup'));
+        $app->post('/{shift}/Actions/Abandon[/]', array($this, 'abandon'));
     }
 
     protected function isVolunteerAdmin($request)
@@ -172,7 +173,7 @@ class ShiftAPI extends Http\Rest\DataTableAPI
             return $response->withStatus(404);
         }
         $entity = $entity[0];
-        if(isset($entity['participant']))
+        if(isset($entity['participant']) && strlen($entity['participant']) > 0)
         {
             return $response->withStatus(401);
         }
@@ -184,12 +185,16 @@ class ShiftAPI extends Http\Rest\DataTableAPI
             $leads = array();
             for($i = 0; $i < $count; $i++)
             {
-            	array_push($leads, $this->getLeadForDepartment($overlaps[$i]['departmentID']));
+            	$leads = array_merge($leads, $this->getLeadForDepartment($overlaps[$i]['departmentID']));
                 $overlaps[$i]['status'] = 'pending';
             }
+            $leads = array_merge($leads, $this->getLeadForDepartment($entity['departmentID']));
+            $leads = array_unique($leads);
             $entity['participant'] = $this->user->uid;
             $entity['status'] = 'pending';
-            return $response->withJSON($overlaps, 500);
+            $email = new \Emails\TwoShiftsAtOnceEmail($profile);
+            $email->addLeads($leads);
+            return $response->withJSON($email, 500);
         }
         if(isset($entity['available']) && $entity['available'])
         {
@@ -198,5 +203,26 @@ class ShiftAPI extends Http\Rest\DataTableAPI
             return $response->withJSON($dataTable->update($filter, $entity));
         }
         print_r($entity); die();
+    }
+
+    public function abandon($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        if(!isset($entity['participant']) || $entity['participant'] !== $this->user->uid)
+        {
+            return $response->withStatus(401);
+        }
+        $entity['participant'] = '';
+        $entity['status'] = 'unfilled';
+        return $response->withJSON($dataTable->update($filter, $entity));
     }
 }
