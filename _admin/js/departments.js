@@ -179,6 +179,11 @@ function initPage() {
   }
   table = new Tabulator("#depts", {
     ajaxURL: '../api/v1/departments',
+    ajaxResponse: function(url, params, response) {
+      return response.filter(function(element) {
+        return element.isAdmin;
+      });
+    },
     columns:[
       {formatter: delIcon, width:40, align:"center", cellClick: delDepartment},
       {title:"ID", field:"_id.$id", visible: false},
