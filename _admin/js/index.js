@@ -165,6 +165,13 @@ function gotEvents(jqXHR) {
   }
 }
 
+function gotVols(jqXHR) {
+  if(jqXHR.responseJSON !== undefined) {
+    var resp = jqXHR.responseJSON;
+    $('#volCount').html(resp['@odata.count']);
+  }
+}
+
 function initIndex() {
   $.ajax({
     url: '../api/v1/departments?$count=true',
@@ -177,6 +184,10 @@ function initIndex() {
   $.ajax({
     url: '../api/v1/events?$count=true',
     complete: gotEvents
+  });
+  $.ajax({
+    url: '../api/v1/participants?$count=true',
+    complete: gotVols
   });
 }
 
