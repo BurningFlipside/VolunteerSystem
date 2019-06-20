@@ -6,7 +6,10 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
 {
     use SecureWebPage;
 
-    function __construct($title)
+    public $isLead;
+    public $isAuthorized;
+
+    public function __construct($title)
     {
         $this->isLead = false;
         $this->isAuthorized = false;

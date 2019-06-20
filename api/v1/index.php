@@ -39,4 +39,3 @@ function getRoot()
 }
 */
 $site->run();
-?>

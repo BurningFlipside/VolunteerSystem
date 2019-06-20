@@ -69,7 +69,7 @@ class ShiftAPI extends VolunteerAPI
         );
     }
 
-    public function createGroup($request, $response, $args)
+    public function createGroup($request, $response)
     {
         $array = $request->getParsedBody();
         $count = count($array);
@@ -116,7 +116,7 @@ class ShiftAPI extends VolunteerAPI
         }
     }
 
-    public function newGroup($request, $response, $args)
+    public function newGroup($request, $response)
     {
         if(!$this->canCreate($request))
         {
