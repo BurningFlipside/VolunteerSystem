@@ -95,83 +95,6 @@ trait Processor
         return $uids[$uid];
     }
 
-    public function shiftOverlaps($shift, $uid)
-    {
-        static $userShifts = null;
-        if($userShifts === null)
-        {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-            $filter = new \Data\Filter("participant eq '$uid'");
-            $userShifts = $dataTable->read($filter);
-        }
-        $count = count($userShifts);
-        if($count === 0)
-        {
-            return false;
-        }
-        $ret = false;
-        $shiftStart = new \DateTime($shift['startTime']);
-        $shiftEnd = new \DateTime($shift['endTime']);
-        for($i = 0; $i < $count; $i++)
-        {
-            //Can't overlap with itself
-            if($userShifts[$i]['_id']->{'$id'} === $shift['_id']->{'$id'})
-            {
-                return false;
-            }
-            $otherStart = new \DateTime($userShifts[$i]['startTime']);
-            $otherEnd = new \DateTime($userShifts[$i]['endTime']);
-            if($shiftStart >= $otherStart && $shiftStart < $otherEnd)
-            {
-                $ret = true;
-            }
-            else if($shiftEnd <= $otherEnd && $shiftEnd > $otherStart)
-            {
-                $ret = true;
-            }
-        }
-        return $ret;
-    }
-
-    public function findOverlaps($shift, $uid)
-    {
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $filter = new \Data\Filter("participant eq '$uid'");
-        $userShifts = $dataTable->read($filter);
-        $res = array();
-        $count = count($userShifts);
-        $shiftStart = new \DateTime($shift['startTime']);
-        $shiftEnd = new \DateTime($shift['endTime']);
-        for($i = 0; $i < $count; $i++)
-        {
-            if($userShifts[$i]['_id']->{'$id'} === $shift['_id']->{'$id'})
-            {
-                continue;
-            }
-            $otherStart = new \DateTime($userShifts[$i]['startTime']);
-            $otherEnd = new \DateTime($userShifts[$i]['endTime']);
-            if($shiftStart >= $otherStart && $shiftStart < $otherEnd)
-            {
-                array_push($res, $userShifts[$i]);
-            }
-            else if($shiftEnd <= $otherEnd && $shiftEnd > $otherStart)
-            {
-                array_push($res, $userShifts[$i]);
-            }
-        }
-        return $res;
-    }
-
-    protected function isUserVolunteerAdmin($user)
-    {
-        static $isVolAdmin = null;
-        if($isVolAdmin === null)
-        {
-            $isVolAdmin = $user->isInGroupNamed('VolunteerAdmins');
-        }
-        return $isVolAdmin;
-    }
-
     protected function isUserDepartmentLead($departmentID, $user)
     {
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
@@ -204,7 +127,7 @@ trait Processor
 
     public function isAdminForShift($shift, $user)
     {
-        if($this->isUserVolunteerAdmin($user))
+        if($this->isAdmin)
         {
             return true;
         }
@@ -234,7 +157,7 @@ trait Processor
             $uid = $this->user->uid;
             $filter = new \Data\Filter("uid eq '$uid'");
             $profile = $dataTable->read($filter);
-            if(empty($profile) && !$this->isVolunteerAdmin($request))
+            if(empty($profile) && !$this->isAdmin)
             {
                 return null;
             }
@@ -257,8 +180,9 @@ trait Processor
                $roles[$role['short_name']] = $role;
             }
         }
+        $shift = new \VolunteerShift(false, $entry);
         $entry['isAdmin'] = $this->isAdminForShift($entry, $this->user);
-        $entry['overlap'] = $this->shiftOverlaps($entry, $this->user->uid);
+        $entry['overlap'] = $shift->findOverlaps($this->user->uid, true);
         if(in_array($entry['departmentID'], $privateDepts) && !$entry['isAdmin'])
         {
             return null;
@@ -319,30 +243,6 @@ trait Processor
     {
         $entry['isAdmin'] = $this->isAdminForRole($entry, $this->user);
         return $entry;
-    }
-
-    protected function getLeadForDepartment($departmentID)
-    {
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
-        $filter = new \Data\Filter('departmentID eq '.$departmentID);
-        $depts = $dataTable->read($filter);
-        if(empty($depts))
-        {
-            return null;
-        }
-        $leadTitle = $depts[0]['lead'];
-        $auth = \AuthProvider::getInstance();
-        $users = $auth->getUsersByFilter(new \Data\Filter('title eq '.$leadTitle), array('mail'));
-        if(empty($users))
-        {
-            return null;
-        }
-        $count = count($users);
-        for($i = 0; $i < $count; $i++)
-        {
-            $users[$i] = $users[$i]['mail'];
-        }
-        return $users;
     }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */

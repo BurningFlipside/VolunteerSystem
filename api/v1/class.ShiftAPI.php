@@ -5,7 +5,7 @@ class ShiftAPI extends VolunteerAPI
 
     public function __construct()
     {
-        parent::__construct('events');
+        parent::__construct('shifts');
     }
 
     public function setup($app)
@@ -165,18 +165,21 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
+        $shift = new \VolunteerShift($entity);
         $entity = $this->processShift($entity, $request);
         if(isset($entity['overlap']) && $entity['overlap'])
         {
-            $overlaps = $this->findOverlaps($entity, $this->user->uid);
+            $overlaps = $shift->findOverlaps($this->user->uid);
             $count = count($overlaps);
             $leads = array();
             for($i = 0; $i < $count; $i++)
             {
-            	$leads = array_merge($leads, $this->getLeadForDepartment($overlaps[$i]['departmentID']));
+                $dept = new \VolunteerDepartment($overlaps[$i]['departmentID']);
+                $leads = array_merge($leads, $dept->getLeadEmails());
                 $overlaps[$i]['status'] = 'pending';
             }
-            $leads = array_merge($leads, $this->getLeadForDepartment($entity['departmentID']));
+            $dept = new \VolunteerDepartment($entity['departmentID']);
+            $leads = array_merge($leads, $dept->getLeadEmails());
             $leads = array_unique($leads);
             $entity['participant'] = $this->user->uid;
             $entity['status'] = 'pending';

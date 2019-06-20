@@ -1,15 +1,23 @@
 <?php
 require_once('class.VolunteerPage.php');
 require_once('api/v1/class.Processor.php');
+require_once('app/VolunteerAutoload.php');
 
 class ProcessorUser
 {
   use Processor;
+
+  protected $isAdmin;
+
+  public function __construct($isAdmin)
+  {
+      $this->isAdmin = $isAdmin;
+  }
 }
 
-$processor = new ProcessorUser();
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 $page->addJS('js/signup.js');
+$processor = new ProcessorUser($page->user->isInGroupNamed('VolunteerAdmins'));
 
 $page->body = '<div class="row"><h1>Shift Signup</h1></div>';
 
@@ -31,6 +39,7 @@ if(empty($shifts))
   return;
 }
 $shift = $shifts[0];
+$myShift = new \VolunteerShift(false, $shift);
 
 $dataTable = DataSetFactory::getDataTableByNames('fvs', 'participants');
 $profiles = $dataTable->read(new \Data\Filter('uid eq '.$page->user->uid));
@@ -87,7 +96,7 @@ if(isset($entry['status']) && ($entry['status'] === 'pending' || $entry['status'
 }
 
 $overlap = false;
-if($processor->shiftOverlaps($shift, $page->user->uid))
+if($myShift->findOverlaps($page->user->uid, true))
 {
     $page->body .= '<div class="alert alert-warning" role="alert">
       You already have a shift during this time. If you choose to signup for this shift the lead(s) for the departments will be notified and must approve.
