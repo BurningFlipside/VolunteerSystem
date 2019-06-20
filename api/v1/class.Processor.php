@@ -215,6 +215,19 @@ trait Processor
         return false;
     }
 
+    public function isAdminForRole($role, $user)
+    {
+        if($this->isUserVolunteerAdmin($user))
+        {
+            return true;
+        }
+        if($this->isUserDepartmentLead($role['departmentID'], $user))
+        {
+            return true;
+        }
+        return false;
+    }
+
     protected function processShift($entry, $request)
     {
         static $profile = null;
@@ -306,6 +319,12 @@ trait Processor
                 unset($entry['participant']);
             }
         }
+        return $entry;
+    }
+
+    protected function processRole($entry, $request)
+    {
+        $entry['isAdmin'] = $this->isAdminForRole($entry, $this->user);
         return $entry;
     }
 

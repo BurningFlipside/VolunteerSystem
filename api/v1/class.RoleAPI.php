@@ -42,4 +42,9 @@ class RoleAPI extends Http\Rest\DataTableAPI
     {
         return $this->canUpdate($request, $entity);
     }
+
+    protected function processEntry($entry, $request)
+    {
+        return $this->processRole($entry, $request);
+    }
 }

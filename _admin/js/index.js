@@ -70,7 +70,14 @@ function gotDepartments(jqXHR) {
 
 function gotRoles(jqXHR) {
   if(jqXHR.responseJSON !== undefined) {
-    $('#roleCount').html(jqXHR.responseJSON['@odata.count']);
+    var roles = jqXHR.responseJSON;
+    var count = 0;
+    for(var i = 0; i < roles.length; i++) {
+      if(roles[i].isAdmin) {
+        count++;
+      }
+    }
+    $('#roleCount').html(count);
   }
 }
 
@@ -178,7 +185,7 @@ function initIndex() {
     complete: gotDepartments
   });
   $.ajax({
-    url: '../api/v1/roles?$count=true',
+    url: '../api/v1/roles',
     complete: gotRoles
   });
   $.ajax({

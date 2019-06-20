@@ -186,7 +186,9 @@ function gotDeptList(jqXHR) {
   var array = jqXHR.responseJSON;
   var sel = $('#deptFilter');
   for(var i = 0; i < array.length; i++) {
-    addOptiontoSelect(sel[0], array[i].departmentID, array[i].departmentName);
+    if(array[i].isAdmin) {
+      addOptiontoSelect(sel[0], array[i].departmentID, array[i].departmentName);
+    }
   }
 }
 
@@ -297,6 +299,11 @@ function initPage() {
   }
   table = new Tabulator("#roles", {
     ajaxURL: tableURL,
+    ajaxResponse: function(url, params, response) {
+      return response.filter(function(element) {
+        return element.isAdmin;
+      });
+    },
     columns:[
       {formatter: delIcon, width:40, align:"center", cellClick: delRole},
       {title:"ID", field:"_id.$id", visible: false},
