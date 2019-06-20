@@ -225,7 +225,7 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         switch($request->getParam('type'))
         {
             case 'simplePDF':
-               return $this->generateSimplePDFSchedule($depts[0], $shifts, $request, $response);
+               return $this->generateSimplePDFSchedule($depts[0], $shifts, $response);
             case 'gridXLSX':
                return $this->generateGridSchedule($depts[0], $shifts, $request, $response, 'XLSX');
             case 'gridPDF':
@@ -258,57 +258,9 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         return $roles[$roleID];
     }
 
-    public function generateSimplePDFSchedule($dept, $shifts, $request, $response)
+    public function generateSimplePDFSchedule($dept, $shifts, $response)
     {
-        $pdf = new \PDF\PDF();
-        $html = '<body>';
-        $html .= '<style type="text/css">table {border-collapse: collapse;} table, th, td {border: 1px solid black;}</style>';
-        $html .= '<h1 style="text-align: center;">'.$dept['departmentName'].' Shift Schedule</h1>';
-        //Group shifts by day...
-        $days = array();
-        $count = count($shifts);
-        for($i = 0; $i < $count; $i++)
-        {
-            $start = new DateTime($shifts[$i]['startTime']);
-            $end = new DateTime($shifts[$i]['endTime']);
-            $shifts[$i]['startTime'] = $start;
-            $shifts[$i]['endTime'] = $end;
-            $dateStr = $start->format('l (n/j/Y)');
-            $timeStr = $start->format('g:i A').' till '.$end->format('g:i A');
-            if(strlen($shifts[$i]['name']) > 0)
-            {
-                $timeStr .=' - <i>'.$shifts[$i]['name'].'</i>';
-            }
-            if(!isset($days[$dateStr]))
-            {
-                $days[$dateStr] = array();
-            }
-            if(!isset($days[$dateStr][$timeStr]))
-            {
-                $days[$dateStr][$timeStr] = array();
-            }
-            array_push($days[$dateStr][$timeStr], $shifts[$i]);
-        }
-        ksort($days);
-        foreach($days as $dateStr=>$day)
-        {
-            $html .='<h2>'.$dateStr.'</h2>';
-            uksort($day, array($this, 'groupSort'));
-            foreach($day as $shiftStr=>$shifts)
-            {
-                usort($shifts, array($this, 'shiftSort'));
-                $html .='<h3>'.$shiftStr.'</h3>';
-                $html .='<table width="100%"><tr><th style="width: 20%">Role</th><th>Volunteer Name</th><th>Volunteer Camp</th></tr>';
-                foreach($shifts as $shift)
-                {
-                    //TODO Volunteer info for shift...
-                    $html .='<tr><td>'.$this->getRoleNameFromID($shift['roleID']).'</td><td></td><td></td></tr>';
-                }
-                $html .='</table>';
-            }
-        }
-        $html .='</body>';
-        $pdf->setPDFFromHTML($html);
+        $pdf = new \Schedules\SimplePDF($dept, $shifts);
         $response = $response->withHeader('Content-Type', 'application/pdf');
         $response->getBody()->write($pdf->toPDFBuffer());
         return $response;

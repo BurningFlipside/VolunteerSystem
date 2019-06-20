@@ -11,7 +11,7 @@ function VolunteerAutoload($classname)
         $classname = substr($classname, $lastNsPos + 1);
         $filename  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace).DIRECTORY_SEPARATOR;
     }
-    $filename = __DIR__.DIRECTORY_SEPARATOR.$filename.'class.'.$classname.'.php'; 
+    $filename = __DIR__.DIRECTORY_SEPARATOR.$filename.'class.'.$classname.'.php';
     if(is_readable($filename))
     {
         require $filename;
