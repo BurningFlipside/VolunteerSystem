@@ -480,11 +480,13 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
             }
             $shift = array_shift($shifts);
         }
-        $style = $sheat->getStyleByColumnAndRow(2, 4, 1+count($simpleHours), 3+count($rows));
+        $rowCount = count($rows);
+        $style = $sheat->getStyleByColumnAndRow(2, 4, 1+count($simpleHours), 3 + $rowCount);
         $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-        for($i = 0; $i < count($simpleHours); $i++)
+        $hourCount = count($simpleHours);
+        for($i = 0; $i < $hourCount; $i++)
         {
-            for($j = 0; $j < count($rows); $j++)
+            for($j = 0; $j < $rowCount; $j++)
             {
                  $cell = $sheat->getCellByColumnAndRow($i+2, $j+4);
                  if($cell->isInMergeRange())
@@ -513,6 +515,10 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
             $writer->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
             $content = 'application/pdf';
             $extension = '.pdf';
+        }
+        else
+        {
+            return $response->withJson(array('msg'=>'Unknown type specified: '.$type), 400);
         }
         ob_start();
         $writer->save('php://output');
