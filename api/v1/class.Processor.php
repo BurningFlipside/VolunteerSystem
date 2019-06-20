@@ -217,15 +217,8 @@ trait Processor
 
     public function isAdminForRole($role, $user)
     {
-        if($this->isUserVolunteerAdmin($user))
-        {
-            return true;
-        }
-        if($this->isUserDepartmentLead($role['departmentID'], $user))
-        {
-            return true;
-        }
-        return false;
+        //Shift and Role use the same key for department ID...
+        return $this->isAdminForShift($role, $user);
     }
 
     protected function processShift($entry, $request)
@@ -264,7 +257,7 @@ trait Processor
                $roles[$role['short_name']] = $role;
             }
         }
-        $entry['isAdmin'] = $this->canUpdate($request, $entry);
+        $entry['isAdmin'] = $this->isAdminForShift($entry, $this->user);
         $entry['overlap'] = $this->shiftOverlaps($entry, $this->user->uid);
         if(in_array($entry['departmentID'], $privateDepts) && !$entry['isAdmin'])
         {
