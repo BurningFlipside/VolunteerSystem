@@ -104,6 +104,11 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         {
             $roles = array();
         }
+        $count = count($roles);
+        for($i = 0; $i < $count; $i++)
+        {
+            $roles[$i] = $this->processRole($roles[$i], $request);
+        }
         return $response->withJson($roles);
     }
 
