@@ -1,19 +1,12 @@
 <?php
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf;
-
-class DepartmentAPI extends Http\Rest\DataTableAPI
+class DepartmentAPI extends VolunteerAPI
 {
     use Processor;
 
-    protected $isAdmin = null;
-    protected $isLead = null;
-
     public function __construct()
     {
-        parent::__construct('fvs', 'departments', 'departmentID');
+        parent::__construct('departments', 'departmentID');
     }
 
     public function setup($app)
@@ -25,21 +18,6 @@ class DepartmentAPI extends Http\Rest\DataTableAPI
         $app->get('/{dept}/shifts[/]', array($this, 'getShiftsForDepartment'));
         $app->post('/{dept}/shifts[/]', array($this, 'createShiftForDepartment'));
         $app->get('/{dept}/shifts/Actions/GenerateShiftSchedule', array($this, 'generateShiftSchedule'));
-    }
-
-    protected function isVolunteerAdmin($request)
-    {
-        $this->validateLoggedIn($request);
-        if($this->isAdmin === null)
-        {
-            $this->isAdmin = $this->user->isInGroupNamed('VolunteerAdmins');
-        }
-        return $this->isAdmin;
-    }
-
-    protected function canCreate($request)
-    {
-        return $this->isVolunteerAdmin($request);
     }
 
     protected function canEditDept($request, $deptId, $dept = null)

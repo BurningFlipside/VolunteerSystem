@@ -1,11 +1,11 @@
 <?php
-class ShiftAPI extends Http\Rest\DataTableAPI
+class ShiftAPI extends VolunteerAPI
 {
     use Processor;
 
     public function __construct()
     {
-        parent::__construct('fvs', 'shifts', '_id');
+        parent::__construct('events');
     }
 
     public function setup($app)
@@ -15,17 +15,6 @@ class ShiftAPI extends Http\Rest\DataTableAPI
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
         $app->post('/{shift}/Actions/Signup[/]', array($this, 'signup'));
         $app->post('/{shift}/Actions/Abandon[/]', array($this, 'abandon'));
-    }
-
-    protected function isVolunteerAdmin($request)
-    {
-        static $isVolAdmin = null;
-        if($isVolAdmin === null)
-        {
-            $this->validateLoggedIn($request);
-            $isVolAdmin = $this->user->isInGroupNamed('VolunteerAdmins');
-        }
-        return $isVolAdmin;
     }
 
     protected function canCreate($request)

@@ -1,11 +1,11 @@
 <?php
-class EventAPI extends Http\Rest\DataTableAPI
+class EventAPI extends VolunteerAPI
 {
     use Processor;
 
     public function __construct()
     {
-        parent::__construct('fvs', 'events', '_id');
+        parent::__construct('events');
     }
 
     public function setup($app)
@@ -13,26 +13,6 @@ class EventAPI extends Http\Rest\DataTableAPI
         parent::setup($app);
         $app->get('/{event}/shifts[/]', array($this, 'getShiftsForEvent'));
         $app->post('/{event}/shifts[/]', array($this, 'createShiftForEvent'));
-    }
-
-    protected function isVolunteerAdmin($request)
-    {
-        static $isVolAdmin = null;
-        if($isVolAdmin === null)
-        {
-            $this->validateLoggedIn($request);
-            $isVolAdmin = $this->user->isInGroupNamed('VolunteerAdmins');
-        }
-        return $isVolAdmin;
-    }
-
-    protected function canCreate($request)
-    {
-        if($this->isVolunteerAdmin($request))
-        {
-            return true;
-        }
-        return false;
     }
 
     protected function canUpdate($request, $entity)

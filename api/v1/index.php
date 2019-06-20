@@ -4,6 +4,7 @@ error_reporting(E_ALL);
 require('Autoload.php');
 require('../../app/VolunteerAutoload.php');
 require_once('class.Processor.php');
+require_once('class.VolunteerAPI.php');
 require_once('class.DepartmentAPI.php');
 require_once('class.EventAPI.php');
 require_once('class.RoleAPI.php');

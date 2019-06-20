@@ -1,27 +1,11 @@
 <?php
-class RoleAPI extends Http\Rest\DataTableAPI
+class RoleAPI extends VolunteerAPI
 {
     use Processor;
 
     public function __construct()
     {
-        parent::__construct('fvs', 'roles', 'short_name');
-    }
-
-    public function setup($app)
-    {
-        parent::setup($app);
-    }
-
-    protected function isVolunteerAdmin($request)
-    {
-        $this->validateLoggedIn($request);
-        return $this->user->isInGroupNamed('VolunteerAdmins');
-    }
-
-    protected function canCreate($request)
-    {
-        return $this->isVolunteerAdmin($request);
+        parent::__construct('roles', 'short_name');
     }
 
     protected function canEditDept($request, $deptId)

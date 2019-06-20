@@ -1,20 +1,9 @@
 <?php
-class ParticipantAPI extends Http\Rest\DataTableAPI
+class ParticipantAPI extends VolunteerAPI
 {
     public function __construct()
     {
-        parent::__construct('fvs', 'participants', 'uid');
-    }
-
-    public function setup($app)
-    {
-        parent::setup($app);
-    }
-
-    protected function isVolunteerAdmin($request)
-    {
-        $this->validateLoggedIn($request);
-        return $this->user->isInGroupNamed('VolunteerAdmins');
+        parent::__construct('participants', 'uid');
     }
 
     protected function canCreate($request)
