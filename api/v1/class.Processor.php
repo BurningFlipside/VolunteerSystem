@@ -216,7 +216,7 @@ trait Processor
             $entry['why'] = $canDoRole[$entry['roleID']]['whyMsg'];
             $entry['whyClass'] = $canDoRole[$entry['roleID']]['whyClass'];
         }
-        if(isset($entry['status']) && ($entry['status'] === 'pending' || $entry['status'] === 'filled'))
+        if($shift->isFilled())
         {
             $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
             if($entry['participant'] === $profile['uid'])

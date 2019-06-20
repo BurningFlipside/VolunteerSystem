@@ -64,6 +64,11 @@ class VolunteerShift
         return false;
     }
 
+    public function isFilled()
+    {
+         return isset($this->dbData['status']) && ($this->dbData['status'] === 'pending' || $this->dbData['status'] === 'filled');
+    }
+
     public function findOverlaps($uid, $shortCircuit = false)
     {
         static $userShifts = null;
