@@ -42,6 +42,27 @@ if(empty($profiles))
 }
 $profile = $profiles[0];
 
+if($processor->isAdminForShift($shift, $page->user))
+{
+  if(isset($shift['groupID']) && strlen($shift['groupID'] > 0))
+  {
+    $page->body .= '
+    <div class="alert alert-info" role="alert">
+      You are an administrator for this shift. You can edit the shift <a href="_admin/shifts.php?shiftID='.$shiftID.'" class="alert-link">here</a>.
+      Or you can edit the shift group <a href="_admin/shifts.php?groupID='.$shift['groupID'].'" class="alert-link">here</a>.
+    </div>
+    ';
+  }
+  else
+  {
+    $page->body .= '
+    <div class="alert alert-info" role="alert">
+      You are an administrator for this shift. You can edit the shift <a href="_admin/shifts.php?shiftID='.$shiftID.'" class="alert-link">here</a>.
+    </div>
+    ';
+  }
+}
+
 //Is shift already taken?
 if(isset($entry['status']) && ($entry['status'] === 'pending' || $entry['status'] === 'filled'))
 {

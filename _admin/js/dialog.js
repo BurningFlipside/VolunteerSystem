@@ -91,7 +91,11 @@ window.flipDialog.dialog = function(options) {
       footer.append(inputGroup);
     }
     else {
-      var buttonElem = $('<button type="button" class="btn btn-primary col-sm-2">'+button.text+'</button>');
+      var disabled = '';
+      if(button.disabled === true) {
+        disabled = 'disabled="true"';
+      }
+      var buttonElem = $('<button type="button" class="btn btn-primary col-sm-2" '+disabled+'>'+button.text+'</button>');
       buttonElem.click(bound);
       footer.append(buttonElem);
     }

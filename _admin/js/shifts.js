@@ -563,6 +563,15 @@ function saveGroup(e) {
   });
 }
 
+function getDepartmentName(departmentID) {
+  if(departments[departmentID] !== undefined) {
+    return departments[departmentID].departmentName
+  }
+  else {
+    return departmentID;
+  }
+}
+
 function gotShiftToEdit(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -579,12 +588,16 @@ function gotShiftToEdit(jqXHR) {
     }
     eventOptions.push(eventOption);
   }
+  var groupable = true;
+  if(shift.groupID !== undefined && shift.groupID.length > 0) {
+    groupable = false;
+  }
   var dialogOptions = {
     title: 'Edit Shift',
     data: shift,
     inputs: [
       {type: 'hidden', id: 'departmentID'},
-      {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[shift.departmentID].departmentName},
+      {label: 'Department', type: 'text', readonly: true, id: 'department', value: getDepartmentName(shift.departmentID)},
       {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true},
@@ -601,7 +614,7 @@ function gotShiftToEdit(jqXHR) {
     ],
     buttons: [
       {text: 'Delete Shift', callback: deleteShift},
-      {text: 'Group Shift', callback: groupShift},
+      {text: 'Group Shift', callback: groupShift, disabled: !groupable},
       {text: 'Save Shift', callback: saveShift}
     ]
   };
@@ -781,6 +794,20 @@ function initPage() {
   });
   $('#startTime').change(setMinEndTime);
   $('#eventID').change(setBoundaryTimes);
+  var shiftID = getParameterByName('shiftID');
+  var groupID = getParameterByName('groupID');
+  if(shiftID !== null) {
+    $.ajax({
+      url: '../api/v1/shifts/'+shiftID,
+      complete: gotShiftToEdit
+    });
+  }
+  else if(groupID !== null) {
+    $.ajax({
+      url: '../api/v1/shifts?$filter=groupID eq '+groupID,
+      complete: gotGroupToEdit
+    });
+  }
 }
 
 $(initPage);

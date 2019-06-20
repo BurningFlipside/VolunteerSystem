@@ -162,6 +162,52 @@ trait Processor
         return $res;
     }
 
+    protected function isUserVolunteerAdmin($user)
+    {
+        static $isVolAdmin = null;
+        if($isVolAdmin === null)
+        {
+            $isVolAdmin = $user->isInGroupNamed('VolunteerAdmins');
+        }
+        return $isVolAdmin;
+    }
+
+    protected function isUserDepartmentLead($departmentID, $user)
+    {
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
+        $filter = new \Data\Filter('departmentID eq '.$departmentID);
+        $depts = $dataTable->read($filter);
+        if(empty($depts))
+        {
+            return false;
+        }
+        return $this->isUserDepartmentLead2($depts[0], $user);
+    }
+
+    protected function isUserDepartmentLead2($dept, $user)
+    {
+        if($user->isInGroupNamed('Leads') && $user->title === $dept['lead'])
+        {
+            return true;
+        }
+        $email = $user->mail;
+        $otherAdmins = $dept['others'];
+        return in_array($email, $otherAdmins);
+    }
+
+    public function isAdminForShift($shift, $user)
+    {
+        if($this->isUserVolunteerAdmin($user))
+        {
+            return true;
+        }
+        if($this->isUserDepartmentLead($shift['departmentID'], $user))
+        {
+            return true;
+        }
+        return false;
+    }
+
     protected function processShift($entry, $request)
     {
         static $profile = null;
