@@ -82,14 +82,6 @@ function renderResource(info) {
   }
 }
 
-function eventClick(info) {
-  if(window.matchMedia('(hover: none)').matches === false) {
-    if(!info.event.extendedProps.available) {
-      info.jsEvent.preventDefault();
-    }
-  }
-}
-
 function eventShouldBeShown(shift, validDepts, validShifts) {
   if(validDepts.includes(shift.departmentID)) {
     if(shift.whyClass === 'MINE' && validShifts.includes('mine')) {
@@ -383,7 +375,6 @@ function initPage() {
     defaultView: defaultView,
     validRange: getDateRange,
     eventRender: eventRenderHelper,
-    eventClick: eventClick,
     resourceColumns: [
       {
         labelText: 'Role',
