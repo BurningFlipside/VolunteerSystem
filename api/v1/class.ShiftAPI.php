@@ -43,9 +43,8 @@ class ShiftAPI extends Http\Rest\DataTableAPI
  	if($this->isVolunteerAdmin($request))
         {
             return true;
-        }       
-        //TODO give access to department lead
-        return false;
+        }
+        return $this->isUserDepartmentLead($entity['departmentID'], $this->user);
     }
 
     protected function canDelete($request, $entity)
