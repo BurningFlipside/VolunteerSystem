@@ -4,6 +4,11 @@ window.flipDialog.dialog = function(options) {
   dialog.find('.modal-content').append('<div class="modal-header"><h4 class="modal-title">'+options.title+'</h4><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button></div>');
   dialog.find('.modal-content').append('<div class="modal-body"><div class-"containter-fluid"><div class="row"></div></div></div>');
   var body = dialog.find('.modal-content .row');
+  if(options.alerts !== undefined) {
+    for(var i = 0; i < options.alerts.length; i++) {
+      body.append('<div class="col-sm-12 alert alert-'+options.alerts[i].type+'" role="alert">'+options.alerts[i].text+'</div>');
+    }
+  }
   for(var i = 0; i < options.inputs.length; i++) {
     var input = options.inputs[i];
     var div = body;

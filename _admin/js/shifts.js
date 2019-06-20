@@ -618,6 +618,11 @@ function gotShiftToEdit(jqXHR) {
       {text: 'Save Shift', callback: saveShift}
     ]
   };
+  if(shift.status === 'filled' || shift.status === 'pending') {
+    dialogOptions.alerts = [
+      {type: 'warning', text: 'Shift is already filled!'}
+    ];
+  }
   $.ajax({
     url: '../api/v1/departments/'+shift.departmentID+'/roles',
     complete: gotDepartmentRoles,
@@ -644,11 +649,15 @@ function gotGroupToEdit(jqXHR) {
   var group = {shifts: shifts};
   var roleText = '';
   var roles = {};
+  var taken = false;
   for(var i = 0; i < shifts.length; i++) {
     if(roles[shifts[i].roleID] === undefined) {
       roles[shifts[i].roleID] = 0;
     }
     roles[shifts[i].roleID]++;
+    if(shifts[i].status === 'filled' || shifts[i].status === 'pending') {
+      taken = true;
+    }
   }
   for(var role in roles) {
     roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[role]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+role+'</span></div></div>';
@@ -678,6 +687,11 @@ function gotGroupToEdit(jqXHR) {
       {text: 'Add Shift/Merge Group', callback: groupShift},
       {text: 'Save Group', callback: saveGroup}
     ]
+  };
+  if(taken) {
+    dialogOptions.alerts = [
+      {type: 'warning', text: 'One or more shift in the group is already filled!'}
+    ];
   }
   flipDialog.dialog(dialogOptions);
 }
