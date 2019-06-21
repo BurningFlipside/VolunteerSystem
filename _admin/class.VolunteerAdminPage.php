@@ -8,6 +8,7 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
 
     public $isLead;
     public $isAuthorized;
+    public $secure_root;
 
     public function __construct($title)
     {

@@ -109,16 +109,16 @@ class DepartmentAPI extends VolunteerAPI
         return $response->withJson($shifts);
     }
 
-    public function createRoleForDepartment($request, $response, $args)
+    protected function createEntityForDepartment($request, $response, $args, $table)
     {
         $deptId = $args['dept'];
         if($this->canEditDept($request, $deptId) === false)
         {
             return $response->withStatus(401);
         }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
+        $dataTable = DataSetFactory::getDataTableByNames('fvs', $table);
         $obj = $request->getParsedBody();
-        if($obj == NULL)
+        if($obj === null)
         {
             $obj = json_decode($request->getBody()->getContents(), true);
         }
@@ -127,22 +127,14 @@ class DepartmentAPI extends VolunteerAPI
         return $response->withJson($ret);
     }
 
+    public function createRoleForDepartment($request, $response, $args)
+    {
+        return $this->createEntityForDepartment($request, $response, $args, 'roles');
+    }
+
     public function createShiftForDepartment($request, $response, $args)
     {
-        $deptId = $args['dept'];
-        if($this->canEditDept($request, $deptId) === false)
-        {
-            return $response->withStatus(401);
-        }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $obj = $request->getParsedBody();
-        if($obj == NULL)
-        {
-            $obj = json_decode($request->getBody()->getContents(), true);
-        }
-        $obj['departmentID'] = $deptId;
-        $ret = $dataTable->create($obj);
-        return $response->withJson($ret);
+        return $this->createEntityForDepartment($request, $response, $args, 'shifts');
     }
 
     public function updateRoleForDepartment($request, $response, $args)
