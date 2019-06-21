@@ -61,6 +61,14 @@ class GridSchedule
         }
     }
 
+    protected function setShiftNameInCell($sheat, $col, $row, $shift)
+    {
+        if(isset($shift['participant']))
+        {
+            $sheat->setCellValueByColumnAndRow($col, $row, $this->getParticipantDiplayName($shift['participant']));
+        }
+    }
+
     protected function createSpreadSheet()
     {
         $shifts = $this->shifts;
@@ -201,18 +209,12 @@ class GridSchedule
                     $i++;
                 }
                 $sheat->mergeCellsByColumnAndRow($hoursFromStart+2, $firstRow+4+$i, $hoursFromStart+1+$shift['length'], $firstRow+4+$i);
-                if(isset($shift['participant']))
-                {
-                    $sheat->setCellValueByColumnAndRow($hoursFromStart+2, $firstRow+4+$i, $this->getParticipantDiplayName($shift['participant']));
-                }
+                $this->setShiftNameInCell($sheat, $hoursFromStart+2, $firstRow+4+$i, $shift);
             }
             else
             {
                 $sheat->mergeCellsByColumnAndRow($hoursFromStart+2, $firstRow+4, $hoursFromStart+1+$shift['length'], $firstRow+4);
-                if(isset($shift['participant']))
-                {
-                    $sheat->setCellValueByColumnAndRow($hoursFromStart+2, $firstRow+4, $this->getParticipantDiplayName($shift['participant']));
-                }
+                $this->setShiftNameInCell($sheat, $hoursFromStart+2, $firstRow+4, $shift);
             }
             $shift = array_shift($shifts);
         }
