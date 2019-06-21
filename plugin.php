@@ -19,4 +19,3 @@ class FVSPlugin extends SecurePlugin
     }
 }
 */
-?>

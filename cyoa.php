@@ -1,12 +1,12 @@
 <?php
-require_once('class.VolunteerPage.php');
-$page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
+require_once('class.SecurePage.php');
+$page = new SecurePage('Burning Flipside - Flipside Volunteer System');
 
-$page->addJSByURI('js/init_page.js', false);
-$page->addJSByURI('js/question_node.js', false);
-$page->addJSByURI('js/volunteer_position.js', false);
+$page->add_js_from_src('scripts/init_page.js');
+$page->add_js_from_src('scripts/question_node.js');
+$page->add_js_from_src('scripts/volunteer_position.js');
 
-$page->addHeadTag('
+$page->add_head_tag('
 <script type="text/javascript">function doYes(){var answer=window.currentNode.GetYes();handleNode(answer)}
 function doBack(){
         if(window.nodes.length == 1){
@@ -73,4 +73,5 @@ $page->body .= '
 </script>
 ';
 
-$page->printPage();
+$page->print_page();
+?>

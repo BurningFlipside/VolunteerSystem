@@ -21,7 +21,7 @@ class VolunteerDepartment
 
     public function getLeadEmails()
     {
-        $leadTitle = $dbData['lead'];
+        $leadTitle = $this->dbData['lead'];
         $auth = \AuthProvider::getInstance();
         $users = $auth->getUsersByFilter(new \Data\Filter('title eq '.$leadTitle), array('mail'));
         if(empty($users))

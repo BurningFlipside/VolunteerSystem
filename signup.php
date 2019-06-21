@@ -13,6 +13,11 @@ class ProcessorUser
   {
       $this->isAdmin = $isAdmin;
   }
+
+  protected function isVolunteerAdmin()
+  {
+      return $this->isAdmin;
+  }
 }
 
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');

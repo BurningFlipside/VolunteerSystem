@@ -8,7 +8,7 @@ class VolunteerPage extends SecurePage
 {
     public  $volunteerRoot;
 
-    function __construct($title)
+    public function __construct($title)
     {
         parent::__construct($title);
         $root = $_SERVER['DOCUMENT_ROOT'];
@@ -29,7 +29,7 @@ class VolunteerPage extends SecurePage
         }
     }
 
-    function printPage($header = true)
+    public function printPage($header = true)
     {
         if($this->user === false || $this->user === null)
         {
@@ -41,7 +41,7 @@ class VolunteerPage extends SecurePage
         parent::printPage($header);
     }
 
-    function isAdmin()
+    public function isAdmin()
     {
         if($this->user === false || $this->user === null)
         {
@@ -50,7 +50,7 @@ class VolunteerPage extends SecurePage
         return $this->user->isInGroupNamed('VolunteerAdmins');
     }
 
-    function isLead()
+    public function isLead()
     {
         if($this->user === false || $this->user === null)
         {

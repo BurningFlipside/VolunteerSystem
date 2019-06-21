@@ -23,6 +23,11 @@ class GridSchedule
         $this->ssheat = $this->createSpreadSheet();
     }
 
+    protected function isVolunteerAdmin()
+    {
+        return true;
+    }
+
     protected function getSimpleHour($hour)
     {
         if($hour < 12)
