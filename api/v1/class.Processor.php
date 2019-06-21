@@ -10,6 +10,8 @@ trait Processor
         return false;
     }
 
+    protected abstract function isVolunteerAdmin($request);
+
     public function canUserDoRole($user, $role)
     {
         if($role['publicly_visible'] === true)

@@ -27,4 +27,3 @@ else
     spl_autoload_register('VolunteerAutoload');
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */
-?>

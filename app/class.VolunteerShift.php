@@ -1,4 +1,18 @@
 <?php
+/**
+ * A class to abstract access to a Volunter System Shift.
+ *
+ * This class is the primary method to access shift information.
+ *
+ * @property string $_id The shift's ID
+ * @property string $departmentID The shift's department
+ * @property string $eventID The shift's event
+ * @property string $roleID The shift's role
+ * @property DateTime $startTime The shifts's starting time
+ * @property DateTime $endTime The shifts's ending time
+ * @property boolean $enabled Is the shift available for signup
+ * @property string $earlyLate The shift's Early Entry/Late Stay status
+ */
 class VolunteerShift
 {
     protected $dbData;

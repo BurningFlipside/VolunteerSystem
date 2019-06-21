@@ -1,4 +1,16 @@
 <?php
+/**
+ * A class to abstract access to a Volunter System Profile.
+ *
+ * This class is the primary method to access volunteer information.
+ * 
+ * @property string $uid The user's ID
+ * @property string $email The user's email address
+ * @property string $lastName The user's surname (last name)
+ * @property string $firstName The user's given name (first name)
+ * @property string $burnerName The user's nick name
+ * @property array $certs Certifications possesed by the user
+ */
 class VolunteerProfile
 {
     protected $dbData;

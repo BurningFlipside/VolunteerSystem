@@ -8,7 +8,7 @@ class SimplePDF extends \PDF\PDF
     protected $department;
     protected $shifts;
 
-    function __construct($department, $shifts)
+    public function __construct($department, $shifts)
     {
         parent::__construct();
         $this->department = $department;

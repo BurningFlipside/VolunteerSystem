@@ -183,6 +183,7 @@ class ShiftAPI extends VolunteerAPI
             $leads = array_unique($leads);
             $entity['participant'] = $this->user->uid;
             $entity['status'] = 'pending';
+            $profile = new \VolunteerProfile($this->user->uid);
             $email = new \Emails\TwoShiftsAtOnceEmail($profile);
             $email->addLeads($leads);
             return $response->withJSON($email, 500);

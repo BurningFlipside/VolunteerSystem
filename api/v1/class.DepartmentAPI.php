@@ -152,10 +152,6 @@ class DepartmentAPI extends VolunteerAPI
         {
             return $response->withStatus(404);
         }
-        if(count($entry) === 1 && isset($entry[0]))
-        {
-            $entry = $entry[0];
-        }
         $obj = $request->getParsedBody();
         if($obj === null)
         {
