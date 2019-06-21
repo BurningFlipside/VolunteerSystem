@@ -13,26 +13,14 @@
  * @property boolean $enabled Is the shift available for signup
  * @property string $earlyLate The shift's Early Entry/Late Stay status
  */
-class VolunteerShift
+class VolunteerShift extends VolunteerObject
 {
-    protected $dbData;
     protected $myStart = null;
     protected $myEnd = null;
 
     public function __construct($shiftID, $dbData = null)
     {
-        if($dbData === null)
-        {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-            $filter = new \Data\Filter('_id eq '.$shiftID);
-            $depts = $dataTable->read($filter);
-            if(empty($depts))
-            {
-                throw new Exception('Unable to locate shift with ID '.$shiftID);
-            }
-            $dbData = $depts[0];
-        }
-        $this->dbData = $dbData;
+        parent::__construct($shiftID, $dbData, 'shifts', '_id');
     }
 
     public function __get($propName)

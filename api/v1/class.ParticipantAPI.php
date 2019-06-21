@@ -77,10 +77,6 @@ class ParticipantAPI extends VolunteerAPI
         {
             return $response->withStatus(404);
         }
-        if(method_exists($this, 'processEntry'))
-        {
-            $areas[0] = $this->processEntry($areas[0], $request);
-        }
         return $response->withJson($areas[0]);
     }
 }

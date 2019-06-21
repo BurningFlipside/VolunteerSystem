@@ -11,24 +11,13 @@
  * @property string $burnerName The user's nick name
  * @property array $certs Certifications possesed by the user
  */
-class VolunteerProfile
+class VolunteerProfile extends VolunteerObject
 {
     protected $dbData;
 
     public function __construct($uid, $dbData = null)
     {
-        if($dbData === null)
-        {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'participants');
-            $filter = new \Data\Filter("uid eq '$uid'");
-            $profile = $dataTable->read($filter);
-            if(empty($profile))
-            {
-                throw new Exception('Unable to locate user with ID '.$uid);
-            }
-            $dbData = $profile[0];
-        }
-        $this->dbData = $dbData;
+        parent::__construct($uid, $dbData, 'participants', 'uid');
     }
 
     public function __get($propName)

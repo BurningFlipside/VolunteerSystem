@@ -76,4 +76,3 @@ $page->body .= '
 ';
 
 $page->printPage();
-?>

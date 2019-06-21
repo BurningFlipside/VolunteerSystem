@@ -5,18 +5,7 @@ class VolunteerDepartment
 
     public function __construct($departmentID, $dbData = null)
     {
-        if($dbData === null)
-        {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
-            $filter = new \Data\Filter('departmentID eq '.$departmentID);
-            $depts = $dataTable->read($filter);
-            if(empty($depts))
-            {
-                throw new Exception('Unable to locate department with ID '.$departmentID);
-            }
-            $dbData = $depts[0];
-        }
-        $this->dbData = $dbData;
+        parent::__construct($departmentID, $dbData, 'departments', 'departmentID');
     }
 
     public function getLeadEmails()
