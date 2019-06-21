@@ -170,6 +170,21 @@ trait Processor
         return $profile[0];
     }
 
+    protected function doShiftTimeChecks($shift, $entry)
+    {
+        $now = new DateTime();
+        if($shift->startTime < $now)
+        {
+            $entry['available'] = false;
+            $entry['why'] = 'Shift already started';
+        }
+        if($shift->endTime < $now)
+        {
+            $entry['available'] = false;
+            $entry['why'] = 'Shift already ended';
+        }
+    }
+
     protected function processShift($entry)
     {
         static $profile = null;
@@ -198,19 +213,7 @@ trait Processor
             return null;
         }
         $entry['available'] = true;
-        $endTime = new DateTime($entry['endTime']);
-        $startTime = new DateTime($entry['startTime']);
-        $now = new DateTime();
-        if($startTime < $now)
-        {
-            $entry['available'] = false;
-            $entry['why'] = 'Shift already started';
-        }
-        if($endTime < $now)
-        {
-            $entry['available'] = false;
-            $entry['why'] = 'Shift already ended';
-        }
+        $this->doShiftTimeChecks($shift, $entry);
         if($entry['earlyLate'] != -1 && !$eeAvailable)
         {
             $entry['available'] = false;
