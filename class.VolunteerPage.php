@@ -14,7 +14,7 @@ class VolunteerPage extends SecurePage
         $root = $_SERVER['DOCUMENT_ROOT'];
         $script_dir = dirname(__FILE__);
         $this->volunteerRoot = substr($script_dir, strlen($root));
-        $this->addJS($this->volunteerRoot.'/js/volunteer.js', false);
+        $this->addJS($this->volunteerRoot.'/js/volunteer.js');
         $this->addTemplateDir(dirname(__FILE__).'/templates', 'Volunteer');
         $this->setTemplateName('@Volunteer/main.html');
         $this->addCSS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css');
@@ -29,7 +29,7 @@ class VolunteerPage extends SecurePage
         }
     }
 
-    public function printPage($header = true)
+    public function printPage()
     {
         if($this->user === false || $this->user === null)
         {
@@ -38,7 +38,7 @@ class VolunteerPage extends SecurePage
     <h1>You must <a href="https://profiles.burningflipside.com/login.php?return='.$this->currentURL().'">log in <span class="fa fa-sign-in-alt"></span></a> to access the Burning Flipside Volunteer system!</h1>
 </div>';
         }
-        parent::printPage($header);
+        parent::printPage();
     }
 
     public function isAdmin()
