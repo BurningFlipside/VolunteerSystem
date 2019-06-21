@@ -63,32 +63,58 @@ trait Processor
 
     protected function isUserDepartmentLead($departmentID, $user)
     {
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
-        $filter = new \Data\Filter('departmentID eq '.$departmentID);
-        $depts = $dataTable->read($filter);
-        if(empty($depts))
+        static $deptCache = array();
+        if(!isset($deptCache[$departmentID]))
         {
-            return false;
+            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
+            $filter = new \Data\Filter('departmentID eq '.$departmentID);
+            $depts = $dataTable->read($filter);
+            if(empty($depts))
+            {
+                return false;
+            }
+            $deptCache[$departmentID] = $depts[0];
         }
-        return $this->isUserDepartmentLead2($depts[0], $user);
+        return $this->isUserDepartmentLead2($deptCache[$departmentID], $user);
+    }
+
+    protected function userIsLeadCached($user)
+    {
+        static $userIsLead = null;
+        if($userIsLead === null)
+        {
+            $userIsLead = $user->isInGroupNamed('Leads');
+        }
+        return $userIsLead;
     }
 
     protected function isUserDepartmentLead2($dept, $user)
     {
-        if($user->isInGroupNamed('Leads'))
+        static $depts = array();
+        if(!isset($depts[$dept['departmentID']]))
         {
-            if(in_array($dept['lead'], $user->title))
+            $depts[$dept['departmentID']] = array();
+        }
+        $deptCache = $depts[$dept['departmentID']];
+        $uid = $user->uid;
+        if(!isset($deptCache[$uid]))
+        {
+            if($this->userIsLeadCached($user) && in_array($dept['lead'], $user->title))
             {
-                return true;
+                $deptCache[$uid] = true;
+            }
+            else if(!isset($dept['others']))
+            {
+                $deptCache[$uid] = false;
+            }
+            else
+            {
+                $email = $user->mail;
+                $otherAdmins = explode(',', $dept['others']);
+                $deptCache[$uid] = in_array($email, $otherAdmins);
             }
         }
-        if(!isset($dept['others']))
-        {
-            return false;
-        }
-        $email = $user->mail;
-        $otherAdmins = explode(',', $dept['others']);
-        return in_array($email, $otherAdmins);
+        return $deptCache[$uid];
     }
 
     public function isAdminForShift($shift, $user)
