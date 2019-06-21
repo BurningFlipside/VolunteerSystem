@@ -5,9 +5,12 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf;
 
+require_once('../../api/v1/class.Processor.php');
+
 class GridSchedule
 {
     use ShiftSchedule;
+    use \Processor;
 
     protected $department;
     protected $shifts;
@@ -18,6 +21,23 @@ class GridSchedule
         $this->department = $department;
         $this->shifts = $shifts;
         $this->ssheat = $this->createSpreadSheet();
+    }
+
+    protected function getSimpleHour($hour)
+    {
+        if($hour < 12)
+        {
+            if($hour === 0)
+            {
+                return '12a';
+            }
+            return $hour.'a';
+        }
+        if($hour === 12)
+        {
+            return $hour.'p';
+        }
+        return ($hour - 12).'p';
     }
 
     protected function createSpreadSheet()
@@ -70,28 +90,7 @@ class GridSchedule
         $hour = $start['hour'];
         for($i = 0; $i < $hourCount; $i++)
         {
-            if($hour < 12)
-            {
-                if($hour === 0)
-                {
-                    array_push($simpleHours, '12a');
-                }
-                else
-                {
-                    array_push($simpleHours, $hour.'a');
-                }
-            }
-            else
-            {
-                if($hour === 12)
-                {
-                    array_push($simpleHours, $hour.'p');
-                }
-                else
-                {
-                    array_push($simpleHours, ($hour - 12).'p');
-                }
-            }
+            array_push($simpleHours, $this->getSimpleHour($hour));
             array_push($militaryHours, $hour.':00');
             $hour++;
             if($hour === 24)
@@ -181,10 +180,18 @@ class GridSchedule
                     $i++;
                 }
                 $sheat->mergeCellsByColumnAndRow($hoursFromStart+2, $firstRow+4+$i, $hoursFromStart+1+$shift['length'], $firstRow+4+$i);
+                if(isset($shift['participant']))
+                {
+                    $sheat->setCellValueByColumnAndRow($hoursFromStart+2, $firstRow+4+$i, $this->getParticipantDiplayName($shift['participant']));
+                }
             }
             else
             {
                 $sheat->mergeCellsByColumnAndRow($hoursFromStart+2, $firstRow+4, $hoursFromStart+1+$shift['length'], $firstRow+4);
+                if(isset($shift['participant']))
+                {
+                    $sheat->setCellValueByColumnAndRow($hoursFromStart+2, $firstRow+4, $this->getParticipantDiplayName($shift['participant']));
+                }
             }
             $shift = array_shift($shifts);
         }
