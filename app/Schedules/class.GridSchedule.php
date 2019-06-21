@@ -40,6 +40,27 @@ class GridSchedule
         return ($hour - 12).'p';
     }
 
+    protected function grayOutUnused($hourCount, $rowCount, $sheat)
+    {
+        for($i = 0; $i < $hourCount; $i++)
+        {
+            for($j = 0; $j < $rowCount; $j++)
+            {
+                 $cell = $sheat->getCellByColumnAndRow($i+2, $j+4);
+                 if($cell->isInMergeRange())
+                 {
+                      continue;
+                 }
+                 else
+                 {
+                     $style = $cell->getStyle();
+                     $style->getBorders()->getAllBorders()->setBorderStyle(false);
+                     $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_PATTERN_LIGHTGRAY);
+                 }
+            }
+        }
+    }
+
     protected function createSpreadSheet()
     {
         $shifts = $this->shifts;
@@ -199,23 +220,7 @@ class GridSchedule
         $style = $sheat->getStyleByColumnAndRow(2, 4, 1+count($simpleHours), 3 + $rowCount);
         $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $hourCount = count($simpleHours);
-        for($i = 0; $i < $hourCount; $i++)
-        {
-            for($j = 0; $j < $rowCount; $j++)
-            {
-                 $cell = $sheat->getCellByColumnAndRow($i+2, $j+4);
-                 if($cell->isInMergeRange())
-                 {
-                      continue;
-                 }
-                 else
-                 {
-                     $style = $cell->getStyle();
-                     $style->getBorders()->getAllBorders()->setBorderStyle(false);
-                     $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_PATTERN_LIGHTGRAY);
-                 }
-            }
-        }
+        $this->grayOutUnused($hourCount, $rowCount, $sheat);
         $sheat->getColumnDimension('A')->setAutoSize(true);
         return $ssheat;
     }
