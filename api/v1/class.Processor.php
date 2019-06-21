@@ -21,11 +21,7 @@ trait Processor
         {
             $requirements = $role['requirements'];
         }
-        $certs = array();
-        if(isset($user['certs']))
-        {
-            $certs = $user['certs'];
-        }
+        $certs = $user->certs;
         if(count($requirements) === 0)
         {
             //Bugged role...
@@ -34,11 +30,10 @@ trait Processor
         if(isset($requirements['email_list']))
         {
             $emails = explode(',', $requirements['email_list']);
-            if(isset($user['email']) && in_array($user['email'], $emails))
+            if(!$user->userInEmailList($emails))
             {
-                return true;
+                return array('whyClass' => 'INVITE', 'whyMsg' => 'Shift is invite only.');
             }
-            return array('whyClass' => 'INVITE', 'whyMsg' => 'Shift is invite only.');
         }
         if($this->certCheck($requirements, $certs, 'ics100'))
         {
@@ -58,39 +53,10 @@ trait Processor
     protected function getParticipantDiplayName($uid)
     {
         static $uids = array();
-        static $dataTable = null;
-        if($dataTable === null)
-        {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'participants');
-        }
         if(!isset($uids[$uid]))
         {
-            $filter = new \Data\Filter("uid eq '$uid'");
-            $profile = $dataTable->read($filter);
-            if(empty($profile))
-            {
-                $uids[$uid] = $uid;
-                return $uid;
-            }
-            $profile = $profile[0];
-            switch($profile['webName'])
-            {
-                case 'anonymous':
-                    $uids[$uid] = 'Anonymous';
-                    break;
-                case 'full':
-                    $uids[$uid] = $profile['firstName'].' "'.$profile['burnerName'].'" '.$profile['lastName'];
-                    break;
-                case 'burnerLast':
-                    $uids[$uid] = $profile['burnerName'].' '.$profile['lastName'];
-                    break;
-                case 'firstBurner':
-                    $uids[$uid] = $profile['firstName'].' '.$profile['burnerName'];
-                    break;
-                case 'burner':
-                    $uids[$uid] = $profile['burnerName'];
-                    break;
-            }
+            $profile = new \VolunteerProfile($uid);
+            $uids[$uid] = $profile->getDisplayName();
         }
         return $uids[$uid];
     }
@@ -158,18 +124,6 @@ trait Processor
         return !in_array($deptId, $privateDepts);
     }
 
-    protected function getParticipantProfile($uid)
-    {
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'participants');
-        $filter = new \Data\Filter("uid eq '$uid'");
-        $profile = $dataTable->read($filter);
-        if(empty($profile))
-        {
-            return null;
-        }
-        return $profile[0];
-    }
-
     protected function doShiftTimeChecks($shift, $entry)
     {
         $now = new DateTime();
@@ -193,11 +147,8 @@ trait Processor
         static $roles = array();
         if($profile === null)
         {
-            $profile = $this->getParticipantProfile($this->user->uid);
-            if(isset($profile['firstName']) && isset($profile['lastName']))
-            {
-                $eeAvailable = true;
-            }
+            $profile = new \VolunteerProfile($this->user->uid);
+            $eeAvailable = $profile->isEEAvailable();
             $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
             $tmp = $dataTable->read();
             foreach($tmp as $role)
@@ -232,7 +183,7 @@ trait Processor
         if($shift->isFilled())
         {
             $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
-            if($entry['participant'] === $profile['uid'])
+            if($entry['participant'] === $profile->uid)
             {
                 $entry['available'] = false;
                 $entry['why'] = 'Shift is already taken, by you';
