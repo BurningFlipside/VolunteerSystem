@@ -1,12 +1,14 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 require_once('class.SecurePage.php');
 $page = new SecurePage('Burning Flipside - Flipside Volunteer System');
 
-$page->add_js_from_src('scripts/init_page.js');
-$page->add_js_from_src('scripts/question_node.js');
-$page->add_js_from_src('scripts/volunteer_position.js');
+$page->addJS('scripts/init_page.js');
+$page->addJS('scripts/question_node.js');
+$page->addJS('scripts/volunteer_position.js');
 
-$page->add_head_tag('
+$page->content['otherHeadData'] = '
 <script type="text/javascript">function doYes(){var answer=window.currentNode.GetYes();handleNode(answer)}
 function doBack(){
         if(window.nodes.length == 1){
@@ -33,7 +35,7 @@ function doBack(){
 function doNo(){var answer=window.currentNode.GetNo();handleNode(answer);}
 function updateQuestionText(){var questionText=document.getElementById("question_text");questionText.innerHTML=window.currentNode.GetQuestion();}
 function handleNode(answer){if(answer instanceof VolunteerPosition){answer.createNode();}else if(answer instanceof QuestionNode){window.currentNode=answer;updateQuestionText();}window.nodes.push(currentNode);}</script>
-');
+';
 
 $page->body .= '
 <div id="content">
@@ -73,5 +75,5 @@ $page->body .= '
 </script>
 ';
 
-$page->print_page();
+$page->printPage();
 ?>
