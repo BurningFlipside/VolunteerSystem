@@ -180,7 +180,7 @@ function gotShifts(jqXHR) {
       end = myEnd;
     }
     var evnt = {
-      id: shifts[i]['_id']['$id'],
+      id: shifts[i]['_id']['$oid'],
       start: myStart,
       end: myEnd
     };
@@ -264,8 +264,8 @@ function gotEvents(jqXHR) {
   var data = [];
   for(var i = 0; i < events.length; i++) {
     if(events[i]['available']) {
-      var option = {id: events[i]['_id']['$id'], text: events[i]['name']};
-      if(id !== null && id === events[i]['_id']['$id']) {
+      var option = {id: events[i]['_id']['$oid'], text: events[i]['name']};
+      if(id !== null && id === events[i]['_id']['$oid']) {
         option.selected = true;
       }
       data.push(option);

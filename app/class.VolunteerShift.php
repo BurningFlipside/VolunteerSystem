@@ -44,7 +44,7 @@ class VolunteerShift
 
     public function isSame($shift)
     {
-        return $this->dbData['_id']->{'$id'} === $shift->dbData['_id']->{'$id'};
+        return $this->dbData['_id'] === $shift->dbData['_id'];
     }
 
     public function overlaps($shift)

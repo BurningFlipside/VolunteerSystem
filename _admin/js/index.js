@@ -166,7 +166,7 @@ function gotEvents(jqXHR) {
     var events = $('#events');
     events.change(showEventDetails);
     for(var i = 0; i < resp.value.length; i++) {
-      events.append('<option value="'+resp.value[i]['_id']['$id']+'">'+resp.value[i].name+'</option>');
+      events.append('<option value="'+resp.value[i]['_id']['$oid']+'">'+resp.value[i].name+'</option>');
     }
     showEventDetails({target: events[0]});
   }

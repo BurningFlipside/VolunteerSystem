@@ -24,7 +24,7 @@ function initPage() {
           return a.name.localeCompare(b.name);
         });
         for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i]['_id']['$id'], text: data[i].name});
+          res.push({id: data[i]['_id']['$oid'], text: data[i].name});
         }
         return {results: res};
       }

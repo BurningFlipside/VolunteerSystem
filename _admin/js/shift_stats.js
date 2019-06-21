@@ -80,7 +80,7 @@ function gotEvents(jqXHR) {
   var data = [];
   for(var i = 0; i < events.length; i++) {
     if(events[i]['available']) {
-      data.push({id: events[i]['_id']['$id'], text: events[i]['name']});
+      data.push({id: events[i]['_id']['$oid'], text: events[i]['name']});
     }
   }
   var boundRetry = retrySelect2.bind({id: '#event', data: data, change: eventChanged});

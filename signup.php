@@ -41,15 +41,7 @@ if(empty($shifts))
 $shift = $shifts[0];
 $myShift = new \VolunteerShift(false, $shift);
 
-$dataTable = DataSetFactory::getDataTableByNames('fvs', 'participants');
-$profiles = $dataTable->read(new \Data\Filter('uid eq '.$page->user->uid));
-if(empty($profiles))
-{
-  $page->body .= 'Error! Could not locate user profile!';
-  $page->printPage();
-  return;
-}
-$profile = $profiles[0];
+$profile = new \VolunteerProfile($page->user->uid);
 
 if($processor->isAdminForShift($shift, $page->user))
 {
