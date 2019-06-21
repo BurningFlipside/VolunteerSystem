@@ -43,7 +43,7 @@ class ShiftAPI extends VolunteerAPI
 
     protected function processEntry($entry, $request)
     {
-        return $this->processShift($entry);
+        return $this->processShift($entry, $request);
     }
 
     protected function genUUID()
@@ -166,7 +166,7 @@ class ShiftAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $shift = new \VolunteerShift($entity);
-        $entity = $this->processShift($entity);
+        $entity = $this->processShift($entity, $request);
         if(isset($entity['overlap']) && $entity['overlap'])
         {
             $overlaps = $shift->findOverlaps($this->user->uid);

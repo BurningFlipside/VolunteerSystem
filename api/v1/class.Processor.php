@@ -165,12 +165,16 @@ trait Processor
         }
     }
 
-    protected function processShift($entry)
+    protected function processShift($entry, $request)
     {
         static $profile = null;
         static $eeAvailable = false;
         static $canDoRole = array();
         static $roles = array();
+        if($this->isAdmin === null)
+        {
+            $this->isVolunteerAdmin($request);
+        }
         if($profile === null)
         {
             $profile = new \VolunteerProfile($this->user->uid);
@@ -231,6 +235,10 @@ trait Processor
 
     protected function processRole($entry, $request)
     {
+        if($this->isAdmin === null)
+        {
+            $this->isVolunteerAdmin($request);
+        }
         $entry['isAdmin'] = $this->isAdminForRole($entry, $this->user);
         return $entry;
     }
