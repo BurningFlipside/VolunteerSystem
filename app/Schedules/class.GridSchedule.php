@@ -74,6 +74,29 @@ class GridSchedule
         }
     }
 
+    protected function getHoursArrays($hour, $hourCount)
+    {
+        $simpleHours = array();
+        $militaryHours = array();
+        for($i = 0; $i < $hourCount; $i++)
+        {
+            array_push($simpleHours, $this->getSimpleHour($hour));
+            array_push($militaryHours, $hour.':00');
+            $hour++;
+            if($hour === 24)
+            {
+                $hour = 0;
+            }
+        }
+        return array($simpleHours, $militaryHours);
+    }
+
+    protected function createShiftCell($sheat, $col, $row, $shift)
+    {
+        $sheat->mergeCellsByColumnAndRow($col, $row, $col+$shift['length']-1, $row);
+        $this->setShiftNameInCell($sheat, $col, $row, $shift);
+    }
+
     protected function createSpreadSheet()
     {
         $shifts = $this->shifts;
@@ -119,19 +142,9 @@ class GridSchedule
         $lastShift = $shifts[$count - 1];
         $interval = $lastShift['endTime']->diff($shifts[0]['startTime']);
         $hourCount = ($interval->d*24) + $interval->h;
-        $simpleHours = array();
-        $militaryHours = array();
-        $hour = $start['hour'];
-        for($i = 0; $i < $hourCount; $i++)
-        {
-            array_push($simpleHours, $this->getSimpleHour($hour));
-            array_push($militaryHours, $hour.':00');
-            $hour++;
-            if($hour === 24)
-            {
-                $hour = 0;
-            }
-        }
+        $tmp = $this->getHoursArrays($start['hour'], $hourCount);
+        $simpleHours = $tmp[0];
+        $militaryHours = $tmp[1];
         $sheat->fromArray($simpleHours, null, 'B2');
         $sheat->fromArray($militaryHours, null, 'B3');
         $mergeCount = 24 - $start['hour'];
@@ -213,13 +226,11 @@ class GridSchedule
                     }
                     $i++;
                 }
-                $sheat->mergeCellsByColumnAndRow($hoursFromStart+2, $firstRow+4+$i, $hoursFromStart+1+$shift['length'], $firstRow+4+$i);
-                $this->setShiftNameInCell($sheat, $hoursFromStart+2, $firstRow+4+$i, $shift);
+                $this->createShiftCell($sheat, $hoursFromStart+2, $firstRow+4+$i, $shift);
             }
             else
             {
-                $sheat->mergeCellsByColumnAndRow($hoursFromStart+2, $firstRow+4, $hoursFromStart+1+$shift['length'], $firstRow+4);
-                $this->setShiftNameInCell($sheat, $hoursFromStart+2, $firstRow+4, $shift);
+                $this->createShiftCell($sheat, $hoursFromStart+2, $firstRow+4, $shift);
             }
             $shift = array_shift($shifts);
         }
