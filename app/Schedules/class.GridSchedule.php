@@ -97,6 +97,26 @@ class GridSchedule
         $this->setShiftNameInCell($sheat, $col, $row, $shift);
     }
 
+    protected function getRowForShift($roleID, $rows, $col, $sheat)
+    {
+        $firstRow = array_search($roleID, $rows);
+        $cell = $sheat->getCellByColumnAndRow($col, $firstRow+4);
+        if($cell->isInMergeRange())
+        {
+            while($rows[$firstRow+$i] === $roleID)
+            {
+                $cell = $sheat->getCellByColumnAndRow($hoursFromStart+2, $firstRow+4+$i);
+                if(!$cell->isInMergeRange())
+                {
+                    break;
+                }
+                $i++;
+            }
+            return $firstRow+4+$i;
+        }
+        return $firstRow+4;
+    }
+
     protected function createSpreadSheet()
     {
         $shifts = $this->shifts;
@@ -213,25 +233,8 @@ class GridSchedule
             $i = 1;
             $timeDiff = $originalStartTime->diff($shift['startTime']);
             $hoursFromStart = ($timeDiff->d*24)+$timeDiff->h;
-            $firstRow = array_search($shift['roleID'], $rows);
-            $cell = $sheat->getCellByColumnAndRow($hoursFromStart+2, $firstRow+4);
-            if($cell->isInMergeRange())
-            {
-                while($rows[$firstRow+$i] === $shift['roleID'])
-                {
-                    $cell = $sheat->getCellByColumnAndRow($hoursFromStart+2, $firstRow+4+$i);
-                    if(!$cell->isInMergeRange())
-                    {
-                        break;
-                    }
-                    $i++;
-                }
-                $this->createShiftCell($sheat, $hoursFromStart+2, $firstRow+4+$i, $shift);
-            }
-            else
-            {
-                $this->createShiftCell($sheat, $hoursFromStart+2, $firstRow+4, $shift);
-            }
+            $rowForShift = $this->getRowForShift($shift['roleID'], $rows, $hoursFromStart+2, $sheat);
+            $this->createShiftCell($sheat, $hoursFromStart+2, $rowForShift, $shift);
             $shift = array_shift($shifts);
         }
         $rowCount = count($rows);
