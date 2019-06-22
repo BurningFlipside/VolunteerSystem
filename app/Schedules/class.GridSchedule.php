@@ -99,13 +99,14 @@ class GridSchedule
 
     protected function getRowForShift($roleID, $rows, $col, $sheat)
     {
+        $i = 1;
         $firstRow = array_search($roleID, $rows);
         $cell = $sheat->getCellByColumnAndRow($col, $firstRow+4);
         if($cell->isInMergeRange())
         {
             while($rows[$firstRow+$i] === $roleID)
             {
-                $cell = $sheat->getCellByColumnAndRow($hoursFromStart+2, $firstRow+4+$i);
+                $cell = $sheat->getCellByColumnAndRow($col, $firstRow+4+$i);
                 if(!$cell->isInMergeRange())
                 {
                     break;
@@ -230,7 +231,6 @@ class GridSchedule
         $shift = array_shift($shifts);
         while($shift)
         {
-            $i = 1;
             $timeDiff = $originalStartTime->diff($shift['startTime']);
             $hoursFromStart = ($timeDiff->d*24)+$timeDiff->h;
             $rowForShift = $this->getRowForShift($shift['roleID'], $rows, $hoursFromStart+2, $sheat);
