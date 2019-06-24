@@ -51,13 +51,24 @@ function eventRenderHelper(info) {
       });
     }
     else {
-      $(info.el).popover({
-        animation:true,
-        delay: 300,
-        title: 'Shift Unavailable',
-        content: shift.why,
-        trigger: 'hover'
-      });
+      if(shift.whyClass === 'TAKEN' && shift.volunteer !== undefined) {
+        $(info.el).popover({
+          animation:true,
+          delay: 300,
+          title: 'Shift Taken',
+          content: 'Shift is taken by '+shift.volunteer,
+          trigger: 'hover'
+        });
+      }
+      else {
+        $(info.el).popover({
+          animation:true,
+          delay: 300,
+          title: 'Shift Unavailable',
+          content: shift.why,
+          trigger: 'hover'
+        });
+      }
     }
   }
   if(info.view.type === 'listWeek' || info.view.type === 'list') {
