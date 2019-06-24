@@ -1,8 +1,6 @@
 <?php
-class VolunteerDepartment
+class VolunteerDepartment extends VolunteerObject
 {
-    protected $dbData;
-
     public function __construct($departmentID, $dbData = null)
     {
         parent::__construct($departmentID, $dbData, 'departments', 'departmentID');

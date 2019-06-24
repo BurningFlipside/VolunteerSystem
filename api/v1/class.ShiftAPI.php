@@ -165,7 +165,7 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $shift = new \VolunteerShift($entity);
+        $shift = new \VolunteerShift($shiftId, $entity);
         $entity = $this->processShift($entity, $request);
         if(isset($entity['overlap']) && $entity['overlap'])
         {
@@ -174,9 +174,9 @@ class ShiftAPI extends VolunteerAPI
             $leads = array();
             for($i = 0; $i < $count; $i++)
             {
-                $dept = new \VolunteerDepartment($overlaps[$i]['departmentID']);
+                $dept = new \VolunteerDepartment($overlaps[$i]->departmentID);
                 $leads = array_merge($leads, $dept->getLeadEmails());
-                $overlaps[$i]['status'] = 'pending';
+                $overlaps[$i]->status = 'pending';
             }
             $dept = new \VolunteerDepartment($entity['departmentID']);
             $leads = array_merge($leads, $dept->getLeadEmails());
