@@ -18,4 +18,9 @@ class VolunteerObject
         }
         $this->dbData = $dbData;
     }
+
+    public function __get($propName)
+    {
+        return $this->dbData[$propName];
+    }
 }

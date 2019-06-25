@@ -186,7 +186,7 @@ class ShiftAPI extends VolunteerAPI
             $profile = new \VolunteerProfile($this->user->uid);
             $email = new \Emails\TwoShiftsAtOnceEmail($profile);
             $email->addLeads($leads);
-            return $response->withJSON($email, 500);
+            return $response->withJSON($email->getRawMessage(), 500);
         }
         if(isset($entity['available']) && $entity['available'])
         {

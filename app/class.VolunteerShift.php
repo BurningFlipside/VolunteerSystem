@@ -15,8 +15,12 @@
  */
 class VolunteerShift extends VolunteerObject
 {
+    protected static $roleCache = array();
+    protected $mod = null;
     protected $myStart = null;
     protected $myEnd = null;
+    protected $modStart = null;
+    protected $modEnd = null;
 
     public function __construct($shiftID, $dbData = null)
     {
@@ -27,18 +31,44 @@ class VolunteerShift extends VolunteerObject
     {
         switch($propName)
         {
+            case 'modTime':
+                if($this->mod === null)
+                {
+                    $this->mod = new \DateInterval('PT'.strval($this->role->down_time).'H');
+                }
+                return $this->mod;
             case 'startTime':
                 if($this->myStart === null)
                 {
                     $this->myStart = new \DateTime($this->dbData['startTime']);
                 }
                 return $this->myStart;
+            case 'startTimeWithMod':
+                if($this->modStart === null)
+                {
+                    $this->modStart = clone $this->startTime;
+                    $this->modStart->sub($this->modTime);
+                }
+                return $this->modStart;
             case 'endTime':
                 if($this->myEnd === null)
                 {
                     $this->myEnd = new \DateTime($this->dbData['endTime']);
                 }
                 return $this->myEnd;
+            case 'endTimeWithMod':
+                if($this->modEnd === null)
+                {
+                    $this->modEnd = clone $this->endTime;
+                    $this->modEnd->add($this->modTime);
+                }
+                return $this->modEnd;
+            case 'role':
+                if(!isset(self::$roleCache[$this->dbData['roleID']]))
+                {
+                    self::$roleCache[$this->dbData['roleID']] = new \VolunteerRole($this->dbData['roleID']);
+                }
+                return self::$roleCache[$this->dbData['roleID']];
             default:
                 return $this->dbData[$propName];
         }
@@ -55,11 +85,11 @@ class VolunteerShift extends VolunteerObject
         {
             return false;
         }
-        if($this->startTime >= $shift->startTime && $this->startTime < $shift->endTime)
+        if($this->startTimeWithMod > $shift->startTimeWithMod && $this->startTimeWithMod < $shift->endTimeWithMod)
         {
             return true;
         }
-        if($this->endTime <= $shift->endTime && $this->endTime > $shift->startTime)
+        if($this->endTimeWithMod < $shift->endTimeWithMod && $this->endTimeWithMod > $shift->startTimeWithMod)
         {
             return true;
         }
