@@ -205,7 +205,12 @@ $page->body .= '
 //Is group eligible?
 if(isset($shift['groupID']) && isset($roles[0]['groups_allowed']) && $roles[0]['groups_allowed'])
 {
-  $page->body .= '
+  $page->body .= '<div id="groupContent" ';
+  if($overlap)
+  {
+    $page->body .= 'class="d-none" ';
+  }
+  $page->body .= '>
   <div class="row">
     <div class="alert alert-primary" role="alert">
       You have selected a group eligible shift. This means you can generate a link for your friends to sign up on the shift with you. Would you like to sign up for the shift and generate that link now?
@@ -213,6 +218,7 @@ if(isset($shift['groupID']) && isset($roles[0]['groups_allowed']) && $roles[0]['
   </div>
   <div class="row">
     <button type="button" class="btn btn-secondary" onclick="groupSignup();">Signup and Generate Group Link</button>
+  </div>
   </div>
   ';
 }

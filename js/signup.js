@@ -28,4 +28,5 @@ function signup() {
 
 function revealPage() {
   $('#signupContent').removeClass('d-none');
+  $('#groupContent').removeClass('d-none');
 }
