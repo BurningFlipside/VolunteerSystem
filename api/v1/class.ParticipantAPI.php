@@ -56,6 +56,15 @@ class ParticipantAPI extends VolunteerAPI
         return true;
     }
 
+    protected function getFilterForPrimaryKey($value)
+    {
+        if($value === 'me')
+        {
+            $value = $this->user->uid;
+        }
+        return parent::getFilterForPrimaryKey($value);
+    }
+
     public function readEntry($request, $response, $args)
     {
         $this->validateLoggedIn($request);

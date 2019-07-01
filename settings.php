@@ -50,6 +50,9 @@ $page->body .= '
   </div>
   <div class="col-sm-5" id="paperDisplay">
   </div>
+  <div class="col-sm-12">
+    <button type="button" class="btn btn-primary float-right" onClick="return saveData();">Save</button>
+  </div>
 </div>
 ';
 

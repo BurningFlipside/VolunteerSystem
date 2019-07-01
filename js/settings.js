@@ -43,6 +43,34 @@ function getName(type) {
   }
 }
 
+function saveDone(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Error saving participant data');
+    return;
+  }
+  alert('Success');
+  location.reload();
+}
+
+function saveData() {
+  var data = {};
+  data.burnerName = $('#burnerName').val();
+  data.campName = $('#myCampName').val();
+  data.firstName = $('#firstName').val();
+  data.lastName = $('#lastName').val();
+  data.paperName = $('#myPaperName').val();
+  data.webName = $('#myWebName').val();
+  $.ajax({
+    url: 'api/v1/participants/me',
+    method: 'PATCH',
+    data: JSON.stringify(data),
+    contentType: 'application/json',
+    complete: saveDone
+  });
+  return false;
+}
+
 function initPage() {
   $.ajax({
     url: 'api/v1/participants/me',
