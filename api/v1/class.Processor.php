@@ -14,6 +14,14 @@ trait Processor
 
     public function canUserDoRole($user, $role)
     {
+        static $certs = null;
+        static $certCount = 0;
+        if($certs === null)
+        {
+            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'certifications');
+            $certs = $dataTable->read();
+            $certCount = count($certs);
+        }
         if($role['publicly_visible'] === true)
         {
             return true;
@@ -23,7 +31,7 @@ trait Processor
         {
             $requirements = $role['requirements'];
         }
-        $certs = $user->certs;
+        $userCerts = $user->certs;
         if(count($requirements) === 0)
         {
             //Bugged role...
@@ -37,17 +45,12 @@ trait Processor
                 return array('whyClass' => 'INVITE', 'whyMsg' => 'Shift is invite only.');
             }
         }
-        if($this->certCheck($requirements, $certs, 'ics100'))
+        for($i = 0; $i < $certCount; $i++)
         {
-            return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires ICS 100 and you do not have that certification');
-        }
-        if($this->certCheck($requirements, $certs, 'ics200'))
-        {
-            return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires ICS 200 and you do not have that certification');
-        }
-        if($this->certCheck($requirements, $certs, 'bls'))
-        {
-            return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires Basic Life Support certification and you do not have that certification');
+             if($this->certCheck($requirements, $userCerts, $certs[$i]['certID']))
+             {
+                 return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires '.$certs[$i]['name'].' and you do not have that certification');
+             }
         }
         return true;
     }

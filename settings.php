@@ -54,6 +54,14 @@ $page->body .= '
     <button type="button" class="btn btn-primary float-right" onClick="return saveData();">Save</button>
   </div>
 </div>
+<div class="row border rounded">
+  <legend>User Certifications</legend>
+  <div class="alert alert-primary" role="alert">
+    Some roles require various certifications. This lets you view which certifications you have on file and file new ones.
+  </div>
+  <div id="certs" class="col-sm-12">
+  </div>
+</div>
 ';
 
 $page->printPage();

@@ -8,6 +8,18 @@ $page->setTemplateName('admin-table-new.html');
 $page->addWellKnownJS(JS_BOOTBOX);
 $page->addJS('../js/wizard.js');
 
+$dataTable = DataSetFactory::getDataTableByNames('fvs', 'certifications');
+$certs = $dataTable->read();
+$certCount = count($certs);
+$certText = '';
+
+for($i = 0; $i < $certCount; $i++)
+{
+    $cert = $certs[$i];
+    $certText .= '<label for="requirements.'.$cert['certID'].'" class="col-sm-3 col-form-label">'.$cert['name'].':</label>
+      <div class="col-sm-2"><input class="form-control" type="checkbox" name="requirements.'.$cert['certID'].'" id="requirements.'.$cert['certID'].'" disabled/></div>';
+}
+
 $page->content['pageHeader'] = 'Roles: <span id="deptName"></span>';
 $page->content['table'] = array('id' => 'roles');
 $page->content['selectors'] = '<div class="col-sm2"><button type="button" class="btn btn-primary" id="newRoleBtn" onclick="showRoleWizard();">New Role</button></div>';
@@ -86,20 +98,7 @@ $page->content['body'] = '
               <div class="col-sm-10">
                 <input class="form-control" type="checkbox" name="publicly_visible" id="publicly_visible" onChange="publiclyVisibleUpdated();" checked/>
               </div>
-              <div class="w-100"></div>
-                <label for="requirements.ics100" class="col-sm-3 col-form-label">ICS 100:</label>
-                <div class="col-sm-2">
-                  <input class="form-control" type="checkbox" name="requirements.ics100" id="requirements.ics100" disabled/>
-                </div>
-                <label for="requirements.ics200" class="col-sm-3 col-form-label">ICS 200:</label>
-                <div class="col-sm-2">
-                  <input class="form-control" type="checkbox" name="requirements.ics200" id="requirements.ics200" disabled/>
-                </div>
-                <div class="w-100"></div>
-                <label for="requirements.bls" class="col-sm-3 col-form-label">Basic Life Support:</label>
-                <div class="col-sm-2">
-                  <input class="form-control" type="checkbox" name="requirements.bls" id="requirements.bls" disabled/>
-                </div>
+              <div class="w-100"></div>'.$certText.'
                 <div class="w-100"></div>
                 <label for="onEmailList" class="col-sm-3 col-form-label">On Email List:</label>
                 <div class="col-sm-2">
