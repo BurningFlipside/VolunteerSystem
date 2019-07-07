@@ -297,14 +297,15 @@ function initPage() {
     });
     $('#deptFilter').change(deptFilterChanged);
   }
-  table = new Tabulator("#roles", {
-    ajaxURL: tableURL,
-    ajaxResponse: function(url, params, response) {
-      return response.filter(function(element) {
-        return element.isAdmin;
-      });
-    },
-    columns:[
+  $.ajax({
+    url: '../api/v1/certs',
+    complete: gotCerts,
+    context: tableURL
+  });
+}
+
+function gotCerts(jqXHR) {
+  var cols = [
       {formatter: delIcon, width:40, align:"center", cellClick: delRole},
       {title:"ID", field:"_id.$id", visible: false},
       {title:'Short Name', field: 'short_name', visible: false},
@@ -314,11 +315,20 @@ function initPage() {
       {title:'Groups', field: 'groups_allowed', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Can be grouped with', field: 'grouped_with', editor: groupedWithEditor, formatter: groupFormatter},
       {title:'Hours between shifts', field: 'down_time', editor: 'number'},
-      {title:'Needs ICS 100', field: 'requirements.ics100', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Needs ICS 200', field: 'requirements.ics200', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Needs Basic Life Support', field: 'requirements.bls', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Restricted To Emails', field: 'requirements.email_list', editor:"textarea", formatter:"html", width: 250}
-    ],
+  ];
+  var data = jqXHR.responseJSON;
+  for(var i = 0; i < data.length; i++) {
+    cols.push({title:'Needs '+data[i].name, field: 'requirements.'+data[i].certID, editor: 'tickCross', formatter: 'tickCross'});
+  }
+  table = new Tabulator("#roles", {
+    ajaxURL: this,
+    ajaxResponse: function(url, params, response) {
+      return response.filter(function(element) {
+        return element.isAdmin;
+      });
+    },
+    columns: cols,
     cellEdited: dataChanged
   });
 }
