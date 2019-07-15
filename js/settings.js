@@ -9,6 +9,7 @@ function gotUser(jqXHR) {
   $('#lastName').val(data.lastName);
   $('#myPaperName').val(data.paperName);
   $('#myWebName').val(data.webName);
+  $('#myShirtSize').val(data.shirtSize);
   webNameChange();
   paperNameChange();
 }
@@ -61,6 +62,7 @@ function saveData() {
   data.lastName = $('#lastName').val();
   data.paperName = $('#myPaperName').val();
   data.webName = $('#myWebName').val();
+  data.shirtSize = $('#myShirtSize').val();
   $.ajax({
     url: 'api/v1/participants/me',
     method: 'PATCH',

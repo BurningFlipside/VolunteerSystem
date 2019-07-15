@@ -50,6 +50,24 @@ $page->body .= '
   </div>
   <div class="col-sm-5" id="paperDisplay">
   </div>
+  <div class="w-100"></div>
+  <label for="myPaperName" class="col-sm-2 col-form-label">T-Shirt Size:</label>
+  <div class="col-sm-10">
+    <select class="form-control" name="myShirtSize" id="myShirtSize">
+      <option value="WS">Women\'s Small</option>
+      <option value="WM">Women\'s Medium</option>
+      <option value="MS">Men\'s Small</option>
+      <option value="WL">Women\'s Large</option>
+      <option value="MM">Men\'s Medium</option>
+      <option value="WXL">Women\'s Extra Large</option>
+      <option value="WXXL">Women\'s Extra Extra Large</option>
+      <option value="ML">Men\'s Large</option>
+      <option value="WXXXL">Women\'s Extra Extra Extra Large</option>
+      <option value="MXL">Men\'s Extra Large</option>
+      <option value="MXXL">Men\'s Extra Extra Large</option>
+      <option value="MXXXL">Men\'s Extra Extra Extra Large</option>
+    </select>
+  </div>
   <div class="col-sm-12">
     <button type="button" class="btn btn-primary float-right" onClick="return saveData();">Save</button>
   </div>
