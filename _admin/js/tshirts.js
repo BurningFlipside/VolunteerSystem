@@ -38,6 +38,7 @@ function gotShifts(jqXHR) {
       promises.push($.ajax({url: '../api/v1/participants/'+participant}));
     }
   }
+  unfilled = unfilled / $('#minShifts').val();
   Promise.all(promises).then((data) => {
     for(var i = 0; i < data.length; i++) {
       sizes[data[i].shirtSize]++;
@@ -84,8 +85,12 @@ function gotShifts(jqXHR) {
   });
 }
 
+function minShiftsChanged(e) {
+  rolesChanged(e);
+}
+
 function rolesChanged(e) {
-  var selectedRoles = $(e.target).select2('data');
+  var selectedRoles = $('#roles').select2('data');
   var filter = '$filter=';
   for(var i = 0; i < selectedRoles.length; i++) {
     filter+='roleID eq '+selectedRoles[i].id;
@@ -155,6 +160,7 @@ function initPage() {
   $('#roles').select2();
   $('#department').change(departmentSelected);
   $('#roles').change(rolesChanged);
+  $('#minShifts').change(minShiftsChanged);
 }
 
 $(initPage);
