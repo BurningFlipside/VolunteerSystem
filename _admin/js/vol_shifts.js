@@ -2,6 +2,7 @@ function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
   }
+  var table = $('#shiftTable');
   var data = jqXHR.responseJSON;
   var participants = {};
   for(var i = 0; i < data.length; i++) {
@@ -19,10 +20,11 @@ function gotShifts(jqXHR) {
   if(max === 0) {
     max = 9999;
   }
+  table.find(':nth-child(2)').remove();
   for(var uid in participants) {
     console.log(participants[uid]);
     if(participants[uid] > min && participants[uid] < max) {
-      $('#shiftTable').append('<tr><td>'+uid+'</td><td>'+participants[uid]+'</td></tr>');
+      table.append('<tr><td>'+uid+'</td><td>'+participants[uid]+'</td></tr>');
     }
   }
 }
