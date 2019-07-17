@@ -2,6 +2,7 @@
 require_once('class.VolunteerPage.php');
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 $page->addJS('js/settings.js');
+$page->addWellKnownJS(JS_BOOTBOX);
 
 $page->body .= '
 <div class="row border rounded">
@@ -77,7 +78,7 @@ $page->body .= '
   <div class="alert alert-primary" role="alert">
     Some roles require various certifications. This lets you view which certifications you have on file and file new ones.
   </div>
-  <div id="certs" class="col-sm-12">
+  <div id="certs" class="col-sm-12 row">
   </div>
 </div>
 ';

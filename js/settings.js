@@ -14,6 +14,51 @@ function gotUser(jqXHR) {
   paperNameChange();
 }
 
+function gotCerts(jqXHR) {
+  if(jqXHR.status !== 200) {
+    return;
+  }
+  var data = jqXHR.responseJSON;
+  var html = $('#certs');
+  for(var i = 0; i < data.length; i++) {
+    var title = $('<div class="col-sm-3"/>');
+    var icon = $('<div class="col-sm-3" id="'+data[i].certID+'"><i class="fas fa-times text-danger"></i></div>');
+    var upload = $('<div class="col-sm-6"></div>');
+    var input = $('<input type="file" class="form-control-file" id="'+data[i].certID+'_Upload" title="Upload an image of your certificate" accept="image/*, application/pdf"/>');
+    title.html(data[i].name);
+    upload.append(input);
+    html.append(title);
+    html.append(icon);
+    html.append(upload);
+    input.change(certUpload);
+  }
+}
+
+function uploadedCert(jqXHR) {
+  console.log(jqXHR);
+}
+
+function certUpload(e) {
+  var file = e.target.files[0];
+  if(file.size >= 10485760) {
+    bootbox.alert('File is greater than 10MB, please reduce the file size.');
+    e.target.value = '';
+    return;
+  }
+  var id = e.target.id.split('_')[0];
+  var reader = new FileReader();
+  reader.onloadend = function(e) {
+    $.ajax({
+      url: 'api/v1/participants/me/certs/'+id,
+      method: 'POST',
+      processData: false,
+      data: e.target.result,
+      complete: uploadedCert
+    });
+  };
+  reader.readAsBinaryString(file);
+}
+
 function webNameChange() {
   var val = $('#myWebName').val();
   var name = getName(val);
@@ -77,6 +122,10 @@ function initPage() {
   $.ajax({
     url: 'api/v1/participants/me',
     complete: gotUser
+  });
+  $.ajax({
+    url: 'api/v1/certs',
+    complete: gotCerts
   });
 }
 

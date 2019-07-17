@@ -61,6 +61,7 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         );
         $this->content['header']['sidebar']['Roles'] = array('icon' => 'fa-address-card', 'url' => 'roles.php');
         $this->content['header']['sidebar']['Shifts'] = array('icon' => 'fa-tshirt', 'url' => 'shifts.php');
+        $this->content['header']['sidebar']['Volunteers'] = array('icon' => 'fa-user', 'url' => 'volunteers.php');
         $this->content['header']['sidebar']['Reports'] = array('icon' => 'fa-chart-bar', 'menu' => $charts_menu);
     }
 }
