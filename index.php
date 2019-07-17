@@ -30,6 +30,7 @@ $page->body .= '
   </div>
   <div class="w-100"></div>
   <div id="calendar"></div>
+  <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts"><i class="far fa-calendar-alt"></i> Download My Shifts</a>
 </div>';
 
 $page->printPage();
