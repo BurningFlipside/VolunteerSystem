@@ -29,6 +29,20 @@ function dataChanged(cell) {
 }
 
 function initPage() {
+  var tShirts = {
+        "WS": "Women's Small",
+        "WM": "Women's Medium",
+        "MS": "Men's Small",
+        "WL": "Women's Large",
+        "MM": "Men's Medium",
+        "WXL": "Women's Extra Large",
+        "WXXL": "Women's Extra Extra Large",
+        "ML": "Men's Large",
+        "WXXXL": "Women's Extra Extra Extra Large",
+        "MXL": "Men's Extra Large",
+        "MXXL": "Men's Extra Extra Large",
+        "MXXXL": "Men's Extra Extra Extra Large",
+  };
   table = new Tabulator("#vols", {
     ajaxURL: '../api/v1/participants',
     columns:[
@@ -37,22 +51,7 @@ function initPage() {
       {title:'First Name', field: 'firstName'},
       {title:'Last Name', field: 'lastName'},
       {title:'Burner Name', field: 'burnerName'},
-      {title:'T-Shirt Size', field: 'shirtSize', editor:'select', editorParams: {
-        values: {
-          "WS": "Women's Small",
-          "WM": "Women's Medium",
-          "MS": "Men's Small",
-          "WL": "Women's Large",
-          "MM": "Men's Medium",
-          "WXL": "Women's Extra Large",
-          "WXXL": "Women's Extra Extra Large",
-          "ML": "Men's Large",
-          "WXXXL": "Women's Extra Extra Extra Large",
-          "MXL": "Men's Extra Large",
-          "MXXL": "Men's Extra Extra Large",
-          "MXXXL": "Men's Extra Extra Extra Large",
-        }
-      }},
+      {title:'T-Shirt Size', field: 'shirtSize', editor:'select', formatter: 'lookup', editorParams: {values: tShirts}, formatterParams: tShirts},
       {title:'Critical Volunteer', field: 'critVol', editor: 'tickCross', formatter: 'tickCross'}      
     ],
     cellEdited: dataChanged,

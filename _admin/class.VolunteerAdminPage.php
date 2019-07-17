@@ -57,7 +57,8 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $charts_menu = array(
             'Shift Schedules' => 'shift_schedules.php',
             'Shift Stats' => 'shift_stats.php',
-            'T-Shirts' => 'tshirts.php'
+            'T-Shirts' => 'tshirts.php',
+            'Participant Shifts' => 'vol_shifts.php'
         );
         $this->content['header']['sidebar']['Roles'] = array('icon' => 'fa-address-card', 'url' => 'roles.php');
         $this->content['header']['sidebar']['Shifts'] = array('icon' => 'fa-tshirt', 'url' => 'shifts.php');
