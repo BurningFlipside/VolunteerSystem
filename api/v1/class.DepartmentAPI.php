@@ -100,6 +100,19 @@ class DepartmentAPI extends VolunteerAPI
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $filter = new \Data\Filter("departmentID eq '$deptId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        if($odata->filter !== false)
+        {
+            $clause = $odata->filter->getClause('departmentID');
+            if($clause !== null)
+            {
+                return $response->withStatus(409);
+            }
+            else
+            {
+                $filter->appendChild('and');
+                $filter->appendChild($odata->filter);
+            }
+        }
         $shifts = $dataTable->read($filter, $odata->select, $odata->top,
                                   $odata->skip, $odata->orderby);
         if($shifts === false)
