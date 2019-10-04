@@ -26,6 +26,25 @@ function signup() {
   });
 }
 
+function override() {
+  var shiftID = $('#shiftID').val();
+  var obj = {};
+  obj['participant'] = '/dev/null';
+  obj['status'] = 'filled';
+  obj['volunteer'] = $('#participantOverride').val();
+  $.ajax({
+    url: 'api/v1/shifts/'+shiftID,
+    method: 'PATCH',
+    data: JSON.stringify(obj),
+    contentType: 'application/json',
+    complete: signupDone
+  });
+}
+
+function showAdminSignup() {
+  $('#adminSignup').removeClass('d-none');
+}
+
 function revealPage() {
   $('#signupContent').removeClass('d-none');
   $('#groupContent').removeClass('d-none');

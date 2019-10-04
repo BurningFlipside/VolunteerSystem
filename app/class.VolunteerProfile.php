@@ -17,6 +17,10 @@ class VolunteerProfile extends VolunteerObject
 
     public function __construct($uid, $dbData = null)
     {
+        if($uid === '/dev/null')
+        {
+            return;
+        }
         parent::__construct($uid, $dbData, 'participants', 'uid');
     }
 

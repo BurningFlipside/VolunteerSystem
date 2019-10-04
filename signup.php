@@ -67,6 +67,14 @@ if($processor->isAdminForShift($shift, $page->user))
     </div>
     ';
   }
+  if(!isset($shift['participant']) || strlen($shift['participant']) === 0)
+  {
+    $page->body .= '
+    <div class="alert alert-info" role="alert">
+      You are an administrator for this shift. You can assign someone to the shift, but it is highly recommended to let the users sign up. But if you are sure click <a href="#" onClick="showAdminSignup()" class="alert-link">here</a>.
+    </div>
+    ';
+  }
 }
 
 //Is shift already taken?
@@ -201,6 +209,22 @@ $page->body .= '
   <button type="button" class="btn btn-primary" onclick="signup();">Signup</button>
 </div></div>
 ';
+
+if($processor->isAdminForShift($shift, $page->user) && (!isset($shift['participant']) || strlen($shift['participant']) === 0))
+{
+  $page->body .= '
+  <div class="row d-none" id="adminSignup">
+    <div class="alert alert-danger" role="alert">
+      First off, make sure you understand what this will do. While it will let you fill out the details for a shift, it will prevent the user from seeing the shift on their list when the log it, it will not be correctly reported for t-shirts or for rock star volunteers, their camp will not be listed on the shift schedule, and the ability to contact past volunteers will not work for anyone signed up in this manner. Basically, doing this removes about 90% of the advantage of using this system. So please only do this if participant in question is unable to sign up on their own.
+    </div>
+    <label for="participantOverride" class="col-sm-2 col-form-label">Participant Name:</label>
+    <div class="col-sm-10">
+      <input type="text" name="participantOverride" id="participantOverride" class="form-control"/>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="override();">Admin Override</button>
+  </div>
+  ';
+}
 
 //Is group eligible?
 if(isset($shift['groupID']) && isset($roles[0]['groups_allowed']) && $roles[0]['groups_allowed'])

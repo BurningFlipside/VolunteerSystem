@@ -217,7 +217,10 @@ trait Processor
         }
         if($shift->isFilled())
         {
-            $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
+            if($entry['participant'] !== '/dev/null')
+            {
+                $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
+            }
             if($entry['participant'] === $profile->uid)
             {
                 $entry['available'] = false;
