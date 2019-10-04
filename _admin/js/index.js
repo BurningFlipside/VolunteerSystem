@@ -101,10 +101,15 @@ function gotShifts(jqXHR) {
     }
     else {
       var filled = 0;
+      var pending = 0;
       var unfilled = data.length;
       for(var i = 0; i < data.length; i++) {
         if(data[i].status && data[i].status === 'filled') {
           filled++;
+          unfilled--;
+        }
+        else if(data[i].status && data[i].status === 'pending') {
+          pending++;
           unfilled--;
         }
       }
@@ -122,10 +127,10 @@ function gotShifts(jqXHR) {
       };
       var data = {
         datasets: [{
-          data: [unfilled, filled],
-          backgroundColor: ["#d53e4f", "#66c2a5"]
+          data: [unfilled, filled, pending],
+          backgroundColor: ["#d53e4f", "#66c2a5", "#f46d43"]
         }],
-        labels: ['Unfilled', 'Filled']
+        labels: ['Unfilled', 'Filled', 'Pending']
       };
       chart = new Chart(ctx, {
         type: 'doughnut',

@@ -61,8 +61,12 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
             'Participant Shifts' => 'vol_shifts.php',
             'Volunteers without Shifts' => 'no_shifts.php'
         );
+        $shifts_menu = array(
+            'Add/Edit Shifts' => 'shifts.php',
+            'Pending Shifts' => 'pending.php'
+        );
         $this->content['header']['sidebar']['Roles'] = array('icon' => 'fa-address-card', 'url' => 'roles.php');
-        $this->content['header']['sidebar']['Shifts'] = array('icon' => 'fa-tshirt', 'url' => 'shifts.php');
+        $this->content['header']['sidebar']['Shifts'] = array('icon' => 'fa-tshirt', 'menu' => $shifts_menu);
         $this->content['header']['sidebar']['Volunteers'] = array('icon' => 'fa-user', 'url' => 'volunteers.php');
         $this->content['header']['sidebar']['Reports'] = array('icon' => 'fa-chart-bar', 'menu' => $charts_menu);
     }

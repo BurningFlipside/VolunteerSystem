@@ -15,6 +15,8 @@ class ShiftAPI extends VolunteerAPI
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
         $app->post('/{shift}/Actions/Signup[/]', array($this, 'signup'));
         $app->post('/{shift}/Actions/Abandon[/]', array($this, 'abandon'));
+        $app->post('/{shift}/Actions/Approve[/]', array($this, 'approvePending'));
+        $app->post('/{shift}/Actions/Disapprove[/]', array($this, 'disapprovePending')); 
     }
 
     protected function canCreate($request)
@@ -177,6 +179,12 @@ class ShiftAPI extends VolunteerAPI
                 $dept = new \VolunteerDepartment($overlaps[$i]->departmentID);
                 $leads = array_merge($leads, $dept->getLeadEmails());
                 $overlaps[$i]->status = 'pending';
+                $tmp = new \Data\Filter('_id eq '.$overlaps[$i]->{'_id'});
+                $res = $dataTable->update($tmp, $overlaps[$i]);
+                if($res === false)
+                {
+                    return $response->withJSON(array('err'=>'Unable to update overlap with id '.$overlaps[$i]->{'_id'}));
+                }
             }
             $dept = new \VolunteerDepartment($entity['departmentID']);
             $leads = array_merge($leads, $dept->getLeadEmails());
@@ -186,7 +194,12 @@ class ShiftAPI extends VolunteerAPI
             $profile = new \VolunteerProfile($this->user->uid);
             $email = new \Emails\TwoShiftsAtOnceEmail($profile);
             $email->addLeads($leads);
-            return $response->withJSON($email->getRawMessage(), 500);
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send duplicate email!');
+            }
+            return $response->withJSON($dataTable->update($filter, $entity));
         }
         if(isset($entity['available']) && $entity['available'])
         {
@@ -215,6 +228,52 @@ class ShiftAPI extends VolunteerAPI
         }
         $entity['participant'] = '';
         $entity['status'] = 'unfilled';
+        return $response->withJSON($dataTable->update($filter, $entity));
+    }
+
+    public function approvePending($request, $response, $args)
+    {
+        if(!$this->canCreate($request))
+        {
+            return $response->withStatus(401);
+        }
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        $entity['status'] = 'filled';
+        return $response->withJSON($dataTable->update($filter, $entity));
+    }
+
+    public function disapprovePending($request, $response, $args)
+    {
+        if(!$this->canCreate($request))
+        {
+            return $response->withStatus(401);
+        }
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity['participant'] = '';
+        $entity['status'] = 'unfilled';
+        $profile = new \VolunteerProfile($this->user->uid);
+        $email = new \Emails\PendingRejectedEmail($profile);
+        $email->setShift($entity);
+        $emailProvider = \EmailProvider::getInstance();
+        if($emailProvider->sendEmail($email) === false)
+        {
+            throw new \Exception('Unable to send duplicate email!');
+        }
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 }
