@@ -23,7 +23,7 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $this->addCSS('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
         $this->addJS('https://cdn.jsdelivr.net/npm/flatpickr');
         $this->addJS('js/admin.js');
-        $this->addJS('js/dialog.js');
+        $this->addJS('../js/dialog.js');
         $this->secure_root = $this->getSecureRoot();
         $this->content['loginUrl'] = $this->secure_root.'api/v1/login';
     }

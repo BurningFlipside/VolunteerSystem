@@ -22,6 +22,8 @@ class ProcessorUser
 
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 $page->addJS('js/signup.js');
+$page->addJS('js/dialog.js');
+$page->addWellKnownJS(JS_BOOTBOX);
 $processor = new ProcessorUser($page->user->isInGroupNamed('VolunteerAdmins'));
 
 $page->body = '<div class="row"><h1>Shift Signup</h1></div>';

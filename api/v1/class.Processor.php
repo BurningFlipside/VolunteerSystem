@@ -217,11 +217,11 @@ trait Processor
         }
         if($shift->isFilled())
         {
-            if($entry['participant'] !== '/dev/null')
+            if(isset($entry['participant']) && $entry['participant'] !== '/dev/null')
             {
                 $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
             }
-            if($entry['participant'] === $profile->uid)
+            if(isset($entry['participant']) && $entry['participant'] === $profile->uid)
             {
                 $entry['available'] = false;
                 $entry['why'] = 'Shift is already taken, by you';

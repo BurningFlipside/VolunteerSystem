@@ -21,6 +21,7 @@ class VolunteerShift extends VolunteerObject
     protected $myEnd = null;
     protected $modStart = null;
     protected $modEnd = null;
+    protected $webParticipantName = null;
 
     public function __construct($shiftID, $dbData = null)
     {
@@ -69,6 +70,20 @@ class VolunteerShift extends VolunteerObject
                     self::$roleCache[$this->dbData['roleID']] = new \VolunteerRole($this->dbData['roleID']);
                 }
                 return self::$roleCache[$this->dbData['roleID']];
+            case 'webParticipantName':
+                if($this->webParticipantName === null)
+                {
+                    if(isset($this->dbData['participant']))
+                    {
+                        $tmp = new \VolunteerProfile($this->dbData['participant']);
+                        $this->webParticipantName = $tmp->getDisplayName();
+                    }
+                    else
+                    {
+                        $this->webParticipantName = "";
+                    }
+                }
+                return $this->webParticipantName;
             default:
                 return $this->dbData[$propName];
         }
@@ -98,7 +113,7 @@ class VolunteerShift extends VolunteerObject
 
     public function isFilled()
     {
-         return isset($this->dbData['status']) && ($this->dbData['status'] === 'pending' || $this->dbData['status'] === 'filled');
+         return isset($this->dbData['status']) && ($this->dbData['status'] === 'pending' || $this->dbData['status'] === 'filled' || $this->dbData['status'] === 'groupPending');
     }
 
     public function findOverlaps($uid, $shortCircuit = false)

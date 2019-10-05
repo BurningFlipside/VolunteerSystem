@@ -639,8 +639,8 @@ function gotGroupToEdit(jqXHR) {
   var shifts = jqXHR.responseJSON;
   var eventOptions = [];
   for(var i = 0; i < events.length; i++) {
-    var eventOption = {value: events[i]['_id']['$id'], text: events[i].name};
-    if(shifts[0].eventID === events[i]['_id']['$id']) {
+    var eventOption = {value: events[i]['_id']['$oid'], text: events[i].name};
+    if(shifts[0].eventID === events[i]['_id']['$oid']) {
       eventOption.selected = true;
       myevent = events[i];
     }

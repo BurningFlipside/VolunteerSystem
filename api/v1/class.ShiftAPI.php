@@ -17,6 +17,8 @@ class ShiftAPI extends VolunteerAPI
         $app->post('/{shift}/Actions/Abandon[/]', array($this, 'abandon'));
         $app->post('/{shift}/Actions/Approve[/]', array($this, 'approvePending'));
         $app->post('/{shift}/Actions/Disapprove[/]', array($this, 'disapprovePending')); 
+        $app->post('/{shift}/Actions/StartGroupSignup', array($this, 'startGroupSignup'));
+        $app->post('/{shift}/Actions/GenerateGroupLink', array($this, 'generateGroupLink'));
     }
 
     protected function canCreate($request)
@@ -207,6 +209,12 @@ class ShiftAPI extends VolunteerAPI
             $entity['status'] = 'filled';
             return $response->withJSON($dataTable->update($filter, $entity));
         }
+        if(isset($entity['status']) && $entity['status'] === 'groupPending')
+        {
+            $entity['participant'] = $this->user->uid;
+            $entity['status'] = 'filled';
+            return $response->withJSON($dataTable->update($filter, $entity));
+        }
         print_r($entity); die();
     }
 
@@ -275,5 +283,130 @@ class ShiftAPI extends VolunteerAPI
             throw new \Exception('Unable to send duplicate email!');
         }
         return $response->withJSON($dataTable->update($filter, $entity));
+    }
+
+    public function startGroupSignup($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        if(isset($entity['participant']) && strlen($entity['participant']) > 0)
+        {
+            return $response->withStatus(401);
+        }
+        $filter = new \Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        $entities = $dataTable->read($filter);
+        $count = count($entities);
+        $dept = new \VolunteerDepartment($entity['departmentID']);
+        $res = array();
+        $res['department'] = $dept->departmentName;
+        $res['earlyLate'] = $entity['earlyLate'];
+        $res['endTime'] = $entity['endTime'];
+        $res['eventID'] = $entity['eventID'];
+        $res['name'] = $entity['name'];
+        $res['startTime'] = $entity['startTime'];
+        $res['groupID'] = $entity['groupID'];
+        $res['shifts'] = array();
+        $roles = array();
+        for($i = 0; $i < $count; $i++)
+        {
+            if(isset($entities[$i]['status']) && ($entities[$i]['status'] === 'filled' || $entities[$i]['status'] === 'pending'))
+            {
+                continue;
+            }
+            if(!isset($roles[$entities[$i]['roleID']]))
+            {
+                $roles[$entities[$i]['roleID']] = new \VolunteerRole($entities[$i]['roleID']);
+            }
+            $role = $roles[$entities[$i]['roleID']];
+            $entities[$i]['role'] = $role->display_name;
+            array_push($res['shifts'], $entities[$i]);
+        }
+        return $response->withJSON($res);
+    }
+
+    public function generateGroupLink($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        if(isset($entity['participant']) && strlen($entity['participant']) > 0)
+        {
+            return $response->withStatus(401);
+        }
+        $data = $request->getParsedBody();
+        $myShift = $data['myshift'];
+        $roles = array();
+        foreach($data as $key => $value)
+        {
+            if(substr($key, 0, 6) === "roles.")
+            {
+                $roles[substr($key, 6)] = $value;
+            }
+        }
+        $filter = new \Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        $entities = $dataTable->read($filter);
+        $count = count($entities);
+        $uuid = $this->genUUID();
+        for($i = 0; $i < $count; $i++)
+        {
+            if(isset($entities[$i]['status']) && ($entities[$i]['status'] === 'filled' || $entities[$i]['status'] === 'pending'))
+            {
+                $entities[$i] = false;
+                continue;
+            }
+            if((string)$entities[$i]['_id'] === (string)new \MongoDB\BSON\ObjectId($myShift))
+            {
+                $entities[$i]['participant'] = $this->user->uid;
+                $entities[$i]['status'] = 'filled';
+                $entities[$i]['signupLink'] = $uuid;
+            }
+            else if(isset($roles[$entities[$i]['roleID']]))
+            {
+                $entities[$i]['status'] = 'groupPending';
+                $entities[$i]['signupLink'] = $uuid;
+                $roles[$entities[$i]['roleID']]--;
+                if($roles[$entities[$i]['roleID']] === 0)
+                {
+                    unset($roles[$entities[$i]['roleID']]);
+                }
+            }
+            else
+            {
+                $entities[$i] = false;
+            }
+        }
+        if(count($roles) !== 0)
+        {
+            throw new \Exception('Not enough shifts to fullfill requests');
+        }
+        for($i = 0; $i < $count; $i++)
+        {
+            if($entities[$i] === false)
+            {
+                continue;
+            }
+            $filter = new \Data\Filter('_id eq '.$entities[$i]['_id']);
+            $res = $dataTable->update($filter, $entities[$i]);
+            if($res === false)
+            {
+                throw new \Exception('Not able to save shift '.$entities[$i]['_id']);
+            }
+        }
+        return $response->withJSON(array('uuid' => $uuid));
     }
 }

@@ -17,7 +17,7 @@ class VolunteerRole extends VolunteerObject
                 }
                 return intval($this->dbData['down_time']);
             default:
-                parent::__get($propName);
+                return parent::__get($propName);
         }
     }
 }
