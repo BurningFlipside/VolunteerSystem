@@ -1,0 +1,834 @@
+# this is an example of the Uber API
+# as a demonstration of an API spec in YAML
+swagger: '2.0'
+info:
+  title: Flipside Volunteer System
+  description: API proposal for the FVS
+  version: "0.0.1"
+# the domain of the service
+host: secure.burningflipside.com
+# array of all schemes that your API supports
+schemes:
+  - https
+# will be prefixed to all paths
+basePath: /fvs/api/v1
+produces:
+  - application/json
+paths:
+  /departments:
+    get:
+      summary: Volunteer Departments
+      description: |
+        The departments endpoint provides a list of the current departments. The response includes the display name and other details about each department, and lists the departments in the proper display order.
+      tags:
+        - Departments
+      responses:
+        200:
+          description: An array of departments
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Department'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a new Department
+      description: |
+        Create a new volunteer department entry
+      tags:
+        - Departments
+      parameters:
+        - name: department
+          in: body
+          description: The department data to create
+          required: true
+          schema:
+            $ref: '#/definitions/Department'
+      responses:
+        201:
+          description: An array of departments
+          headers:
+            Location: 
+              description: The URI for the new department
+              type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /departments/{name}:
+    get:
+      summary: Get Single Department
+      description: Returns the single department specified by the name
+      tags:
+        - Departments
+      parameters:
+        - name: name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+      responses:
+        200:
+          description: A department
+          schema:
+            $ref: '#/definitions/Department'
+        404:
+          description: The department with this short name was not found
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Update Department
+      description: Modify one or more fields in the department
+      tags:
+        - Departments
+      parameters:
+        - name: name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+        - name: department
+          in: body
+          description: The department data to edit
+          required: true
+          schema:
+            $ref: '#/definitions/Department'
+      responses:
+        200:
+          description: The edited department object
+          schema:
+            $ref: '#/definitions/Department'
+        404:
+          description: The department with this short name was not found
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete Department
+      description: Delete a department
+      tags:
+        - Departments
+      parameters:
+        - name: name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+      responses:
+        200:
+          description: The requested department was deleted
+        404:
+          description: The department with this short name was not found
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /departments/{name}/roles:
+    get:
+      summary: Get Roles for Department
+      description: Returns all the roles defined for the department
+      tags:
+        - Roles
+      parameters:
+        - name: name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+      responses:
+        200:
+          description: An array of roles
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Role'
+        404:
+          description: The department with this short name was not found
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a new Department
+      description: |
+        Create a new volunteer department entry
+      tags:
+        - Roles
+      parameters:
+        - name: name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+        - name: role
+          in: body
+          description: The role data to create
+          required: true
+          schema:
+            $ref: '#/definitions/Role'
+      responses:
+        201:
+          description: The location of the new role
+          headers:
+            Location: 
+              description: The URI for the new role
+              type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /departments/{dept_name}/roles/{role_name}:
+    get:
+      summary: Get Single Role
+      description: Returns the single role specified by the name
+      tags:
+        - Roles
+      parameters:
+        - name: dept_name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+        - name: role_name
+          in: path
+          description: The short_name for the role
+          required: true
+          type: string
+      responses:
+        200:
+          description: A role
+          schema:
+            $ref: '#/definitions/Role'
+        404:
+          description: The department with this short name was not found or a role with this short name was not found
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Update Role
+      description: Modify one or more fields in the department
+      tags:
+        - Roles
+      parameters:
+        - name: dept_name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+        - name: role_name
+          in: path
+          description: The short_name for the role
+          required: true
+          type: string
+        - name: department
+          in: body
+          description: The role data to edit
+          required: true
+          schema:
+            $ref: '#/definitions/Role'
+      responses:
+        200:
+          description: The edited role object
+          schema:
+            $ref: '#/definitions/Role'
+        404:
+          description: The department with this short name was not found or a role with this short name was not found
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete Role
+      description: Delete a role
+      tags:
+        - Roles
+      parameters:
+        - name: dept_name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+        - name: role_name
+          in: path
+          description: The short_name for the role
+          required: true
+          type: string
+      responses:
+        200:
+          description: The requested role was deleted
+        404:
+          description: The department with this short name was not found or a role with this short name was not found
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /departments/{name}/shifts:
+    get:
+      summary: Get Shifts for Department
+      description: Returns all the shifts defined for the department
+      tags:
+        - Shifts
+      parameters:
+        - name: name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+      responses:
+        200:
+          description: An array of shifts
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Shift'
+        404:
+          description: The department with this short name was not found
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a new shift
+      description: |
+        Create a new volunteer shift entry for this department
+      tags:
+        - Shifts
+      parameters:
+        - name: name
+          in: path
+          description: The short_name for the department
+          required: true
+          type: string
+        - name: shift
+          in: body
+          description: The shift data to create
+          required: true
+          schema:
+            $ref: '#/definitions/Shift'
+      responses:
+        201:
+          description: The location of the new shift
+          headers:
+            Location: 
+              description: The URI for the new shift
+              type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /shifts:
+    get:
+      summary: Get all shifts the user has rights to
+      description: |
+        Returns all the shifts the user can sign up for positions in.
+      tags:
+        - Shifts
+      responses:
+        200:
+          description: An array of shifts
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Shift'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /shifts/{shift_id}:
+    get:
+      summary: Get all shifts the user has rights to
+      description: |
+        Returns all the shifts the user can sign up for positions in.
+      tags:
+        - Shifts
+      parameters:
+        - name: shift_id
+          in: path
+          description: The shift id for the shift
+          required: true
+          type: string
+      responses:
+        200:
+          description: The specific shift
+          schema:
+            $ref: '#/definitions/Shift'
+        404:
+          description: The specified shift does not exist or the calling user does not have access to the shift
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /shifts/{shift_id}/Actions/Shifts.SignMeUp:
+    post:
+      summary: Sign up for a shift
+      description: Sign a user up for a specific role in a shift
+      tags:
+        - Shifts
+      parameters:
+        - name: shift_id
+          in: path
+          description: The shift id for the shift
+          required: true
+          type: string
+        - name: role
+          in: body
+          schema:
+            $ref: '#/definitions/ShiftSignUp'
+      responses:
+        200:
+          description: The signup was successful
+        404:
+          description: The specified shift does not exist or the calling user does not have access to the shift
+        412:
+          description: The shift is already full
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /shifts/{shift_id}/Actions/Shifts.CreateGroupSignup:
+    post:
+      summary: Create a group signup for a shift
+      description: Generate a URI that can be sent to other participants to sign up for positions on this shift
+      tags:
+        - Shifts
+      parameters:
+        - name: shift_id
+          in: path
+          description: The shift id for the shift
+          required: true
+          type: string
+        - name: group
+          in: body
+          schema:
+            $ref: '#/definitions/GroupShiftSignUp'
+      responses:
+        200:
+          description: The uri was successfully generated
+        404:
+          description: The specified shift does not exist or the calling user does not have access to the shift
+        412:
+          description: The shift is already full or not available for group signup
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error' 
+  /participants:
+    get:
+      summary: Get all participants
+      description: |
+        Returns all the participants in the system.
+      tags:
+        - Participant
+      responses:
+        200:
+          description: An array of participants
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Participant'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /participants/{uid}:
+    get:
+      summary: Get a specific participant
+      description: Returns a specific participants info.
+      tags:
+        - Participant
+      parameters:
+        - name: uid
+          in: path
+          description: The uid for the user
+          required: true
+          type: string
+      responses:
+        200:
+          description: Participant information for a user
+          schema:
+            $ref: '#/definitions/Participant'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Edit a participant
+      description: Allows an admin or lead to edit a user. Currently only used to set the lead note field
+      tags:
+        - Participant
+      parameters:
+        - name: uid
+          in: path
+          description: The uid for the user
+          required: true
+          type: string
+        - name: paricipant
+          in: body
+          schema:
+            $ref: '#/definitions/Participant'
+      responses:
+        200:
+          description: The updated participant
+          schema:
+            $ref: '#/definitions/Participant'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /participant/{uid}/shifts:
+    get:
+      summary: Get all shifts the specified user is signed up for
+      description: |
+        Returns all the shifts the specified user is signed up for.
+      tags:
+        - Participant
+        - Shifts
+      parameters:
+        - name: uid
+          in: path
+          description: The uid for the user
+          required: true
+          type: string
+      responses:
+        200:
+          description: An array of shifts
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Shift'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /participant/{uid}/notes:
+    get:
+      summary: Get all the private notes about the specified user that the logged in user can see
+      description: Returns all the private notes about the specified user that the logged in user can see
+      tags:
+        - Participant
+      parameters:
+        - name: uid
+          in: path
+          description: The uid for the user
+          required: true
+          type: string
+      responses:
+        200:
+          description: An array of notes
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PrivateNote'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a new note
+      description: Add a new private note to the user
+      tags:
+        - Participant
+      parameters:
+        - name: uid
+          in: path
+          description: The uid for the user
+          required: true
+          type: string
+        - name: note
+          in: body
+          schema:
+            $ref: '#/definitions/PrivateNote'
+      responses:
+        201:
+          description: The location of the new note
+          headers:
+            Location: 
+              description: The URI for the new note
+              type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /participant/{uid}/notes/{note_id}:
+    get:
+      summary: Get the specified note
+      description: Returns the specified private note
+      tags:
+        - Participant
+      parameters:
+        - name: uid
+          in: path
+          description: The uid for the user
+          required: true
+          type: string
+        - name: note_id
+          in: path
+          description: The note_id for the note
+          required: true
+          type: string
+      responses:
+        200:
+          description: The private note
+          schema:
+            $ref: '#/definitions/PrivateNote'
+        404:
+          description: The note does not exist or the user is not able to see the note
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Edit the specified note
+      description: Edit the specified private note
+      tags:
+        - Participant
+      parameters:
+        - name: uid
+          in: path
+          description: The uid for the user
+          required: true
+          type: string
+        - name: note_id
+          in: path
+          description: The note_id for the note
+          required: true
+          type: string
+        - name: note
+          in: body
+          schema:
+            $ref: '#/definitions/PrivateNote'
+      responses:
+        200:
+          description: The updated private note
+          schema:
+            $ref: '#/definitions/PrivateNote'
+        404:
+          description: The note does not exist or the user is not able to see the note
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete the specified note
+      description: Delete the specified private note
+      tags:
+        - Participant
+      parameters:
+        - name: uid
+          in: path
+          description: The uid for the user
+          required: true
+          type: string
+        - name: note_id
+          in: path
+          description: The note_id for the note
+          required: true
+          type: string
+      responses:
+        200:
+          description: The requested note was deleted
+        404:
+          description: The note does not exist or the user is not able to see the note
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /participants/me:
+    get:
+      summary: Participant info
+      description: The participant info of the currently logged in participant.
+      tags:
+        - Participant
+      responses:
+        200:
+          description: Participant information for a user
+          schema:
+            $ref: '#/definitions/Participant'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /participant/me/shifts:
+    get:
+      summary: Get all shifts the signed in user is signed up for
+      description: |
+        Returns all the shifts the signed in user is signed up for.
+      tags:
+        - Participant
+        - Shifts
+      responses:
+        200:
+          description: An array of shifts
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Shift'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  Department:
+    type: object
+    properties:
+      short_name:
+        type: string
+        description: Unique identifier representing a specific department.
+      description:
+        type: string
+        description: Description of department.
+      display_name:
+        type: string
+        description: Display name of department.
+      image:
+        type: string
+        description: Image data representing the department.
+      email:
+        type: string
+        description: Email address for the department lead
+  Role:
+    type: object
+    properties:
+      short_name:
+        type: string
+        description: Unique identifier (within department) representing a specific role.
+      description:
+        type: string
+        description: Role's job description (may contain HTML).
+      display_name:
+        type: string
+        description: Display name of the role.
+      publicly_visible:
+        type: boolean
+        description: Can any user see who has signed up for this role in a shift
+      groups_allowed:
+        type: boolean
+        description: Can a user generate a group sign up link for this role?
+      requirements:
+        $ref: '#/definitions/RoleRequirements'
+  RoleRequirements:
+    type: object
+    description: A list of all the requirements for a user to sign up for this role all must evaluate to true for a user to see the role
+    properties:
+      must_be_in_groups:
+        type: array
+        items:
+          type: string
+          description: The names of the groups the user must be in to sign up for this role. Empty or not present means all groups.
+      must_have_email_in_list:
+        type: array
+        items:
+          type: string
+          description: The emails of all the users authorized to sign up for this role. Empty or not present means any email address can sign up.
+  Shift:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Unique identifier representing a specific shift.
+      department:
+        type: string
+        description: The department short_name of the department this shift is associated with
+      display_name:
+        type: string
+        description: Display name of the shift.
+      enabled:
+        type: boolean
+        description: Is this shift currently available for signups or not?
+      requirements:
+        description: TBD
+      start_time: 
+        type: string
+        description: Start time of the shift in RFC2822 format
+      end_time:
+        type: string
+        description: End time of the shift in RFC2822 format
+      positions:
+        type: array
+        items:
+          $ref: '#/definitions/Position'
+  Position:
+    type: object
+    properties:
+      role:
+        type: string
+        description: URI of the role represented by this position
+      available:
+        type: boolean
+        description: Is this position available to the calling user?
+      participant:
+        $ref: '#/definitions/Participant'
+      group_signup_uri:
+        type: string
+        description: The URI to do a group sign up to this role (visible to admins and the user that generated the URI)
+      group_signup_initiator:
+        type: string
+        description: The UID of the user who started the group signup
+      group_signup_expire:
+        type: string
+        description: When the group signup will expire
+  Participant:
+    type: object
+    properties:
+      uid:
+        type: string
+        description: The User ID of the participant who has signed up for this shift
+      camp:
+        type: string
+        description: The user's camp
+      lead_notes:
+        type: string
+        description: Notes about this user that are visible to all leads
+      private_notes:
+        type: array
+        items:
+          $ref: '#/definitions/PrivateNote'
+  PrivateNote:
+    type: object
+    properties:
+      note_id:
+        type: string
+        description: A unique ID (per user) for the note
+      uid: 
+        type: string
+        description: The user ID who wrote the note
+      role:
+        type: string
+        description: The URI of the role of the user that wrote the note (all other users with that role can see this note)
+      note:
+        type: string
+        description: The text of the note
+  ShiftSignUp:
+    type: object
+    properties:
+      role:
+        type: string
+        description: The role to sign up for
+  GroupShiftSignUp:
+    type: object
+    properties:
+      role:
+        type: string
+        description: Optional - Only allow users of the link to sign up for this role. Default is all roles on the shift.
+      max:
+        type: integer
+        description: Optional - Only allow the specified number of positions on the shift to be filled through this link. Default is all positions on the shift.
+      expire_time:
+        type: string
+        description: Optional - The expire time of the link in RFC2822 format. Default is the expire time specifed by the shift creator. NOTE if the specified expire_time is beyond that specified by the shift creator the request will fail.
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
