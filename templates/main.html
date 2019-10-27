@@ -1,0 +1,168 @@
+{% extends "@Secure/main.html" %}
+
+{% block headBlock %}
+<script type="text/javascript" src="js/wizard.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/core/main.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/list/main.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/daygrid/main.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/timegrid/main.css" rel="stylesheet" />
+<link href="/js/common/fullcalendar/timeline/main.css" rel='stylesheet' />
+<link href="/js/common/fullcalendar/resource-timeline/main.css" rel='stylesheet' />
+<script type="text/javascript" src="/js/common/fullcalendar/core/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/list/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/daygrid/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/timegrid/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/timeline/main.min.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/resource-common/main.js"></script>
+<script type="text/javascript" src="/js/common/fullcalendar/resource-timeline/main.js"></script>
+<script type="text/javascript" src="https://unpkg.com/tooltip.js/dist/umd/tooltip.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="modal fade bd-example-modal-lg" id="profileWizard" tabindex="-1" role="dialog" aria-labelledby="profileWizardTitle" aria-hidden="true" data-backdrop="static" data-complete="saveProfile">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="profileWizardTitle">Participant Profile</h5>
+      </div>
+      <div class="modal-body">
+        <div class="row flex-xl-nowrap">
+          <div class="d-none d-sm-none d-md-none d-lg-none d-xl-block col-xl-3 bd-sidebar">
+            <ul class="list-group">
+              <li class="list-group-item active">Basic Info</li>
+              <li class="list-group-item">Legal Name</li>
+              <li class="list-group-item">Privacy Settings</li>
+              <li class="list-group-item">Communications</li>
+            </ul>
+          </div>
+          <div class="col-12 col-md-8 col-xl-8 bd-content">
+            <div id="profileBasic" class="d-block">
+              This is some basic information so we know who you are and can find you if we need you.
+              <div class="row">
+                <label for="displayName" class="col-sm-2 col-form-label">Burner Name:</label>
+                <div class="col-sm-9">
+                  <input class="form-control" type="text" name="displayName" id="displayName" value="{{ user.displayName }}" required/>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="tooltip" data-trigger="focus" title="This serves a few purposes. First we may need to find you on site if you are late to your shift for example. So this should be what people in your camp know you by. Also depending on your privacy settings this might be shown as who signed up for the shift.">Why?</a>
+                </div>
+                <div class="w-100"></div>
+                <label for="campName" class="col-sm-2 col-form-label">Camp Name:</label>
+                <div class="col-sm-9">
+                  <input class="form-control" type="text" name="campName" id="campName" required/>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="tooltip" data-trigger="focus" title="We may need to find you on site if you are late to your shift for example. So this should be enough info to locate your approximate camp.">Why?</a>
+                </div>
+                <div class="w-100"></div>
+                <label for="shirtSize" class="col-sm-2 col-form-label">Shirt Size:</label>
+                <div class="col-sm-9">
+                  <select class="form-control" type="text" name="shirtSize" id="shirtSize">
+                    <option value="WS">Women's Small</option>
+                    <option value="WM">Women's Medium</option>
+                    <option value="MS">Men's Small</option>
+                    <option value="WL">Women's Large</option>
+                    <option value="MM">Men's Medium</option>
+                    <option value="WXL">Women's Extra Large</option>
+                    <option value="WXXL">Women's Extra Extra Large</option>
+                    <option value="ML">Men's Large</option>
+                    <option value="WXXXL">Women's Extra Extra Extra Large</option>
+                    <option value="MXL">Men's Extra Large</option>
+                    <option value="MXXL">Men's Extra Extra Large</option>
+                    <option value="MXXXL">Men's Extra Extra Extra Large</option>
+                  </select>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="tooltip" data-trigger="focus" title="Many departments use t-shirts as a method of uniquely identifying volunteers for a particular department. This data will allow us to determine what size shirt to order if you qualify.">Why?</a>
+                </div>
+              </div>
+            </div>
+            <div id="profileLegal" class="d-none">
+              Attending the event early or staying late requires AAR, LLC (the organization that puts on Burning Flipside) have access to your legal name. If you wish to sign up for any shifts that require
+              Early Entry or Late Stay then you must provide this information. If you choose not to do so those shifts will be hidden from you.
+              <div class="alert alert-danger" role="alert">
+                NOTE: Providing false information on this page could cause your shifts to be denied. If you do not want to provide this information simply leave it blank. You will have the opportunity to
+                change how your name is displayed to other users on the next page.
+              </div>
+              <div class="row">
+                <label for="givenName" class="col-sm-2 col-form-label">First Name:</label>
+                <div class="col-sm-9">
+                  <input class="form-control" type="text" name="givenName" id="givenName" value="{{ user.givenName }}"/>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="tooltip" data-trigger="focus" title="Burner Names change, legal names are a bit harder to change and are what legal entities deal with. AAR needs this information so that they know who is on land before or after the event.">Why?</a>
+                </div>
+                <div class="w-100"></div>
+                <label for="sn" class="col-sm-2 col-form-label">Last Name:</label>
+                <div class="col-sm-9">
+                  <input class="form-control" type="text" name="sn" id="sn" value="{{ user.sn }}"/>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="tooltip" data-trigger="focus" title="Burner Names change, legal names are a bit harder to change and are what legal entities deal with. AAR needs this information so that they know who is on land before or after the event.">Why?</a>
+                </div>
+              </div>
+            </div>
+            <div id="profilePrivacy" class="d-none" data-onshow="privacyShown">
+              Your name can be shown on the web version of the schedule (helpful if you want to sign up with your friends) or optionaly hidden. Your name will be on the copies of the schedule the leads
+              can print out for on site use. How would you like your name shown on each schedule?
+              <div class="row">
+                <label for="webName" class="col-sm-3 col-form-label">Online:</label>
+                <div class="col-sm-8">
+                  <select class="form-control" name="webName" id="webName" onChange="updateDisplayName(this);">
+                    <option value="full">Full Name</option>
+                    <option value="burnerLast">Burner then Last Name</option>
+                    <option value="firstBurner">First then Burner Name</option>
+                    <option value="burner">Burner Name</option>
+                    <option value="anonymous">Anonymous</option>
+                  </select>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="tooltip" data-trigger="focus" title="Burner Names change, legal names are a bit harder to change and are what legal entities deal with. AAR needs this information so that they know who is on land before or after the event.">Why?</a>
+                </div>
+                <div class="w-100"></div>
+                <label for="webDisplayName" class="col-sm-3 col-form-label">What will be shown:</label>
+                <div class="col-sm-9">
+                  <input class="form-control" type="text" name="webDisplayName" id="webDisplayName" readonly/>
+                </div>
+                <div class="w-100"></div>
+                <label for="paperName" class="col-sm-3 col-form-label">Paper:</label>
+                <div class="col-sm-8">
+                  <select class="form-control" name="paperName" id="paperName" onChange="updateDisplayName(this);">
+                    <option value="full">Full Name</option>
+                    <option value="burnerLast">Burner then Last Name</option>
+                    <option value="firstBurner">First then Burner Name</option>
+                    <option value="burner">Burner Name</option>
+                  </select>
+                </div>
+                <div class="col-sm-1">
+                  <a href="#" data-toggle="tooltip" data-trigger="focus" title="Burner Names change, legal names are a bit harder to change and are what legal entities deal with. AAR needs this information so that they know who is on land before or after the event.">Why?</a>
+                </div>
+                <div class="w-100"></div>
+                <label for="paperDisplayName" class="col-sm-3 col-form-label">What will be shown:</label>
+                <div class="col-sm-9">
+                  <input class="form-control" type="text" name="paperDisplayName" id="paperDisplayName" readonly/>
+                </div>
+              </div>
+            </div>
+            <div id="profileCommunications" class="d-none">
+              Any communications about your volunteer shift will go to the email address you have setup in your Flipside profile at profiles.burningflipside.com. If you want to use a different email you need
+              to configure that in your profile.
+              <div class="row">
+                <label for="mail" class="col-sm-3 col-form-label">Email:</label>
+                <div class="col-sm-8">
+                  <input class="form-control" type="text" name="mail" id="mail" value="{{ user.mail }}" readonly/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="prevStep" type="button" class="btn btn-outline-primary" disabled onClick="prevWizardStep(this);">Previous</button>
+        <button id="nextStep" type="button" class="btn btn-outline-primary" onClick="nextWizardStep(this);">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
