@@ -60,8 +60,12 @@ trait Processor
         static $uids = array();
         if(!isset($uids[$uid]))
         {
-            $profile = new \VolunteerProfile($uid);
-            $uids[$uid] = $profile->getDisplayName();
+            try {
+                $profile = new \VolunteerProfile($uid);
+                $uids[$uid] = $profile->getDisplayName();
+            } catch (Exception $e) {
+                $uids[$uid] = $uid;
+            }
         }
         return $uids[$uid];
     }
