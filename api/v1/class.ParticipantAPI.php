@@ -102,29 +102,43 @@ class ParticipantAPI extends VolunteerAPI
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $filter = new \Data\Filter("participant eq '$uid'");
         $shifts = $dataTable->read($filter);
-        $text = "BEGIN:VCALENDAR\r\n";
-        $text.= "VERSION:2.0\r\n";
-        $text.= "PRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\n";
-        $count = count($shifts);
-        for($i = 0; $i < $count; $i++)
+        $format = $request->getAttribute('format', false);
+        if($format === false || $format === 'text/calendar')
         {
-            $text.= "BEGIN:VEVENT\r\n";
-            $text.= "UID:".$this->user->mail."\r\n";
-            $d = new DateTime($shifts[$i]['startTime']);
-            $d->setTimezone(new \DateTimeZone('UTC'));
-            $text.= "DTSTAMP:".$d->format('Ymd\THis\Z')."\r\n";
-            $text.= "DTSTART:".$d->format('Ymd\THis\Z')."\r\n";
-            $d = new DateTime($shifts[$i]['endTime']);
-            $d->setTimezone(new \DateTimeZone('UTC'));
-            $text.= "DTEND:".$d->format('Ymd\THis\Z')."\r\n";
-            $text.= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
-            $text.= "END:VEVENT\r\n";
+            $text = "BEGIN:VCALENDAR\r\n";
+            $text.= "VERSION:2.0\r\n";
+            $text.= "PRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\n";
+            $count = count($shifts);
+            for($i = 0; $i < $count; $i++)
+            {
+                $text.= "BEGIN:VEVENT\r\n";
+                $text.= "UID:".$this->user->mail."\r\n";
+                $d = new DateTime($shifts[$i]['startTime']);
+                $d->setTimezone(new \DateTimeZone('UTC'));
+                $text.= "DTSTAMP:".$d->format('Ymd\THis\Z')."\r\n";
+                $text.= "DTSTART:".$d->format('Ymd\THis\Z')."\r\n";
+                $d = new DateTime($shifts[$i]['endTime']);
+                $d->setTimezone(new \DateTimeZone('UTC'));
+                $text.= "DTEND:".$d->format('Ymd\THis\Z')."\r\n";
+                $text.= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
+                $text.= "END:VEVENT\r\n";
+            }
+            $text.= "END:VCALENDAR\r\n";
+            $response = $response->withHeader('Content-type', 'text/calendar');
+            $response = $response->withHeader('Content-Disposition', 'attachment; filename="MyShifts.ics"');
+            $body = $response->getBody();
+            $body->write($text);
         }
-        $text.= "END:VCALENDAR\r\n";
-        $response = $response->withHeader('Content-type', 'text/calendar');
-        $response = $response->withHeader('Content-Disposition', 'attachment; filename="MyShifts.ics"');
-        $body = $response->getBody();
-        $body->write($text);
+        else if($format === 'application/pdf')
+        {
+            $pdf = new \Schedules\SimplePDF('My', $shifts);
+            $response = $response->withHeader('Content-Type', 'application/pdf');
+            $response->getBody()->write($pdf->toPDFBuffer());
+        }
+        else
+        {
+            throw new \Exception('Unknown format '.$format);
+        }
         return $response;
     }
 }

@@ -70,6 +70,19 @@ class VolunteerShift extends VolunteerObject
                     self::$roleCache[$this->dbData['roleID']] = new \VolunteerRole($this->dbData['roleID']);
                 }
                 return self::$roleCache[$this->dbData['roleID']];
+            case 'participantObj':
+                if($this->participantObj === null)
+                {
+                    if(isset($this->dbData['participant']))
+                    {
+                        $this->participantObj = new \VolunteerProfile($this->dbData['participant']);
+                    }
+                    else
+                    {
+                        $this->participantObj = false;
+                    }
+                }
+                return $this->participantObj;
             case 'webParticipantName':
                 if($this->webParticipantName === null)
                 {
@@ -84,6 +97,20 @@ class VolunteerShift extends VolunteerObject
                     }
                 }
                 return $this->webParticipantName;
+            case 'scheduleParticipantName':
+                if($this->scheduleParticipantName === null)
+                {
+                    if(isset($this->dbData['participant']))
+                    {
+                        $tmp = new \VolunteerProfile($this->dbData['participant']);
+                        $this->scheduleParticipantName = $tmp->getDisplayName('paperName');
+                    }
+                    else
+                    {
+                        $this->scheduleParticipantName = "";
+                    }
+                }
+                return $this->scheduleParticipantName;
             default:
                 return $this->dbData[$propName];
         }

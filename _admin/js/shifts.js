@@ -81,7 +81,7 @@ function addNewShift(elem) {
   href = href.substring(1);
   var eventOptions = [];
   for(var i = 0; i < events.length; i++) {
-    var eventOption = {value: events[i]['_id']['$id'], text: events[i].name};
+    var eventOption = {value: events[i]['_id']['$oid'], text: events[i].name};
     eventOptions.push(eventOption);
     if(i === 0) {
       min = events[i].startTime;
@@ -155,7 +155,7 @@ function addNewGroup(elem) {
   $('#groupDepartmentName').val(departments[href].departmentName);
   var mySelect = $('#groupEvent')[0];
   for(var i = 0; i < events.length; i++) {
-    addOptiontoSelect(mySelect, events[i]['_id']['$id'], events[i].name);
+    addOptiontoSelect(mySelect, events[i]['_id']['$oid'], events[i].name);
   }
   if(!browser_supports_input_type('datetime-local')) {
     $('[type="datetime-local"]').flatpickr({enableTime: true});
@@ -171,7 +171,7 @@ function addNewGroup(elem) {
 function groupEventChanged(elem) {
   var eventID = elem.value;
   for(var i = 0; i < events.length; i++) {
-    if(events[i]['_id']['$id'] === eventID) {
+    if(events[i]['_id']['$oid'] === eventID) {
       myevent = events[i];
       break;
     }
@@ -214,7 +214,7 @@ function deleteShift(e) {
     callback: function(result){
       if(result) {
         $.ajax({
-          url: '../api/v1/shifts/'+e.data['_id']['$id'],
+          url: '../api/v1/shifts/'+e.data['_id']['$oid'],
           method: 'DELETE',
           complete: shiftDeleted
         });
@@ -236,7 +236,7 @@ function removeOwnEvent(element) {
   if(this.shifts) {
     return (element.groupID !== this.groupID);
   }
-  return (element['_id']['$id'] !== this['_id']['$id']);
+  return (element['_id']['$oid'] !== this['_id']['$oid']);
 }
 
 function filterSinglesAndGroups(element) {
@@ -290,7 +290,7 @@ function gotShiftstoReplaceGroupIDs(jqXHR) {
     var data = array[i];
     data.groupID = this;
     promises.push($.ajax({
-      url: '../api/v1/shifts/'+array[i]['_id']['$id'],
+      url: '../api/v1/shifts/'+array[i]['_id']['$oid'],
       method: 'PATCH',
       contentType: 'application/json',
       data: JSON.stringify(data)
@@ -319,7 +319,7 @@ function doGroup(e) {
     //Create a new group...
     var array = [];
     array.push(data.shiftID);
-    array.push(data['_id']['$id']);
+    array.push(data['_id']['$oid']);
     $.ajax({
       url: '../api/v1/shifts/Actions/CreateGroup',
       data: JSON.stringify(array),
@@ -337,7 +337,7 @@ function doGroup(e) {
     delete data.group;
     delete data.shiftID;
     $.ajax({
-      url: '../api/v1/shifts/'+data['_id']['$id'],
+      url: '../api/v1/shifts/'+data['_id']['$oid'],
       method: 'PATCH',
       contentType: 'application/json',
       data: JSON.stringify(data),
@@ -409,7 +409,7 @@ function gotShiftsToGroup(jqXHR) {
         var end = new Date(singles[i].endTime);
         shiftName = singles[i].roleID+': '+start+' to '+end;
       }
-      singleSelect.options.push({value: singles[i]['_id']['$id'], text: shiftName});
+      singleSelect.options.push({value: singles[i]['_id']['$oid'], text: shiftName});
     }
   }
   if(this.shifts !== undefined) {
@@ -443,7 +443,7 @@ function groupShift(e) {
 function saveShift(e) {
   var shift = e.data;
   $.ajax({
-    url: '../api/v1/shifts/'+shift['_id']['$id'],
+    url: '../api/v1/shifts/'+shift['_id']['$oid'],
     method: 'PATCH',
     contentType: 'application/json',
     data: JSON.stringify(shift),
@@ -539,7 +539,7 @@ function saveGroup(e) {
   for(var i = 0; i < shifts.length; i++) {
     if(shifts[i]['_id'] !== undefined) {
       promises.push($.ajax({
-        url: '../api/v1/shifts/'+shifts[i]['_id']['$id'],
+        url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
         method: 'PATCH',
         contentType: 'application/json',
         data: JSON.stringify(shifts[i])
@@ -581,8 +581,8 @@ function gotShiftToEdit(jqXHR) {
   var shift = jqXHR.responseJSON;
   var eventOptions = [];
   for(var i = 0; i < events.length; i++) {
-    var eventOption = {value: events[i]['_id']['$id'], text: events[i].name};
-    if(shift.eventID === events[i]['_id']['$id']) {
+    var eventOption = {value: events[i]['_id']['$oid'], text: events[i].name};
+    if(shift.eventID === events[i]['_id']['$oid']) {
       eventOption.selected = true;
       myevent = events[i];
     }
@@ -744,7 +744,7 @@ function gotShifts(jqXHR) {
       var end = new Date(singles[i].endTime);
       shiftName = singles[i].roleID+': '+start+' to '+end;
     }
-    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$id']+'" class="list-group-item list-group-item-action" onclick="return editShift(this);">'+shiftName+'</a>');
+    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action" onclick="return editShift(this);">'+shiftName+'</a>');
   }
 }
 
@@ -788,12 +788,11 @@ function setMinEndTime(e) {
 function setBoundaryTimes(e) {
   var id = e.target.value;
   for(var i = 0; i < events.length; i++) {
-    if(events[i]['_id']['$id'] === id) {
+    if(events[i]['_id']['$oid'] === id) {
       myevent = events[i];
       break;
     }
   }
-  console.log($('#startTime'));
   $('#startTime').attr('min', myevent.startTime);
   $('#startTime').attr('max', myevent.endTime);
   $('#endTime').attr('min', myevent.startTime);

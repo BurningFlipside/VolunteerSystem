@@ -18,7 +18,7 @@ $page->body .= '
     <select class="form-control" id="departments" multiple></select>
   </div>
   <div class="w-100"></div>
-  <label for="shiftTypes" class="d-none d-lg-block col-sm-2 col-form-label">Shift Types:</label>
+  <label for="shiftTypes" class="d-none d-lg-block col-sm-2 col-form-label">Shift Status:</label>
   <div class="d-none d-lg-block col-sm-10">
     <select class="form-control" id="shiftTypes" multiple>
       <option value="unfilled" selected>Unfilled</option>
@@ -30,7 +30,8 @@ $page->body .= '
   </div>
   <div class="w-100"></div>
   <div id="calendar"></div>
-  <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts"><i class="far fa-calendar-alt"></i> Download My Shifts</a>
+  <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts?$format=text/calendar"><i class="far fa-calendar-alt"></i> Download My Shifts</a>
+  <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts?$format=application/pdf"><i class="fas fa-print"></i> Print My Shifts</a>
 </div>
 <style type="text/css">
   .select2-container--default .select2-selection--multiple .select2-selection__choice[title=Unfilled] {
