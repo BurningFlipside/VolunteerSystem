@@ -782,11 +782,13 @@ function gotDepartments(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
+  var count = 0;
   var accordian = $('#accordion');
   for(var i = 0; i < array.length; i++) {
     if(array[i].isAdmin === false) {
       continue;
     }
+    count++;
     departments[array[i].departmentID] = array[i];
     accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift group</a></div></div></div></div>');
   }
@@ -795,7 +797,10 @@ function gotDepartments(jqXHR) {
     complete: gotShifts
   });
   if(window.location.hash !== '') {
-    accordian.find(':not(#collapse'+window.location.hash.substr(1)+')').collapse('hide');
+    accordian.find(':not(#collapse'+window.location.hash.substr(1)+')').removeClass('show');
+  }
+  else if (count > 2) {
+    accordian.find('.show').removeClass('show');
   }
 }
 
