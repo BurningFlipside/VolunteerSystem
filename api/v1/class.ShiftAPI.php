@@ -13,6 +13,7 @@ class ShiftAPI extends VolunteerAPI
         parent::setup($app);
         $app->post('/Actions/CreateGroup', array($this, 'createGroup'));
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
+        $app->post('/Actions/DeleteGroup', array($this, 'deleteGroup'));
         $app->post('/{shift}/Actions/Signup[/]', array($this, 'signup'));
         $app->post('/{shift}/Actions/Abandon[/]', array($this, 'abandon'));
         $app->post('/{shift}/Actions/Approve[/]', array($this, 'approvePending'));
@@ -151,6 +152,28 @@ class ShiftAPI extends VolunteerAPI
             }
         }
         return $response->withJSON($ret);
+    }
+
+    public function deleteGroup($request, $response)
+    {
+        $data = $request->getParsedBody();
+        $dataTable = $this->getDataTable();
+        $filter = new \Data\Filter('groupID eq '.$data['groupID']);
+        $entities = $dataTable->read($filter);
+        if(empty($entities))
+        {
+            return $response->withStatus(404);
+        }
+        if(!$this->canUpdate($request, $entities[0]))
+        {
+            return $response->withStatus(401);
+        }
+        $res = $dataTable->delete($filter);
+        if($res)
+        {
+            return $response->withJSON($res);
+        }
+        return $response->withJSON($res, 500);
     }
 
     public function signup($request, $response, $args)

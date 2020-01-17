@@ -201,8 +201,12 @@ function shiftDeleted(jqXHR) {
 }
 
 function deleteShift(e) {
+  var msg = "Are you sure you want to delete this shift?";
+  if(e.data.shifts !== undefined) {
+    msg = "Are you sure you want to delete all "+e.data.shifts.length+" shifts in this group?";
+  }
   bootbox.confirm({
-    message: "Are you sure you want to delete this shift?",
+    message: msg,
     buttons: {
       confirm: {
         label: 'Yes'
@@ -213,11 +217,24 @@ function deleteShift(e) {
     },
     callback: function(result){
       if(result) {
-        $.ajax({
-          url: '../api/v1/shifts/'+e.data['_id']['$oid'],
-          method: 'DELETE',
-          complete: shiftDeleted
-        });
+        if(e.data.shifts !== undefined) {
+          var obj = { 'groupID': e.data.groupID };
+          $.ajax({
+            contentType: 'application/json',
+            data: JSON.stringify(obj),
+            dataType: 'json',
+            url: '../api/v1/shifts/Actions/DeleteGroup',
+            method: 'POST',
+            complete: shiftDeleted
+          });
+        }
+        else {
+          $.ajax({
+            url: '../api/v1/shifts/'+e.data['_id']['$oid'],
+            method: 'DELETE',
+            complete: shiftDeleted
+          });
+        }
       }
     }
   });
@@ -684,6 +701,7 @@ function gotGroupToEdit(jqXHR) {
       ]}
     ],
     buttons: [
+      {text: 'Delete Shift Group', callback: deleteShift},
       {text: 'Add Shift/Merge Group', callback: groupShift},
       {text: 'Save Group', callback: saveGroup}
     ]
