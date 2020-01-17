@@ -59,7 +59,8 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
             'Shift Stats' => 'shift_stats.php',
             'T-Shirts' => 'tshirts.php',
             'Participant Shifts' => 'vol_shifts.php',
-            'Volunteers without Shifts' => 'no_shifts.php'
+            'Volunteers without Shifts' => 'no_shifts.php',
+            'Empty Shifts' => 'report_empty_shifts.php'
         );
         $shifts_menu = array(
             'Add/Edit Shifts' => 'shifts.php',
