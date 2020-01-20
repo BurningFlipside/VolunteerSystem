@@ -20,6 +20,7 @@ class ShiftAPI extends VolunteerAPI
         $app->post('/{shift}/Actions/Disapprove[/]', array($this, 'disapprovePending')); 
         $app->post('/{shift}/Actions/StartGroupSignup', array($this, 'startGroupSignup'));
         $app->post('/{shift}/Actions/GenerateGroupLink', array($this, 'generateGroupLink'));
+        $app->post('/{shift}/Actions/ForceShiftEmpty[/]', array($this, 'forceEmpty'));
     }
 
     protected function canCreate($request)
@@ -435,5 +436,26 @@ class ShiftAPI extends VolunteerAPI
             }
         }
         return $response->withJSON(array('uuid' => $uuid));
+    }
+
+    function forceEmpty($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        if(!$this->canUpdate($request, $entity))
+        {
+            return $response->withStatus(401);
+        }
+        $entity['participant'] = '';
+        $entity['status'] = 'unfilled';
+        return $response->withJSON($dataTable->update($filter, $entity));
     }
 }

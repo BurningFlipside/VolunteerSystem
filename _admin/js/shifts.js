@@ -247,6 +247,38 @@ function deleteShift(e) {
   });
 }
 
+function shiftEmptied(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to empty shift!');
+    return;
+  }
+  location.reload();
+}
+
+function forceShiftEmpty(e) {
+  bootbox.confirm({
+    message: 'Are you sure you want to force this shift empty? The participant will not be informed!',
+    buttons: {
+      confirm: {
+        label: 'Yes'
+      },
+      cancel: {
+        label: 'No'
+      }
+    },
+    callback: function(result) {
+      if(result) {
+        $.ajax({
+          url: '../api/v1/shifts/'+e.data['_id']['$oid']+'/Actions/ForceShiftEmpty',
+          method: 'POST',
+          complete: shiftEmptied
+        });
+      }
+    }
+  });
+}
+
 function shiftEditDone(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -648,6 +680,7 @@ function gotShiftToEdit(jqXHR) {
     dialogOptions.alerts = [
       {type: 'warning', text: 'Shift is already filled!'}
     ];
+    dialogOptions.buttons.push({text: 'Force Shift Empty', callback: forceShiftEmpty});
   }
   $.ajax({
     url: '../api/v1/departments/'+shift.departmentID+'/roles',
