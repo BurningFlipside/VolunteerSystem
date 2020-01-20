@@ -176,4 +176,11 @@ class VolunteerShift extends VolunteerObject
         }
         return $res;
     }
+
+    public function makeCopy($dataTable)
+    {
+        $tmp = $this->dbData;
+        unset($tmp['_id']);
+        $dataTable->create($tmp);
+    }
 }

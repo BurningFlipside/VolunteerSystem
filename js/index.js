@@ -163,6 +163,10 @@ function shiftChanged(e) {
   filterEvents();
 }
 
+function retryShifts() {
+  gotShifts(this);
+}
+
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     alert('Unable to get shifts!');
@@ -172,6 +176,11 @@ function gotShifts(jqXHR) {
   var events = calendar.getEvents();
   for(var i = 0; i < events.length; i++) {
     events[i].remove();
+  }
+  if($('#departments').data('select2') === null) {
+    var boundRetry = retryShifts.bind(jqXHR);
+    setTimeout(boundRetry, 100);
+    return;
   }
   var depts = $('#departments').select2('data');
   var deptHasShifts = {};

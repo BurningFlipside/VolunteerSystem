@@ -194,6 +194,10 @@ class ShiftAPI extends VolunteerAPI
         }
         $shift = new \VolunteerShift($shiftId, $entity);
         $entity = $this->processShift($entity, $request);
+        if(isset($entity['minShifts']) && $entity['minShifts'] > 0)
+        {
+          $shift->makeCopy($dataTable);
+        }
         if(isset($entity['overlap']) && $entity['overlap'])
         {
             $overlaps = $shift->findOverlaps($this->user->uid);

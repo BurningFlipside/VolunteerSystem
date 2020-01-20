@@ -13,6 +13,11 @@ function doneCreatingShift(jqXHR) {
 
 function createShift(e) {
   var shift = e.data;
+  if(shift.minShifts !== 0 && shift.unbounded) {
+    e.data.copies = shift.minShifts;
+    createCopies(e);
+    return;
+  }
   $.ajax({
     url: '../api/v1/departments/'+shift.departmentID+'/shifts',
     contentType: 'application/json',
@@ -98,6 +103,8 @@ function addNewShift(elem) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: min, max: max, onChange: setMinEndTime, required: true},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: min, max: max, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
+      {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
+      {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: true}, 
       {label: 'Shift Name', type: 'text', id: 'name'},
       {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyLate', options: [
         {value: -2, text: 'Late Stay (Monday Evening)'},
@@ -620,6 +627,8 @@ function gotShiftToEdit(jqXHR) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
+      {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
+      {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: !shift.unbounded},
       {label: 'Shift Name', type: 'text', id: 'name'},
       {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyLate', options: [
         {value: -2, text: 'Late Stay (Monday Evening)'},
@@ -691,6 +700,8 @@ function gotGroupToEdit(jqXHR) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true, value: shifts[0].startTime},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true, value: shifts[0].endTime},
       {label: 'Enabled', type: 'checkbox', id: 'enabled', checked: shifts[0].enabled},
+      {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
+      {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: !shifts[0].unbounded},
       {label: 'Shift Name', type: 'text', id: 'name', value: shifts[0].name},
       {label: 'Entry/Late Stay Window', type: 'select', id: 'earlyLate', options: [
         {value: -2, text: 'Late Stay (Monday Evening)', selected: (shifts[0].earlyLate === '-2')},
@@ -820,6 +831,15 @@ function setBoundaryTimes(e) {
   $('#startTime').attr('max', myevent.endTime);
   $('#endTime').attr('min', myevent.startTime);
   $('#endTime').attr('max', myevent.endTime);
+}
+
+function unboundedChanged(e) {
+  if(e.target.checked) {
+    $('#minShifts').removeAttr('disabled');
+  }
+  else {
+    $('#minShifts').attr('disabled', true);
+  }
 }
 
 function initPage() {
