@@ -25,12 +25,8 @@ class ShiftAPI extends VolunteerAPI
 
     protected function canCreate($request)
     {
-        if($this->isVolunteerAdmin($request))
-        {
-            return true;
-        }
-        //TODO give access to department lead
-        return false;
+        //Check is handled by validateCreate...
+        return true;
     }
 
     protected function canUpdate($request, $entity)
@@ -45,6 +41,19 @@ class ShiftAPI extends VolunteerAPI
     protected function canDelete($request, $entity)
     {
         return $this->canUpdate($request, $entity);
+    }
+
+    protected function validateCreate(&$obj, $request)
+    {
+        if($this->isVolunteerAdmin($request))
+        {
+            return true;
+        }
+        if(!isset($obj['departmentID']))
+        {
+             return false;
+        }
+        return $this->isUserDepartmentLead($obj['departmentID'], $this->user);
     }
 
     protected function processEntry($entry, $request)
