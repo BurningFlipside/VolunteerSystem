@@ -21,6 +21,7 @@ class VolunteerShift extends VolunteerObject
     protected $myEnd = null;
     protected $modStart = null;
     protected $modEnd = null;
+    protected $participantObj = null;
     protected $webParticipantName = null;
 
     public function __construct($shiftID, $dbData = null)
