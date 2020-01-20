@@ -87,7 +87,7 @@ function renderResource(info) {
   }
   var role = roles[resource.id];
   if(!validDepts.includes(role.departmentID)) {
-    console.log(resource);
+    //console.log(resource);
   }
   else {
   }
@@ -147,8 +147,9 @@ function filterEvents() {
     }
   }
   if(calendar.view.currentEnd < newStart) {
-    calendar.next();
+    calendar.gotoDate(newStart);
   }
+  console.log(calendar.view);
   calendar.renderingPauseDepth = false;
   if(calendar.needsRerender) {
     calendar.render();
@@ -246,6 +247,9 @@ function gotShifts(jqXHR) {
   }
   $('#departments').trigger('change');
   $('#departments').change(deptChanged);
+  if(getParameterByName('department') !== null) {
+    filterEvents();
+  }
 }
 
 function eventChanged(e) {
@@ -303,6 +307,7 @@ function gotDepartments(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
   }
+  var id = getParameterByName('department');
   var depts = jqXHR.responseJSON;
   var groups = {};
   for(var i = 0; i < depts.length; i++) {
@@ -312,8 +317,14 @@ function gotDepartments(jqXHR) {
     if(groups[depts[i]['area']] === undefined) {
       groups[depts[i]['area']] = [];
     }
-    groups[depts[i]['area']].push({id: depts[i]['departmentID'], text: depts[i]['departmentName'], selected: true});
-    validDepts.push(depts[i]['departmentID']);
+    var tmp = {id: depts[i]['departmentID'], text: depts[i]['departmentName'], selected: true};
+    if(id !== null && id !== tmp.id) {
+      tmp.selected = false;
+    }
+    else {
+      validDepts.push(depts[i]['departmentID']);
+    }
+    groups[depts[i]['area']].push(tmp);
   }
   var data = [];
   for(var group in groups) {
