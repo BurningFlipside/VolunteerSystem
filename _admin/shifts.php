@@ -9,6 +9,14 @@ $page->addWellKnownJS(JS_BOOTBOX);
 $page->addJS('../js/wizard.js');
 
 $page->content['pageHeader'] = 'Shifts';
+$page->content['subHeader'] = '
+  <label for="eventFilter" class="col-sm-2 col-form-label">Events:</label>
+  <div class="col-sm-10">
+    <select class="form-control" id="eventFilter">
+      <option value=""></option>
+    </select>
+  </div>
+';
 $page->content['panel'] = array();
 $page->content['body'] = '
 <div class="modal fade bd-example-modal-lg" id="groupWizard" tabindex="-1" role="dialog" aria-labelledby="groupWizardTitle" aria-hidden="true" data-backdrop="static" data-complete="newGroup">

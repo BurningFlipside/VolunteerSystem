@@ -761,7 +761,7 @@ function gotShifts(jqXHR) {
   for(var groupID in groups) {
     var group = groups[groupID];
     var groupName = getGroupName(group);
-    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+'</a>');
+    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+'</a>');
   }
   singles.sort(sortEvents);
   for(var i = 0; i < singles.length; i++) {
@@ -773,7 +773,7 @@ function gotShifts(jqXHR) {
       var end = new Date(singles[i].endTime);
       shiftName = singles[i].roleID+': '+start+' to '+end;
     }
-    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action" onclick="return editShift(this);">'+shiftName+'</a>');
+    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+'</a>');
   }
 }
 
@@ -784,6 +784,11 @@ function gotEvents(jqXHR) {
     return;
   }
   events = jqXHR.responseJSON;
+  var ef = $('#eventFilter');
+  for(var i = 0; i < events.length; i++) {
+    var option = $('<option value="'+events[i]['_id']['$oid']+'">'+events[i].name+'</option>');
+    ef.append(option);
+  }
 }
 
 function gotDepartments(jqXHR) {
@@ -842,6 +847,14 @@ function unboundedChanged(e) {
   }
 }
 
+function efChanged(e) {
+  $('.shift').remove();
+  $.ajax({
+    url: '../api/v1/shifts?$filter=eventID eq '+e.target.value,
+    complete: gotShifts
+  });
+}
+
 function initPage() {
   $.ajax({
     url: '../api/v1/events',
@@ -867,6 +880,7 @@ function initPage() {
       complete: gotGroupToEdit
     });
   }
+  $('#eventFilter').change(efChanged);
 }
 
 $(initPage);
