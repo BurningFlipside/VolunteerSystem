@@ -141,7 +141,7 @@ function getShiftsBeforeDelete(jqXHR) {
       callback: function(result){ 
         if(result) {
           $.ajax({
-            url: '../api/v1/events/'+data['_id']['$id'],
+            url: '../api/v1/events/'+data['_id']['$oid'],
             method: 'DELETE',
             complete: deleteDone
           });
@@ -156,7 +156,7 @@ function getShiftsBeforeDelete(jqXHR) {
 function delEvent(e, cell) {
   var data = cell.getRow().getData();
   $.ajax({
-    url: '../api/v1/events/'+data['_id']['$id']+'/shifts',
+    url: '../api/v1/events/'+data['_id']['$oid']+'/shifts',
     context: data,
     complete: getShiftsBeforeDelete
   });
