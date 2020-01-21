@@ -2,7 +2,8 @@ function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
   }
-  var table = $('#shiftTable');
+  var table = $('#shiftTable tbody');
+  table.empty();
   var data = jqXHR.responseJSON;
   var participants = {};
   for(var i = 0; i < data.length; i++) {
@@ -20,36 +21,41 @@ function gotShifts(jqXHR) {
   if(max === 0) {
     max = 9999;
   }
-  table.find(':nth-child(2)').remove();
   for(var uid in participants) {
-    console.log(participants[uid]);
-    if(participants[uid] > min && participants[uid] < max) {
+    if(participants[uid] >= min && participants[uid] <= max) {
       table.append('<tr><td>'+uid+'</td><td>'+participants[uid]+'</td></tr>');
     }
   }
 }
 
-function minShiftsChanged(e) {
-  rolesChanged(e);
-}
-
-function maxShiftsChanged(e) {
-  rolesChanged(e);
-}
-
-function rolesChanged(e) {
+function getShifts() {
   var selectedRoles = $('#roles').select2('data');
-  var filter = '$filter=';
-  for(var i = 0; i < selectedRoles.length; i++) {
-    filter+='roleID eq '+selectedRoles[i].id;
-    if(i < selectedRoles.length-1) {
-      filter+=' or ';
+  var filter = '';
+  if(selectedRoles.length > 0) {
+    filter = '?$filter=';
+    for(var i = 0; i < selectedRoles.length; i++) {
+      filter+='roleID eq '+selectedRoles[i].id;
+      if(i < selectedRoles.length-1) {
+        filter+=' or ';
+      }
     }
   }
   $.ajax({
-    url: '../api/v1/events/'+$('#event').val()+'/shifts?'+filter,
+    url: '../api/v1/events/'+$('#event').val()+'/shifts'+filter,
     complete: gotShifts
   });
+}
+
+function minShiftsChanged(e) {
+  getShifts();
+}
+
+function maxShiftsChanged(e) {
+  getShifts();
+}
+
+function rolesChanged(e) {
+  getShifts();
 }
 
 function gotRoles(jqXHR) {
@@ -70,6 +76,11 @@ function departmentSelected(e) {
     url: '../api/v1/departments/'+value+'/roles',
     complete: gotRoles
   });
+  getShifts();
+}
+
+function eventSelected(e) {
+  getShifts();
 }
 
 function initPage() {
@@ -106,6 +117,7 @@ function initPage() {
     }
   });
   $('#roles').select2();
+  $('#event').change(eventSelected);
   $('#department').change(departmentSelected);
   $('#roles').change(rolesChanged);
   $('#minShifts').change(minShiftsChanged);
