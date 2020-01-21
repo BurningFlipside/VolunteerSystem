@@ -38,6 +38,17 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
             {
                  $this->is_admin = true;
             }
+            else
+            {
+                //Is this user the assistant for a department?
+                $uid = $this->user->uid;
+                $email = $this->user->mail;
+                $filter = new \Data\Filter("others eq $uid or others eq $email");
+                $dataTable = DataSetFactory::getDataTableByNames('fvs','departments');
+                $depts = $dataTable->read($filter);
+                $this->isLead = !empty($depts);
+                $this->is_admin = true;
+            }
         }
     }
 

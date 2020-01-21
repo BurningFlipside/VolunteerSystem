@@ -56,6 +56,10 @@ class VolunteerPage extends SecurePage
         {
             return false;
         }
-        return $this->user->isInGroupNamed('Leads');
+        if($this->user->isInGroupNamed('Leads'))
+        {
+            return true;
+        }
+        return false;
     }
 }

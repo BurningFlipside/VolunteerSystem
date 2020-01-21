@@ -94,6 +94,9 @@ function renderResource(info) {
 }
 
 function eventShouldBeShown(shift, validDepts, validShifts) {
+  if(shift.enabled === false) {
+    return false;
+  }
   if(validDepts.includes(shift.departmentID)) {
     if(shift.whyClass === 'MINE' && validShifts.includes('mine')) {
       return true;
