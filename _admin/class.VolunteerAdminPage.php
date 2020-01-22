@@ -83,5 +83,12 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $this->content['header']['sidebar']['Volunteers'] = array('icon' => 'fa-user', 'url' => 'volunteers.php');
         $this->content['header']['sidebar']['Reports'] = array('icon' => 'fa-chart-bar', 'menu' => $charts_menu);
         $this->content['header']['sidebar']['Contact'] = array('icon' => 'fa-envelope', 'url' => 'contact.php');
+        if($this->user && $this->user->isInGroupNamed('VolunteerAdmins'))
+        {
+            $admin_menu = array(
+                'Email Text' => 'emails.php'
+            );
+            $this->content['header']['sidebar']['Admin'] = array('icon' => 'fa-cog', 'menu' => $admin_menu);
+        }
     }
 }
