@@ -256,24 +256,35 @@ function shiftEmptied(jqXHR) {
   location.reload();
 }
 
-function forceShiftEmpty(e) {
-  bootbox.confirm({
-    message: 'Are you sure you want to force this shift empty? The participant will not be informed!',
+function emptyShift(e) {
+  bootbox.dialog({
+    message: 'Are you sure you want to empty this shift?',
     buttons: {
-      confirm: {
-        label: 'Yes'
+      yes: {
+        label: 'Yes and Inform Participant',
+        className: 'btn-primary',
+        callback: function() {
+          $.ajax({
+            url: '../api/v1/shifts/'+e.data['_id']['$oid']+'/Actions/EmptyShift',
+            method: 'POST',
+            complete: shiftEmptied
+          });
+        }
       },
+      force: {
+        label: 'Yes and <b>DO NOT</b> Inform Participant',
+        className: 'btn-danger',
+        callback: function() {
+          $.ajax({
+            url: '../api/v1/shifts/'+e.data['_id']['$oid']+'/Actions/ForceShiftEmpty',
+            method: 'POST',
+            complete: shiftEmptied
+          });
+        }
+      }, 
       cancel: {
-        label: 'No'
-      }
-    },
-    callback: function(result) {
-      if(result) {
-        $.ajax({
-          url: '../api/v1/shifts/'+e.data['_id']['$oid']+'/Actions/ForceShiftEmpty',
-          method: 'POST',
-          complete: shiftEmptied
-        });
+        label: 'No',
+        className: 'btn-secondary'
       }
     }
   });
@@ -628,6 +639,17 @@ function getDepartmentName(departmentID) {
   }
 }
 
+function retryEvents() {
+  if(events === undefined) {
+    setTimeout(retryEvents, 100);
+    return;
+  }
+  var eventdd = $('#eventID');
+  for(var i = 0; i < events.length; i++) {
+    eventdd.append($('<option value="'+events[i]['_id']['$oid']+'">'+events[i].name+'</option>'));
+  }
+}
+
 function gotShiftToEdit(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -636,13 +658,21 @@ function gotShiftToEdit(jqXHR) {
   }
   var shift = jqXHR.responseJSON;
   var eventOptions = [];
-  for(var i = 0; i < events.length; i++) {
-    var eventOption = {value: events[i]['_id']['$oid'], text: events[i].name};
-    if(shift.eventID === events[i]['_id']['$oid']) {
-      eventOption.selected = true;
-      myevent = events[i];
+  if(events === undefined) {
+    setTimeout(retryEvents, 100);
+    myevent = {};
+    myevent.startTime = new Date();
+    myevent.endTime = new Date(8640000000000000);
+  }
+  else {
+    for(var i = 0; i < events.length; i++) {
+      var eventOption = {value: events[i]['_id']['$oid'], text: events[i].name};
+      if(shift.eventID === events[i]['_id']['$oid']) {
+        eventOption.selected = true;
+        myevent = events[i];
+      }
+      eventOptions.push(eventOption);
     }
-    eventOptions.push(eventOption);
   }
   var groupable = true;
   if(shift.groupID !== undefined && shift.groupID.length > 0) {
@@ -680,7 +710,8 @@ function gotShiftToEdit(jqXHR) {
     dialogOptions.alerts = [
       {type: 'warning', text: 'Shift is already filled!'}
     ];
-    dialogOptions.buttons.push({text: 'Force Shift Empty', callback: forceShiftEmpty});
+    dialogOptions.inputs.push({label: 'Participant', type: 'text', value: shift.participant, disabled: true});
+    dialogOptions.buttons.push({text: 'Empty Shift', callback: emptyShift});
   }
   $.ajax({
     url: '../api/v1/departments/'+shift.departmentID+'/roles',

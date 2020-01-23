@@ -15,7 +15,9 @@
  */
 class VolunteerShift extends VolunteerObject
 {
+    protected static $deptCache = array();
     protected static $roleCache = array();
+    protected static $eventCache = array();
     protected $mod = null;
     protected $myStart = null;
     protected $myEnd = null;
@@ -65,12 +67,24 @@ class VolunteerShift extends VolunteerObject
                     $this->modEnd->add($this->modTime);
                 }
                 return $this->modEnd;
+            case 'department':
+                if(!isset(self::$deptCache[$this->dbData['departmentID']]))
+                {
+                    self::$deptCache[$this->dbData['departmentID']] = new \VolunteerDepartment($this->dbData['departmentID']);
+                }
+                return self::$deptCache[$this->dbData['departmentID']];
             case 'role':
                 if(!isset(self::$roleCache[$this->dbData['roleID']]))
                 {
                     self::$roleCache[$this->dbData['roleID']] = new \VolunteerRole($this->dbData['roleID']);
                 }
                 return self::$roleCache[$this->dbData['roleID']];
+            case 'event':
+                if(!isset(self::$eventCache[$this->dbData['eventID']]))
+                {
+                    self::$eventCache[$this->dbData['eventID']] = new \VolunteerEvent($this->dbData['eventID']);
+                }
+                return self::$eventCache[$this->dbData['eventID']];
             case 'participantObj':
                 if($this->participantObj === null)
                 {

@@ -20,6 +20,7 @@ class ShiftAPI extends VolunteerAPI
         $app->post('/{shift}/Actions/Disapprove[/]', array($this, 'disapprovePending')); 
         $app->post('/{shift}/Actions/StartGroupSignup', array($this, 'startGroupSignup'));
         $app->post('/{shift}/Actions/GenerateGroupLink', array($this, 'generateGroupLink'));
+        $app->post('/{shift}/Actions/EmptyShift[/]', array($this, 'emptyShift'));
         $app->post('/{shift}/Actions/ForceShiftEmpty[/]', array($this, 'forceEmpty'));
     }
 
@@ -445,6 +446,38 @@ class ShiftAPI extends VolunteerAPI
             }
         }
         return $response->withJSON(array('uuid' => $uuid));
+    }
+
+    function emptyShift($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        if(!$this->canUpdate($request, $entity))
+        {
+            return $response->withStatus(401);
+        }
+        $shift = new \VolunteerShift(false, $entity);
+        $entity['participant'] = '';
+        $entity['status'] = 'unfilled';
+        $ret = $dataTable->update($filter, $entity);
+        if($ret)
+        {
+            $email = new \Emails\ShiftEmail($shift, 'shiftEmptiedSource');
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send email!');
+            }
+        }
+        return $response->withJSON($ret);
     }
 
     function forceEmpty($request, $response, $args)
