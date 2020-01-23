@@ -62,6 +62,25 @@ class ShiftAPI extends VolunteerAPI
         return $this->processShift($entry, $request);
     }
 
+    protected function postDeleteAction($entry)
+    {
+        if(empty($entry))
+        {
+            return true;
+        }
+        $shift = new \VolunteerShift(false, $entry[0]);
+        if($shift->isFilled())
+        {
+            $email = new \Emails\ShiftEmail($shift, 'shiftCanceledSource');
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send email!');
+            } 
+        }
+        return true;
+    }
+
     protected function genUUID()
     {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
