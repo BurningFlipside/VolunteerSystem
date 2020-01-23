@@ -86,7 +86,8 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         if($this->user && $this->user->isInGroupNamed('VolunteerAdmins'))
         {
             $admin_menu = array(
-                'Email Text' => 'emails.php'
+                'Email Text' => 'emails.php',
+                'Certifications' => 'certs.php'
             );
             $this->content['header']['sidebar']['Admin'] = array('icon' => 'fa-cog', 'menu' => $admin_menu);
         }
