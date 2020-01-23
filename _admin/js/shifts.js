@@ -710,7 +710,7 @@ function gotShiftToEdit(jqXHR) {
     dialogOptions.alerts = [
       {type: 'warning', text: 'Shift is already filled!'}
     ];
-    dialogOptions.inputs.push({label: 'Participant', type: 'text', value: shift.participant, disabled: true});
+    dialogOptions.inputs.push({label: 'Participant', type: 'text', id: 'participant', value: shift.participant, disabled: true});
     dialogOptions.buttons.push({text: 'Empty Shift', callback: emptyShift});
   }
   $.ajax({

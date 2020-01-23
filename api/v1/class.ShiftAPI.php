@@ -62,6 +62,21 @@ class ShiftAPI extends VolunteerAPI
         return $this->processShift($entry, $request);
     }
 
+    protected function postUpdateAction($newObj, $request, $oldObj)
+    {
+        $oldShift = new \VolunteerShift(false, $oldObj);
+        if($oldShift->isFilled() && ($oldObj['startTime'] != $newObj['startTime'] || $oldObj['endTime'] != $newObj['endTime']))
+        {
+            $email = new \Emails\ShiftEmail($oldShift, 'shiftChangedSource');
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send email!');
+            }
+        }
+        return true;
+    }
+
     protected function postDeleteAction($entry)
     {
         if(empty($entry))
