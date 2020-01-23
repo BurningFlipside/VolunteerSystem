@@ -14,6 +14,30 @@ function gotUser(jqXHR) {
   paperNameChange();
 }
 
+function gotMyCerts(jqXHR) {
+  if(jqXHR.status !== 200) {
+    return;
+  }
+  var data = jqXHR.responseJSON;
+  for(var key in data) {
+    var icon = $('#'+key);
+    var upload = $('#'+key+'_Upload');
+    switch(data[key].status) {
+      case 'pending':
+        icon.html('<i class="fas fa-exclamation-triangle text-warning" title="Your certification is pending review"></i>');
+        break;
+    }
+    console.log(data[key]);
+  }
+}
+
+function getMyCerts() {
+  $.ajax({
+    url: 'api/v1/participants/me/certs',
+    complete: gotMyCerts
+  });
+}
+
 function gotCerts(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
@@ -32,10 +56,16 @@ function gotCerts(jqXHR) {
     html.append(upload);
     input.change(certUpload);
   }
+  getMyCerts();
 }
 
 function uploadedCert(jqXHR) {
-  console.log(jqXHR);
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Unable to upload certification!');
+    return;
+  }
+  getMyCerts();
 }
 
 function certUpload(e) {
@@ -46,17 +76,16 @@ function certUpload(e) {
     return;
   }
   var id = e.target.id.split('_')[0];
-  var reader = new FileReader();
-  reader.onloadend = function(e) {
-    $.ajax({
-      url: 'api/v1/participants/me/certs/'+id,
-      method: 'POST',
-      processData: false,
-      data: e.target.result,
-      complete: uploadedCert
-    });
-  };
-  reader.readAsBinaryString(file);
+  var fd = new FormData();
+  fd.append('file', file);
+  $.ajax({
+    url: 'api/v1/participants/me/certs/'+id,
+    method: 'POST',
+    contentType: false,
+    processData: false,
+    data: fd,
+    complete: uploadedCert
+  });
 }
 
 function webNameChange() {

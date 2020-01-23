@@ -10,6 +10,8 @@ class ParticipantAPI extends VolunteerAPI
     {
         parent::setup($app);
         $app->get('/me/shifts[/]', array($this, 'getMyShifts'));
+        $app->get('/{uid}/certs[/]', array($this, 'getCerts'));
+        $app->post('/{uid}/certs/{certId}[/]', array($this, 'uploadCert'));
     }
 
     protected function canCreate($request)
@@ -140,5 +142,70 @@ class ParticipantAPI extends VolunteerAPI
             throw new \Exception('Unknown format '.$format);
         }
         return $response;
+    }
+
+    public function getCerts($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['uid'];
+        if($uid === 'me')
+        {
+            $uid = $this->user->uid;
+        }
+        else if($uid !== $this->user->uid && $this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = $this->getDataTable();
+        $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        $filter = $this->getFilterForPrimaryKey($uid);
+        $areas = $dataTable->read($filter, array('certs'), $odata->top,
+                                  $odata->skip, $odata->orderby);
+        if(empty($areas))
+        {
+            return $response->withStatus(404);
+        }
+        if(!isset($areas[0]['certs']))
+        {
+            return $response->withJson(array());
+        }
+        return $response->withJson($areas[0]['certs']);
+    }
+
+    public function uploadCert($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['uid'];
+        if($uid === 'me')
+        {
+            $uid = $this->user->uid;
+        }
+        else if($uid !== $this->user->uid && $this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($uid);
+        $users = $dataTable->read($filter);
+        if(empty($users))
+        {
+            return $response->withStatus(404);
+        }
+        $user = $users[0];
+        if(!isset($user['certs']))
+        {
+             $user['certs'] = array();
+        }
+        $files = $request->getUploadedFiles();
+        $file = $files['file'];
+        $stream = $file->getStream();
+        $cert = array('status'=>'pending', 'image'=>base64_encode($stream->getContents()));
+        $user['certs'][$args['certId']] = $cert;
+        $ret = $dataTable->update($filter, $user);
+        if($ret)
+        {
+            return $response->withStatus(200);
+        }
+        return $response->withStatus(500);
     }
 }
