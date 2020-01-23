@@ -872,8 +872,26 @@ function gotDepartments(jqXHR) {
     departments[array[i].departmentID] = array[i];
     accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift group</a></div></div></div></div>');
   }
+  var eventID = getParameterByName('event');
+  var filled = getParameterByName('filled');
+  var uri = '../api/v1/shifts';
+  if(eventID !== null && filled !== null) {
+    uri += '?$filter=eventID eq '+eventID+' and status ';
+    if(filled === '1') {
+      uri += 'eq filled';
+    }
+    else if(filled === '2') {
+      uri += 'eq pending';
+    }
+    else {
+      uri += 'ne filled and status ne pending';
+    }
+  }
+  else if(eventID !== null) {
+    uri += '?$filter=eventID eq '+eventID;
+  }
   $.ajax({
-    url: '../api/v1/shifts',
+    url: uri,
     complete: gotShifts
   });
   if(window.location.hash !== '') {

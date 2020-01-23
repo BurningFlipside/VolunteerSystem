@@ -81,6 +81,19 @@ function gotRoles(jqXHR) {
   }
 }
 
+function chartClick(e) {
+  var slice = this.getElementAtEvent(e)[0];
+  var index = slice._index;
+  var eventId = $('#events').val();
+  var deptId = $('#departments').val();
+  if(deptId === '*') {
+    location.href = 'shifts.php?event='+eventId+'&filled='+index;
+  }
+  else {
+    location.href = 'shifts.php?event='+eventId+'&department='+deptId+'&filled='+index;
+  }
+}
+
 var chart = null;
 
 function gotShifts(jqXHR) {
@@ -123,7 +136,8 @@ function gotShifts(jqXHR) {
           center: {
             text: text
           }
-        }
+        },
+        onClick: chartClick
       };
       var data = {
         datasets: [{
