@@ -12,6 +12,7 @@ class ParticipantAPI extends VolunteerAPI
         $app->get('/me/shifts[/]', array($this, 'getMyShifts'));
         $app->get('/{uid}/certs[/]', array($this, 'getCerts'));
         $app->post('/{uid}/certs/{certId}[/]', array($this, 'uploadCert'));
+        $app->post('/{uid}/certs/{certId}/Actions/RejectCert', array($this, 'rejectCert'));
     }
 
     protected function canCreate($request)
@@ -204,6 +205,52 @@ class ParticipantAPI extends VolunteerAPI
         $ret = $dataTable->update($filter, $user);
         if($ret)
         {
+            return $response->withStatus(200);
+        }
+        return $response->withStatus(500);
+    }
+
+    public function rejectCert($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['uid'];
+        if($uid === 'me')
+        {
+            $uid = $this->user->uid;
+        }
+        else if($uid !== $this->user->uid && $this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($uid);
+        $users = $dataTable->read($filter);
+        if(empty($users))
+        {
+            return $response->withStatus(404);
+        }
+        $user = $users[0];
+        $certType = $args['certId'];
+        if(!isset($user['certs']) || !isset($user['certs'][$certType]))
+        {
+            return $response->withStatus(404);
+        }
+        $obj = $request->getParsedBody();
+        if($obj === null)
+        {
+            $request->getBody()->rewind();
+            $obj = $request->getBody()->getContents();
+            $tmp = json_decode($obj, true);
+            if($tmp !== null)
+            {
+                $obj = $tmp;
+            }
+        }
+        unset($user['certs'][$certType]);
+        $ret = $dataTable->update($filter, $user);
+        if($ret)
+        {
+            //TODO Send user email...
             return $response->withStatus(200);
         }
         return $response->withStatus(500);

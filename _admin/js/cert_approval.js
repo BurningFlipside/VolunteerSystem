@@ -20,7 +20,7 @@ function gotCertTypes(jqXHR) {
   var data = jqXHR.responseJSON;
   for(var i = 0; i < data.length; i++) {
     $.ajax({
-      url: '../api/v1/participants?$filter=certs.'+data[i].certID+'.status%20eq%20pending&$select=firstName,lastName,email,burnerName,certs.'+data[i].certID,
+      url: '../api/v1/participants?$filter=certs.'+data[i].certID+'.status%20eq%20pending&$select=firstName,lastName,email,burnerName,uid,certs.'+data[i].certID,
       context: data[i].certID,
       complete: gotUsersWithPendingCerts
     });
@@ -28,12 +28,44 @@ function gotCertTypes(jqXHR) {
   }
 }
 
-function approveCert(e) {
+function finishedCertOp(jqXHR) {
+  if(jqXHR.status !== 200) {
+    alert('Could not complete certification operation');
+    console.log(jqXHR);
+    return;
+  }
+  location.reload();
+}
+
+function approveCert(e, cell) {
   console.log(e);
 }
 
-function disapproveCert(e) {
-  console.log(e);
+function disapproveCert(e, cell) {
+  var data = cell.getRow().getData();
+  var certType = Object.keys(data.certs)[0];
+  bootbox.prompt({ 
+    title: "Why are you rejecting this certification?",
+    inputType: 'select',
+    inputOptions: [
+      {text: 'It is not a valid cerification', value: 'invalid'},
+      {text: 'It is already expired', value: 'expired'}
+    ],
+    callback: function(result){ 
+      if(result === null) {
+        //User canceled the dialog
+        return;
+      }
+      var obj = {reason: result};
+      $.ajax({
+        url: '../api/v1/participants/'+data.uid+'/certs/'+certType+'/Actions/RejectCert',
+        data: JSON.stringify(obj),
+        contentType: 'application/json',
+        method: 'POST',
+        complete: finishedCertOp
+      })
+    }
+  });
 }
 
 function approveIcon(cell, formatterParams, onRendered) {
