@@ -199,7 +199,7 @@ class ParticipantAPI extends VolunteerAPI
         $files = $request->getUploadedFiles();
         $file = $files['file'];
         $stream = $file->getStream();
-        $cert = array('status'=>'pending', 'image'=>base64_encode($stream->getContents()));
+        $cert = array('status'=>'pending', 'image'=>base64_encode($stream->getContents()), 'imageType'=>$file->getClientMediaType());
         $user['certs'][$args['certId']] = $cert;
         $ret = $dataTable->update($filter, $user);
         if($ret)
