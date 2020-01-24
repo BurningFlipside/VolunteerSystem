@@ -246,11 +246,27 @@ class ParticipantAPI extends VolunteerAPI
                 $obj = $tmp;
             }
         }
+        $reason = 'Unknown';
+        switch($obj['reason'])
+        {
+            case 'invalid':
+                $reason = 'the image provided did not seem to show a valid certication of the type selected';
+                break;
+            case 'expired':
+                $reason = 'the image provided was for a certification that had already expired';
+                break;
+        }
         unset($user['certs'][$certType]);
         $ret = $dataTable->update($filter, $user);
         if($ret)
         {
-            //TODO Send user email...
+            $profile = new \VolunteerProfile(false, $user);
+            $email = new \Emails\CertificationEmail($profile, 'certifcationRejected', $certType, array('reason'=>$reason));
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send email!');
+            }
             return $response->withStatus(200);
         }
         return $response->withStatus(500);

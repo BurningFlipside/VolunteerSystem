@@ -78,10 +78,26 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
             'Add/Edit Shifts' => 'shifts.php',
             'Pending Shifts' => 'pending.php'
         );
+        $certApprovalCount = 0;
+        $certTable = \DataSetFactory::getDataTableByNames('fvs', 'certifications');
+        $userTable = \DataSetFactory::getDataTableByNames('fvs', 'participants');
+        $certs = $certTable->read();
+        $count = count($certs);
+        for($i = 0; $i < $count; $i++)
+        {
+            $filter = new \Data\Filter('certs.'.$certs[$i]['certID'].'.status eq pending');
+            $users = $userTable->read($filter);
+            $certApprovalCount += count($users);
+        }
+        $certBadge = '';
+        if($certApprovalCount > 0)
+        {
+            $certBadge = '<span class="badge badge-secondary">'.$certApprovalCount.'</span>';
+        }
         $this->content['header']['sidebar']['Roles'] = array('icon' => 'fa-address-card', 'url' => 'roles.php');
         $this->content['header']['sidebar']['Shifts'] = array('icon' => 'fa-tshirt', 'menu' => $shifts_menu);
         $this->content['header']['sidebar']['Volunteers'] = array('icon' => 'fa-user', 'url' => 'volunteers.php');
-        $this->content['header']['sidebar']['Certification Approval'] = array('icon' => 'fa-stamp', 'url' => 'cert_approval.php');
+        $this->content['header']['sidebar']['Certification Approval '.$certBadge] = array('icon' => 'fa-stamp', 'url' => 'cert_approval.php');
         $this->content['header']['sidebar']['Reports'] = array('icon' => 'fa-chart-bar', 'menu' => $charts_menu);
         $this->content['header']['sidebar']['Contact'] = array('icon' => 'fa-envelope', 'url' => 'contact.php');
         if($this->user && $this->user->isInGroupNamed('VolunteerAdmins'))

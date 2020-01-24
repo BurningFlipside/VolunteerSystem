@@ -14,6 +14,7 @@ $page->addJS('//cdn.ckeditor.com/4.7.0/full/adapters/jquery.js', false);
       <option value="shiftCanceledSource" selected>Shift Canceled Email</option>
       <option value="shiftChangedSource">Shift Changed Email</option>
       <option value="shiftEmptiedSource">Shift Emptied Email</option>
+      <option value="certifcationRejected">Certification Rejected</option>
     </select>
   </div>
 </div>
