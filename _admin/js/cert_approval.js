@@ -38,7 +38,20 @@ function finishedCertOp(jqXHR) {
 }
 
 function approveCert(e, cell) {
-  console.log(e);
+  var data = cell.getRow().getData();
+  var certType = Object.keys(data.certs)[0];
+  console.log(data);
+  if(certs[certType].expires) {
+    //TODO Expires dialog...
+    alert('TODO');
+    return;
+  }
+  $.ajax({
+    url: '../api/v1/participants/'+data.uid+'/certs/'+certType+'/Actions/AcceptCert',
+    contentType: 'application/json',
+    method: 'POST',
+    complete: finishedCertOp
+  });
 }
 
 function disapproveCert(e, cell) {
@@ -63,7 +76,7 @@ function disapproveCert(e, cell) {
         contentType: 'application/json',
         method: 'POST',
         complete: finishedCertOp
-      })
+      });
     }
   });
 }
@@ -91,14 +104,22 @@ function certImage(cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
   var imagedata = data.certs[certType].image;
-  return '<img width="300" src="data:image/png;base64, '+imagedata+'"/>';
+  var imagetype = data.certs[certType].imageType;
+  if(imagetype === 'application/pdf') {
+    return '<object width="300" data="data:'+imagetype+';base64, '+imagedata+'"/>';
+  }
+  return '<img width="300" src="data:'+imagetype+';base64, '+imagedata+'"/>';
 }
 
 function fullImage(e, cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
   var imagedata = data.certs[certType].image;
-  bootbox.alert({size: 'xl', message:'<img src="data:image/png;base64, '+imagedata+'"/>'});
+  var imagetype = data.certs[certType].imageType;
+  if(imagetype === 'application/pdf') {
+    bootbox.alert({size: 'xl', message:'<object data="data:'+imagetype+';base64, '+imagedata+'"/>'});
+  }
+  bootbox.alert({size: 'xl', message:'<img src="data:'+imagetype+';base64, '+imagedata+'"/>'});
 }
 
 function initPage() {

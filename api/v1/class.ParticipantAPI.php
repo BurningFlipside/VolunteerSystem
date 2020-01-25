@@ -13,6 +13,7 @@ class ParticipantAPI extends VolunteerAPI
         $app->get('/{uid}/certs[/]', array($this, 'getCerts'));
         $app->post('/{uid}/certs/{certId}[/]', array($this, 'uploadCert'));
         $app->post('/{uid}/certs/{certId}/Actions/RejectCert', array($this, 'rejectCert'));
+        $app->post('/{uid}/certs/{certId}/Actions/AcceptCert', array($this, 'acceptCert'));
     }
 
     protected function canCreate($request)
@@ -262,6 +263,48 @@ class ParticipantAPI extends VolunteerAPI
         {
             $profile = new \VolunteerProfile(false, $user);
             $email = new \Emails\CertificationEmail($profile, 'certifcationRejected', $certType, array('reason'=>$reason));
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send email!');
+            }
+            return $response->withStatus(200);
+        }
+        return $response->withStatus(500);
+    }
+
+    public function acceptCert($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['uid'];
+        if($uid === 'me')
+        {
+            $uid = $this->user->uid;
+        }
+        else if($uid !== $this->user->uid && $this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($uid);
+        $users = $dataTable->read($filter);
+        if(empty($users))
+        {
+            return $response->withStatus(404);
+        }
+        $user = $users[0];
+        $certType = $args['certId'];
+        $certType = $args['certId'];
+        if(!isset($user['certs']) || !isset($user['certs'][$certType]))
+        {
+            return $response->withStatus(404);
+        }
+        $user['certs'][$certType]['status'] = 'current';
+        $ret = $dataTable->update($filter, $user);
+        if($ret)
+        {
+            $profile = new \VolunteerProfile(false, $user);
+            $email = new \Emails\CertificationEmail($profile, 'certifcationAccepted', $certType);
             $emailProvider = \EmailProvider::getInstance();
             if($emailProvider->sendEmail($email) === false)
             {

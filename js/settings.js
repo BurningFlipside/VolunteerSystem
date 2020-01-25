@@ -26,6 +26,10 @@ function gotMyCerts(jqXHR) {
       case 'pending':
         icon.html('<i class="fas fa-exclamation-triangle text-warning" title="Your certification is pending review"></i>');
         break;
+      case 'current':
+        icon.html('<i class="fas fa-check text-success" title="Your certification is current"></i>');
+        upload.remove();
+        break;
     }
     console.log(data[key]);
   }
