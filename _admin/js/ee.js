@@ -123,6 +123,13 @@ function gotInitialData(results) {
   obj.depts = processDepts(deptResult.value);
   obj.vols = processParticipants(participantResults.value);
   for(var i = 0; i < shiftResults.value.length; i++) {
+    if(shiftResults.value[i].participant === '') {
+      continue;
+    }
+    if(obj.vols[shiftResults.value[i].participant] === undefined) {
+      alert('Could not locate volunteer '+shiftResults.value[i].participant);
+      continue;
+    }
     if(obj.vols[shiftResults.value[i].participant].shifts === undefined) {
       obj.vols[shiftResults.value[i].participant].shifts = [];
     }

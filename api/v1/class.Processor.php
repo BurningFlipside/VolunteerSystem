@@ -195,6 +195,18 @@ trait Processor
                $roles[$role['short_name']] = $role;
             }
         }
+        if(isset($entry['volunteer']))
+        {
+          unset($entry['volunteer']);
+        }
+        if(isset($entry['why']))
+        {
+          unset($entry['why']);
+        }
+        if(isset($entry['whyClass']))
+        {
+          unset($entry['whyClass']);
+        }
         $shift = new \VolunteerShift(false, $entry);
         $entry['isAdmin'] = $this->isAdminForShift($entry, $this->user);
         $entry['overlap'] = $shift->findOverlaps($this->user->uid, true);
@@ -221,7 +233,7 @@ trait Processor
         }
         if($shift->isFilled())
         {
-            if(isset($entry['participant']) && $entry['participant'] !== '/dev/null')
+            if(isset($entry['participant']) && ($entry['participant'] !== '/dev/null' || $entry['participant'] !== ''))
             {
                 $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
             }

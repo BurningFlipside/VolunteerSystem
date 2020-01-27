@@ -329,6 +329,10 @@ class ShiftAPI extends VolunteerAPI
         }
         $entity['participant'] = '';
         $entity['status'] = 'unfilled';
+        if(isset($entity['needEEApproval']))
+        {
+          unset($entity['needEEApproval']);
+        }
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 
@@ -522,6 +526,10 @@ class ShiftAPI extends VolunteerAPI
         $shift = new \VolunteerShift(false, $entity);
         $entity['participant'] = '';
         $entity['status'] = 'unfilled';
+        if(isset($entity['needEEApproval']))
+        {
+          unset($entity['needEEApproval']);
+        }
         $ret = $dataTable->update($filter, $entity);
         if($ret)
         {
@@ -553,6 +561,10 @@ class ShiftAPI extends VolunteerAPI
         }
         $entity['participant'] = '';
         $entity['status'] = 'unfilled';
+        if(isset($entity['needEEApproval']))
+        {
+          unset($entity['needEEApproval']);
+        }
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 }
