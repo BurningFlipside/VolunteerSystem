@@ -54,6 +54,10 @@ class EventAPI extends VolunteerAPI
         {
             return null;
         }
+        if(!$this->isVolunteerAdmin($request) && !$this->userIsLeadCached($this->user) && isset($entry['eeLists']))
+        {
+            unset($entry['eeLists']);
+        }
         return $entry;
     }
 

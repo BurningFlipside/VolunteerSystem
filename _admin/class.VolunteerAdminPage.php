@@ -76,7 +76,8 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         );
         $shifts_menu = array(
             'Add/Edit Shifts' => 'shifts.php',
-            'Pending Shifts' => 'pending.php'
+            'Pending Shifts' => 'pending.php',
+            'Early Entry/Late Stay Approval' => 'ee.php'
         );
         $certApprovalCount = 0;
         $certTable = \DataSetFactory::getDataTableByNames('fvs', 'certifications');

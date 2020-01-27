@@ -221,6 +221,23 @@ class ShiftAPI extends VolunteerAPI
         return $response->withJSON($res, 500);
     }
 
+    protected function doSignup($uid, $status, $entity, $filter, $dataTable)
+    {
+        if(isset($entity['earlyLate']) && $entity['earlyLate'] !== '-1')
+        {
+            $event = new \VolunteerEvent($entity['eventID']);
+            if(!$event->hasVolOnEEList($uid, intval($entity['earlyLate'])))
+            {
+                $status = 'pending';
+                $entity['needEEApproval'] = true;
+                $event->addToEEList($uid, intval($entity['earlyLate']));
+            }
+        }
+        $entity['participant'] = $uid;
+        $entity['status'] = $status;
+        return $dataTable->update($filter, $entity);
+    }
+
     public function signup($request, $response, $args)
     {
         $this->validateLoggedIn($request);
@@ -263,8 +280,7 @@ class ShiftAPI extends VolunteerAPI
             $dept = new \VolunteerDepartment($entity['departmentID']);
             $leads = array_merge($leads, $dept->getLeadEmails());
             $leads = array_unique($leads);
-            $entity['participant'] = $this->user->uid;
-            $entity['status'] = 'pending';
+            $ret = $this->doSignup($this->user->uid, 'pending', $entity, $filter, $dataTable);
             $profile = new \VolunteerProfile($this->user->uid);
             $email = new \Emails\TwoShiftsAtOnceEmail($profile);
             $email->addLeads($leads);
@@ -273,19 +289,17 @@ class ShiftAPI extends VolunteerAPI
             {
                 throw new \Exception('Unable to send duplicate email!');
             }
-            return $response->withJSON($dataTable->update($filter, $entity));
+            return $response->withJSON($ret);
         }
         if(isset($entity['available']) && $entity['available'])
         {
-            $entity['participant'] = $this->user->uid;
-            $entity['status'] = 'filled';
-            return $response->withJSON($dataTable->update($filter, $entity));
+            $ret = $this->doSignup($this->user->uid, 'filled', $entity, $filter, $dataTable);
+            return $response->withJSON($ret);
         }
         if(isset($entity['status']) && $entity['status'] === 'groupPending')
         {
-            $entity['participant'] = $this->user->uid;
-            $entity['status'] = 'filled';
-            return $response->withJSON($dataTable->update($filter, $entity));
+            $ret = $this->doSignup($this->user->uid, 'filled', $entity, $filter, $dataTable);
+            return $response->withJSON($ret);
         }
         print_r($entity); die();
     }

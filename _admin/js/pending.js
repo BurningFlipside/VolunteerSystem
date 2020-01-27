@@ -16,6 +16,9 @@ function gotDeptList(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
+  array = array.sort(function(a, b) {
+    return a.departmentName.localeCompare(b.departmentName);
+  });
   var sel = $('#deptFilter');
   for(var i = 0; i < array.length; i++) {
     if(array[i].isAdmin) {
@@ -27,11 +30,11 @@ function gotDeptList(jqXHR) {
 function deptFilterChanged(e) {
   var value = e.target.value;
   if(value === '*') {
-    table.setData('../api/v1/shifts?$filter=status%20eq%20pending');
+    table.setData('../api/v1/shifts?$filter=status%20eq%20pending and needEEApproval ne true');
     deptId = null;
   }
   else {
-    table.setData('../api/v1/departments/'+value+'/shifts?$filter=status%20eq%20pending');
+    table.setData('../api/v1/departments/'+value+'/shifts?$filter=status%20eq%20pending and needEEApproval ne true');
     deptId = value;
   }
 }
@@ -93,12 +96,12 @@ function initPage() {
       url: '../api/v1/departments/'+deptId,
       complete: gotDept
     });
-    tableURL = '../api/v1/departments/'+deptId+'/shifts?$filter=status%20eq%20pending';
+    tableURL = '../api/v1/departments/'+deptId+'/shifts?$filter=status%20eq%20pending and needEEApproval ne true';
     $('#grouped_with').select2({width: '100%'});
   }
   else {
     $('#deptName').html('All');
-    tableURL = '../api/v1/shifts?$filter=status%20eq%20pending';
+    tableURL = '../api/v1/shifts?$filter=status%20eq%20pending and needEEApproval ne true';
     $.ajax({
       url: '../api/v1/departments',
       complete: gotDeptList
