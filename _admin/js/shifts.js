@@ -13,7 +13,7 @@ function doneCreatingShift(jqXHR) {
 
 function createShift(e) {
   var shift = e.data;
-  if(shift.minShifts !== 0 && shift.unbounded) {
+  if((shift.minShifts !== 0 && shift.minShifts !== '' && shift.minShifts !== null) && shift.unbounded) {
     e.data.copies = shift.minShifts;
     createCopies(e);
     return;

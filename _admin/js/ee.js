@@ -56,6 +56,63 @@ function showShifts(e, cell) {
   console.log(data);
 }
 
+function approveDone(jqXHR) {
+  console.log(jqXHR);
+}
+
+function approve(type, uid, ee) {
+  var obj = {};
+  obj.approvalType = type;
+  obj.uid = uid;
+  obj.eeList = ee;
+  $.ajax({
+    url: '../api/v1/events/Actions/ApproveEE',
+    data: JSON.stringify(obj),
+    contentType: 'application/json',
+    method: 'POST',
+    complete: approveDone
+  });
+}
+
+function aarApprovalDisplay(cell) {
+  var data = cell.getRow().getData();
+  if(data.AAR === true) {
+    return '<p class="text-success">Approved!</p>';
+  }
+  if($('body').data('aar') === 1) {
+    var msg = '<button type="button" class="btn btn-success" onclick="approve(\'aar\',\''+data.id+'\', '+data.eeTypeID+');"><i class="fas fa-thumbs-up"></i></button>';
+    msg += '<button type="button" class="btn btn-danger" onclick="disapprove(\'aar\',\''+data.id+'\', '+data.eeTypeID+');"><i class="fas fa-thumbs-down"></i></button>';
+    return msg;
+  }
+  return '<i class="text-secondary">Pending</i>';
+}
+
+function afApprovalDisplay(cell) {
+  var data = cell.getRow().getData();
+  if(data.AF === true) {
+    return '<p class="text-success">Approved!</p>';
+  }
+  if($('body').data('af') === 1) {
+    var msg = '<button type="button" class="btn btn-success" onclick="approve(\'af\',\''+data.id+'\', '+data.eeTypeID+');"><i class="fas fa-thumbs-up"></i></button>';
+    msg += '<button type="button" class="btn btn-danger" onclick="disapprove(\'af\',\''+data.id+'\', '+data.eeTypeID+');"><i class="fas fa-thumbs-down"></i></button>';
+    return msg;
+  }
+  return '<i class="text-secondary">Pending</i>';
+}
+
+function leadApprovalDisplay(cell) {
+  var data = cell.getRow().getData();
+  if(data.Lead === true) {
+    return '<p class="text-success">Approved!</p>';
+  }
+  if($('body').data('lead') === 1) {
+    var msg = '<button type="button" class="btn btn-success" onclick="approve(\'lead\',\''+data.id+'\', '+data.eeTypeID+');"><i class="fas fa-thumbs-up"></i></button>';
+    msg += '<button type="button" class="btn btn-danger" onclick="disapprove(\'lead\',\''+data.id+'\', '+data.eeTypeID+');"><i class="fas fa-thumbs-down"></i></button>';
+    return msg;
+  }
+  return '<i class="text-secondary">Pending</i>';
+}
+
 function gotInitialData(results) {
   var eventResult = results.shift();
   var deptResult = results.shift();
@@ -86,6 +143,9 @@ function gotInitialData(results) {
               if(parseInt(eeType) > bestEE) {
                 bestEE = parseInt(eeType);
               }
+              row.AAR = list[uid].AAR;
+              row.AF = list[uid].AF;
+              row.Lead = list[uid].Lead;
             }
           }
         }
@@ -101,6 +161,7 @@ function gotInitialData(results) {
           row.eeType = 'Wednesday Afternoon';
           break;
       }
+      row.eeTypeID = bestEE;
       rows.push(row);
     }
   }
@@ -109,9 +170,9 @@ function gotInitialData(results) {
       {title: 'Name', field: 'name'},
       {title: 'Early Entry Type', field: 'eeType'},
       {title: 'Shifts', formatter: shiftLinkDisplay, cellClick: showShifts},
-      {title: 'AAR'},
-      {title: 'AF'},
-      {title: 'Lead'}
+      {title: 'AAR', formatter: aarApprovalDisplay},
+      {title: 'AF', formatter: afApprovalDisplay},
+      {title: 'Lead', formatter: leadApprovalDisplay}
     ]
   });
   table.setData(rows);

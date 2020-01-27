@@ -54,6 +54,13 @@ class ShiftAPI extends VolunteerAPI
         {
              return false;
         }
+        if(isset($obj['unbounded']) && $obj['unbounded'])
+        {
+            if(!isset($obj['minShifts']) || $obj['minShifts'] === 0 || $obj['minShifts'] === '')
+            {
+                 $obj['minShifts'] = '1';
+            }
+        }
         return $this->isUserDepartmentLead($obj['departmentID'], $this->user);
     }
 
