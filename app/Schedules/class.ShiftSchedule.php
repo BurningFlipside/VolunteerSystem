@@ -26,4 +26,65 @@ trait ShiftSchedule
         }
         return $roles[$roleID];
     }
+
+    public function shiftSort($a, $b)
+    {
+        return strcmp($this->getRoleNameFromID($a['roleID']), $this->getRoleNameFromID($b['roleID']));
+    }
+
+    public function shiftTimeSort($a, $b)
+    {
+        $interval = $a['startTime']->diff($b['startTime']);
+        if($interval->invert === 0)
+        {
+            if($interval->h || $interval->i)
+            {
+                return -1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else if($interval->invert === 1 && ($interval->h || $interval->days))
+        {
+            return 1;
+        }
+        print_r($interval);
+        die();
+    }
+
+    public function getStringBetween($string, $start, $end)
+    {
+        $index = strpos($string, $start);
+        if($index === false)
+        {
+            return $string;
+        }
+        $index++;
+        $len = strpos($string, $end, $index) - $index;
+        return substr($string, $index, $len);
+    }
+
+    public function daySort($a, $b)
+    {
+        $a_date = $this->getStringBetween($a, '(', ')');
+        $b_date = $this->getStringBetween($b, '(', ')'); 
+        return strcasecmp($a_date, $b_date);
+    }
+
+    public function groupSort($a, $b)
+    {
+        $aArr = explode(' ', $a);
+        $bArr = explode(' ', $b);
+        if($aArr[1] === 'PM' && $bArr[1] === 'AM')
+        {
+            return 1;
+        }
+        else if($aArr[1] === 'AM' && $bArr[1] === 'PM')
+        {
+            return -1;
+        }
+        return strcmp($a, $b);
+    }
 }

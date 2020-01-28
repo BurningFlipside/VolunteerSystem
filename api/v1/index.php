@@ -11,6 +11,7 @@ require_once('class.RoleAPI.php');
 require_once('class.ShiftAPI.php');
 require_once('class.ParticipantAPI.php');
 require_once('class.CertificatonAPI.php');
+require_once('class.TextAPI.php');
 
 $site = new \Http\WebSite();
 $site->registerAPI('/events', new EventAPI());
@@ -19,6 +20,7 @@ $site->registerAPI('/roles', new RoleAPI());
 $site->registerAPI('/shifts', new ShiftAPI());
 $site->registerAPI('/participants', new ParticipantAPI());
 $site->registerAPI('/certs', new CertificatonAPI());
+$site->registerAPI('/longText', new TextAPI());
 /*
 $app = new FlipREST();
 $app->get('(/)', 'getRoot');

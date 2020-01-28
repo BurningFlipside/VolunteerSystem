@@ -13,22 +13,21 @@ class ShiftAPI extends VolunteerAPI
         parent::setup($app);
         $app->post('/Actions/CreateGroup', array($this, 'createGroup'));
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
+        $app->post('/Actions/DeleteGroup', array($this, 'deleteGroup'));
         $app->post('/{shift}/Actions/Signup[/]', array($this, 'signup'));
         $app->post('/{shift}/Actions/Abandon[/]', array($this, 'abandon'));
         $app->post('/{shift}/Actions/Approve[/]', array($this, 'approvePending'));
         $app->post('/{shift}/Actions/Disapprove[/]', array($this, 'disapprovePending')); 
         $app->post('/{shift}/Actions/StartGroupSignup', array($this, 'startGroupSignup'));
         $app->post('/{shift}/Actions/GenerateGroupLink', array($this, 'generateGroupLink'));
+        $app->post('/{shift}/Actions/EmptyShift[/]', array($this, 'emptyShift'));
+        $app->post('/{shift}/Actions/ForceShiftEmpty[/]', array($this, 'forceEmpty'));
     }
 
     protected function canCreate($request)
     {
-        if($this->isVolunteerAdmin($request))
-        {
-            return true;
-        }
-        //TODO give access to department lead
-        return false;
+        //Check is handled by validateCreate...
+        return true;
     }
 
     protected function canUpdate($request, $entity)
@@ -45,9 +44,63 @@ class ShiftAPI extends VolunteerAPI
         return $this->canUpdate($request, $entity);
     }
 
+    protected function validateCreate(&$obj, $request)
+    {
+        if($this->isVolunteerAdmin($request))
+        {
+            return true;
+        }
+        if(!isset($obj['departmentID']))
+        {
+             return false;
+        }
+        if(isset($obj['unbounded']) && $obj['unbounded'])
+        {
+            if(!isset($obj['minShifts']) || $obj['minShifts'] === 0 || $obj['minShifts'] === '')
+            {
+                 $obj['minShifts'] = '1';
+            }
+        }
+        return $this->isUserDepartmentLead($obj['departmentID'], $this->user);
+    }
+
     protected function processEntry($entry, $request)
     {
         return $this->processShift($entry, $request);
+    }
+
+    protected function postUpdateAction($newObj, $request, $oldObj)
+    {
+        $oldShift = new \VolunteerShift(false, $oldObj);
+        if($oldShift->isFilled() && ($oldObj['startTime'] != $newObj['startTime'] || $oldObj['endTime'] != $newObj['endTime']))
+        {
+            $email = new \Emails\ShiftEmail($oldShift, 'shiftChangedSource');
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send email!');
+            }
+        }
+        return true;
+    }
+
+    protected function postDeleteAction($entry)
+    {
+        if(empty($entry))
+        {
+            return true;
+        }
+        $shift = new \VolunteerShift(false, $entry[0]);
+        if($shift->isFilled())
+        {
+            $email = new \Emails\ShiftEmail($shift, 'shiftCanceledSource');
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send email!');
+            } 
+        }
+        return true;
     }
 
     protected function genUUID()
@@ -153,6 +206,45 @@ class ShiftAPI extends VolunteerAPI
         return $response->withJSON($ret);
     }
 
+    public function deleteGroup($request, $response)
+    {
+        $data = $request->getParsedBody();
+        $dataTable = $this->getDataTable();
+        $filter = new \Data\Filter('groupID eq '.$data['groupID']);
+        $entities = $dataTable->read($filter);
+        if(empty($entities))
+        {
+            return $response->withStatus(404);
+        }
+        if(!$this->canUpdate($request, $entities[0]))
+        {
+            return $response->withStatus(401);
+        }
+        $res = $dataTable->delete($filter);
+        if($res)
+        {
+            return $response->withJSON($res);
+        }
+        return $response->withJSON($res, 500);
+    }
+
+    protected function doSignup($uid, $status, $entity, $filter, $dataTable)
+    {
+        if(isset($entity['earlyLate']) && $entity['earlyLate'] !== '-1')
+        {
+            $event = new \VolunteerEvent($entity['eventID']);
+            if(!$event->hasVolOnEEList($uid, intval($entity['earlyLate'])))
+            {
+                $status = 'pending';
+                $entity['needEEApproval'] = true;
+                $event->addToEEList($uid, intval($entity['earlyLate']));
+            }
+        }
+        $entity['participant'] = $uid;
+        $entity['status'] = $status;
+        return $dataTable->update($filter, $entity);
+    }
+
     public function signup($request, $response, $args)
     {
         $this->validateLoggedIn($request);
@@ -171,6 +263,10 @@ class ShiftAPI extends VolunteerAPI
         }
         $shift = new \VolunteerShift($shiftId, $entity);
         $entity = $this->processShift($entity, $request);
+        if(isset($entity['minShifts']) && $entity['minShifts'] > 0)
+        {
+          $shift->makeCopy($dataTable);
+        }
         if(isset($entity['overlap']) && $entity['overlap'])
         {
             $overlaps = $shift->findOverlaps($this->user->uid);
@@ -191,8 +287,7 @@ class ShiftAPI extends VolunteerAPI
             $dept = new \VolunteerDepartment($entity['departmentID']);
             $leads = array_merge($leads, $dept->getLeadEmails());
             $leads = array_unique($leads);
-            $entity['participant'] = $this->user->uid;
-            $entity['status'] = 'pending';
+            $ret = $this->doSignup($this->user->uid, 'pending', $entity, $filter, $dataTable);
             $profile = new \VolunteerProfile($this->user->uid);
             $email = new \Emails\TwoShiftsAtOnceEmail($profile);
             $email->addLeads($leads);
@@ -201,19 +296,17 @@ class ShiftAPI extends VolunteerAPI
             {
                 throw new \Exception('Unable to send duplicate email!');
             }
-            return $response->withJSON($dataTable->update($filter, $entity));
+            return $response->withJSON($ret);
         }
         if(isset($entity['available']) && $entity['available'])
         {
-            $entity['participant'] = $this->user->uid;
-            $entity['status'] = 'filled';
-            return $response->withJSON($dataTable->update($filter, $entity));
+            $ret = $this->doSignup($this->user->uid, 'filled', $entity, $filter, $dataTable);
+            return $response->withJSON($ret);
         }
         if(isset($entity['status']) && $entity['status'] === 'groupPending')
         {
-            $entity['participant'] = $this->user->uid;
-            $entity['status'] = 'filled';
-            return $response->withJSON($dataTable->update($filter, $entity));
+            $ret = $this->doSignup($this->user->uid, 'filled', $entity, $filter, $dataTable);
+            return $response->withJSON($ret);
         }
         print_r($entity); die();
     }
@@ -236,6 +329,10 @@ class ShiftAPI extends VolunteerAPI
         }
         $entity['participant'] = '';
         $entity['status'] = 'unfilled';
+        if(isset($entity['needEEApproval']))
+        {
+          unset($entity['needEEApproval']);
+        }
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 
@@ -408,5 +505,66 @@ class ShiftAPI extends VolunteerAPI
             }
         }
         return $response->withJSON(array('uuid' => $uuid));
+    }
+
+    function emptyShift($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        if(!$this->canUpdate($request, $entity))
+        {
+            return $response->withStatus(401);
+        }
+        $shift = new \VolunteerShift(false, $entity);
+        $entity['participant'] = '';
+        $entity['status'] = 'unfilled';
+        if(isset($entity['needEEApproval']))
+        {
+          unset($entity['needEEApproval']);
+        }
+        $ret = $dataTable->update($filter, $entity);
+        if($ret)
+        {
+            $email = new \Emails\ShiftEmail($shift, 'shiftEmptiedSource');
+            $emailProvider = \EmailProvider::getInstance();
+            if($emailProvider->sendEmail($email) === false)
+            {
+                throw new \Exception('Unable to send email!');
+            }
+        }
+        return $response->withJSON($ret);
+    }
+
+    function forceEmpty($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        if(!$this->canUpdate($request, $entity))
+        {
+            return $response->withStatus(401);
+        }
+        $entity['participant'] = '';
+        $entity['status'] = 'unfilled';
+        if(isset($entity['needEEApproval']))
+        {
+          unset($entity['needEEApproval']);
+        }
+        return $response->withJSON($dataTable->update($filter, $entity));
     }
 }

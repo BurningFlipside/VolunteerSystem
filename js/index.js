@@ -87,13 +87,16 @@ function renderResource(info) {
   }
   var role = roles[resource.id];
   if(!validDepts.includes(role.departmentID)) {
-    console.log(resource);
+    //console.log(resource);
   }
   else {
   }
 }
 
 function eventShouldBeShown(shift, validDepts, validShifts) {
+  if(shift.enabled === false) {
+    return false;
+  }
   if(validDepts.includes(shift.departmentID)) {
     if(shift.whyClass === 'MINE' && validShifts.includes('mine')) {
       return true;
@@ -147,8 +150,9 @@ function filterEvents() {
     }
   }
   if(calendar.view.currentEnd < newStart) {
-    calendar.next();
+    calendar.gotoDate(newStart);
   }
+  console.log(calendar.view);
   calendar.renderingPauseDepth = false;
   if(calendar.needsRerender) {
     calendar.render();
@@ -163,6 +167,10 @@ function shiftChanged(e) {
   filterEvents();
 }
 
+function retryShifts() {
+  gotShifts(this);
+}
+
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     alert('Unable to get shifts!');
@@ -172,6 +180,11 @@ function gotShifts(jqXHR) {
   var events = calendar.getEvents();
   for(var i = 0; i < events.length; i++) {
     events[i].remove();
+  }
+  if($('#departments').data('select2') === null) {
+    var boundRetry = retryShifts.bind(jqXHR);
+    setTimeout(boundRetry, 100);
+    return;
   }
   var depts = $('#departments').select2('data');
   var deptHasShifts = {};
@@ -237,6 +250,9 @@ function gotShifts(jqXHR) {
   }
   $('#departments').trigger('change');
   $('#departments').change(deptChanged);
+  if(getParameterByName('department') !== null) {
+    filterEvents();
+  }
 }
 
 function eventChanged(e) {
@@ -294,6 +310,7 @@ function gotDepartments(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
   }
+  var id = getParameterByName('department');
   var depts = jqXHR.responseJSON;
   var groups = {};
   for(var i = 0; i < depts.length; i++) {
@@ -303,8 +320,14 @@ function gotDepartments(jqXHR) {
     if(groups[depts[i]['area']] === undefined) {
       groups[depts[i]['area']] = [];
     }
-    groups[depts[i]['area']].push({id: depts[i]['departmentID'], text: depts[i]['departmentName'], selected: true});
-    validDepts.push(depts[i]['departmentID']);
+    var tmp = {id: depts[i]['departmentID'], text: depts[i]['departmentName'], selected: true};
+    if(id !== null && id !== tmp.id) {
+      tmp.selected = false;
+    }
+    else {
+      validDepts.push(depts[i]['departmentID']);
+    }
+    groups[depts[i]['area']].push(tmp);
   }
   var data = [];
   for(var group in groups) {

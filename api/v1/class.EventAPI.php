@@ -13,6 +13,8 @@ class EventAPI extends VolunteerAPI
         parent::setup($app);
         $app->get('/{event}/shifts[/]', array($this, 'getShiftsForEvent'));
         $app->post('/{event}/shifts[/]', array($this, 'createShiftForEvent'));
+        $app->get('/{event}/Actions/GetEEShiftReport', array($this, 'getEEShiftReportForEvent'));
+        $app->post('/{event}/Actions/GetEEShiftReport', array($this, 'getEEShiftReportForEvent'));
     }
 
     protected function canUpdate($request, $entity)
@@ -51,6 +53,10 @@ class EventAPI extends VolunteerAPI
         if(!$entry['available'] && !$this->isVolunteerAdmin($request))
         {
             return null;
+        }
+        if(!$this->isVolunteerAdmin($request) && !$this->userIsLeadCached($this->user) && isset($entry['eeLists']))
+        {
+            unset($entry['eeLists']);
         }
         return $entry;
     }
@@ -105,6 +111,43 @@ class EventAPI extends VolunteerAPI
         }
         $obj['eventID'] = $eventId;
         $ret = $dataTable->create($obj);
+        return $response->withJson($ret);
+    }
+
+    public function getEEShiftReportForEvent($request, $response, $args)
+    {
+        $eventId = $args['event'];
+        if($this->canUpdate($request, null) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $shiftDataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $obj = $request->getParsedBody();
+        if($obj == NULL)
+        {
+            $obj = json_decode($request->getBody()->getContents(), true);
+        }
+        $filterStr = 'eventID eq '.$eventId.' and status eq filled';
+        if(isset($obj['earlyLate']))
+        {
+            $filterStr .= ' and earlyLate eq \''.$obj['earlyLate'].'\'';
+        }
+        else
+        {
+            $filterStr .= " and earlyLate ne '-1'";
+        }
+        $filter = new \Data\Filter($filterStr);
+        $shifts = $shiftDataTable->read($filter);
+        $ret = array();
+        $count = count($shifts);
+        for($i = 0; $i < $count; $i++)
+        {
+            $shift = new \VolunteerShift(false, $shifts[$i]);
+            $vol = $shift->participantObj;
+            $role = $shift->role;
+            $entry = array('name' => $vol->getDisplayName('paperName'), 'email'=> $vol->email, 'dept'=> $shift->departmentID, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate);
+            array_push($ret, $entry);
+        }
         return $response->withJson($ret);
     }
 }

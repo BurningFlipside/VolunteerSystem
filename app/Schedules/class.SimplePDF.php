@@ -6,12 +6,22 @@ class SimplePDF extends \PDF\PDF
     use ShiftSchedule;
 
     protected $department;
+    protected $deptName;
     protected $shifts;
 
     public function __construct($department, $shifts)
     {
         parent::__construct();
-        $this->department = $department;
+        if(is_string($department))
+        {
+            $this->deptName = $department;
+            $this->department = false;
+        }
+        else
+        {
+            $this->department = $department;
+            $this->deptName = $this->department['departmentName'];
+        }
         $this->shifts = $shifts;
         $this->createPDFBody();
     }
@@ -20,7 +30,7 @@ class SimplePDF extends \PDF\PDF
     {
         $html = '<body>';
         $html .= '<style type="text/css">table {border-collapse: collapse;} table, th, td {border: 1px solid black;}</style>';
-        $html .= '<h1 style="text-align: center;">'.$this->department['departmentName'].' Shift Schedule</h1>';
+        $html .= '<h1 style="text-align: center;">'.$this->deptName.' Shift Schedule</h1>';
         //Group shifts by day...
         $days = array();
         $shifts = $this->shifts;
@@ -47,7 +57,7 @@ class SimplePDF extends \PDF\PDF
             }
             array_push($days[$dateStr][$timeStr], $shifts[$i]);
         }
-        ksort($days);
+        uksort($days, array($this, 'daySort'));
         foreach($days as $dateStr=>$day)
         {
             $html .='<h2>'.$dateStr.'</h2>';
@@ -59,8 +69,16 @@ class SimplePDF extends \PDF\PDF
                 $html .='<table width="100%"><tr><th style="width: 20%">Role</th><th>Volunteer Name</th><th>Volunteer Camp</th></tr>';
                 foreach($shifts as $shift)
                 {
-                    //TODO Volunteer info for shift...
-                    $html .='<tr><td>'.$this->getRoleNameFromID($shift['roleID']).'</td><td></td><td></td></tr>';
+                    $shift = new \VolunteerShift(false, $shift);
+                    $participant = $shift->participantObj;
+                    if($participant !== false)
+                    { 
+                        $html .='<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$participant->getDisplayName('paperName').'</td><td>'.$participant->campName.'</td></tr>';
+                    }
+                    else
+                    {
+                        $html .='<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td></td><td></td></tr>';
+                    }
                 }
                 $html .='</table>';
             }

@@ -18,7 +18,7 @@ class VolunteerPage extends SecurePage
         $this->addTemplateDir(dirname(__FILE__).'/templates', 'Volunteer');
         $this->setTemplateName('@Volunteer/main.html');
         $this->addCSS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css');
-        $this->addJS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js');
+        $this->addJS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js', false);
         if($this->isAdmin() || $this->isLead())
         {
             $this->addLink('Admin', '_admin/');
@@ -56,6 +56,10 @@ class VolunteerPage extends SecurePage
         {
             return false;
         }
-        return $this->user->isInGroupNamed('Leads');
+        if($this->user->isInGroupNamed('Leads'))
+        {
+            return true;
+        }
+        return false;
     }
 }

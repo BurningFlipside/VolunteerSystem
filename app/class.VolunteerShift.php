@@ -15,12 +15,15 @@
  */
 class VolunteerShift extends VolunteerObject
 {
+    protected static $deptCache = array();
     protected static $roleCache = array();
+    protected static $eventCache = array();
     protected $mod = null;
     protected $myStart = null;
     protected $myEnd = null;
     protected $modStart = null;
     protected $modEnd = null;
+    protected $participantObj = null;
     protected $webParticipantName = null;
 
     public function __construct($shiftID, $dbData = null)
@@ -64,12 +67,37 @@ class VolunteerShift extends VolunteerObject
                     $this->modEnd->add($this->modTime);
                 }
                 return $this->modEnd;
+            case 'department':
+                if(!isset(self::$deptCache[$this->dbData['departmentID']]))
+                {
+                    self::$deptCache[$this->dbData['departmentID']] = new \VolunteerDepartment($this->dbData['departmentID']);
+                }
+                return self::$deptCache[$this->dbData['departmentID']];
             case 'role':
                 if(!isset(self::$roleCache[$this->dbData['roleID']]))
                 {
                     self::$roleCache[$this->dbData['roleID']] = new \VolunteerRole($this->dbData['roleID']);
                 }
                 return self::$roleCache[$this->dbData['roleID']];
+            case 'event':
+                if(!isset(self::$eventCache[$this->dbData['eventID']]))
+                {
+                    self::$eventCache[$this->dbData['eventID']] = new \VolunteerEvent($this->dbData['eventID']);
+                }
+                return self::$eventCache[$this->dbData['eventID']];
+            case 'participantObj':
+                if($this->participantObj === null)
+                {
+                    if(isset($this->dbData['participant']))
+                    {
+                        $this->participantObj = new \VolunteerProfile($this->dbData['participant']);
+                    }
+                    else
+                    {
+                        $this->participantObj = false;
+                    }
+                }
+                return $this->participantObj;
             case 'webParticipantName':
                 if($this->webParticipantName === null)
                 {
@@ -84,6 +112,20 @@ class VolunteerShift extends VolunteerObject
                     }
                 }
                 return $this->webParticipantName;
+            case 'scheduleParticipantName':
+                if($this->scheduleParticipantName === null)
+                {
+                    if(isset($this->dbData['participant']))
+                    {
+                        $tmp = new \VolunteerProfile($this->dbData['participant']);
+                        $this->scheduleParticipantName = $tmp->getDisplayName('paperName');
+                    }
+                    else
+                    {
+                        $this->scheduleParticipantName = "";
+                    }
+                }
+                return $this->scheduleParticipantName;
             default:
                 return $this->dbData[$propName];
         }
@@ -148,5 +190,12 @@ class VolunteerShift extends VolunteerObject
             return false;
         }
         return $res;
+    }
+
+    public function makeCopy($dataTable)
+    {
+        $tmp = $this->dbData;
+        unset($tmp['_id']);
+        $dataTable->create($tmp);
     }
 }

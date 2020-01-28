@@ -60,8 +60,12 @@ trait Processor
         static $uids = array();
         if(!isset($uids[$uid]))
         {
-            $profile = new \VolunteerProfile($uid);
-            $uids[$uid] = $profile->getDisplayName();
+            try {
+                $profile = new \VolunteerProfile($uid);
+                $uids[$uid] = $profile->getDisplayName();
+            } catch (Exception $e) {
+                $uids[$uid] = $uid;
+            }
         }
         return $uids[$uid];
     }
@@ -104,7 +108,7 @@ trait Processor
         $uid = $user->uid;
         if(!isset($deptCache[$uid]))
         {
-            if($this->userIsLeadCached($user) && in_array($dept['lead'], $user->title))
+            if(isset($dept['lead']) && $this->userIsLeadCached($user) && in_array($dept['lead'], $user->title))
             {
                 $deptCache[$uid] = true;
             }
@@ -191,6 +195,18 @@ trait Processor
                $roles[$role['short_name']] = $role;
             }
         }
+        if(isset($entry['volunteer']))
+        {
+          unset($entry['volunteer']);
+        }
+        if(isset($entry['why']))
+        {
+          unset($entry['why']);
+        }
+        if(isset($entry['whyClass']))
+        {
+          unset($entry['whyClass']);
+        }
         $shift = new \VolunteerShift(false, $entry);
         $entry['isAdmin'] = $this->isAdminForShift($entry, $this->user);
         $entry['overlap'] = $shift->findOverlaps($this->user->uid, true);
@@ -217,7 +233,7 @@ trait Processor
         }
         if($shift->isFilled())
         {
-            if(isset($entry['participant']) && $entry['participant'] !== '/dev/null')
+            if(isset($entry['participant']) && ($entry['participant'] !== '/dev/null' || $entry['participant'] !== ''))
             {
                 $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
             }

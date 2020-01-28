@@ -114,6 +114,7 @@ window.flipDialog.dialog = function(options) {
 };
 
 function dialogButtonClick(e) {
+  e.preventDefault();
   e.data = this.data;
   if(e.data === undefined) {
     e.data = {};

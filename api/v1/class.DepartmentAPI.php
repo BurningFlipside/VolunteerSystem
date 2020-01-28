@@ -136,6 +136,16 @@ class DepartmentAPI extends VolunteerAPI
             $obj = json_decode($request->getBody()->getContents(), true);
         }
         $obj['departmentID'] = $deptId;
+        if($table === 'shifts')
+        {
+            if(isset($obj['unbounded']) && $obj['unbounded'])
+            {
+                if(!isset($obj['minShifts']) || $obj['minShifts'] === 0 || $obj['minShifts'] === '')
+                {
+                    $obj['minShifts'] = '1';
+                }
+            }
+        }
         $ret = $dataTable->create($obj);
         return $response->withJson($ret);
     }

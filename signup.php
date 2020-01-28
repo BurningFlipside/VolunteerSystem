@@ -80,7 +80,7 @@ if($processor->isAdminForShift($shift, $page->user))
 }
 
 //Is shift already taken?
-if(isset($entry['status']) && ($entry['status'] === 'pending' || $entry['status'] === 'filled'))
+if($myShift->isFilled())
 {
   if(isset($shift['participant']) && $shift['participant'] === $page->user->uid)
   {

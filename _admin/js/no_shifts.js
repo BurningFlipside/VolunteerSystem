@@ -17,7 +17,13 @@ function gotShifts(jqXHR) {
     if(part.shiftCount > 0) {
       continue;
     }
-    tbody.append('<tr><td>'+uid+'</td></tr>');
+    let certs = '';
+    if(part.certs !== undefined) {
+      for(var cert in part.certs) {
+        certs+=cert+' ';
+      }
+    }
+    tbody.append('<tr><td>'+uid+'</td><td>'+certs+'</td></tr>');
     console.log(part);
   }
 }
