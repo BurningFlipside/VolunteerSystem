@@ -27,6 +27,7 @@ class VolunteerPage extends SecurePage
         {
             $this->addLink('Settings', 'settings.php');
         }
+        $this->addLink('Help <i class="fas fa-question"></i>', 'docs/help.html');
     }
 
     public function printPage()
