@@ -50,11 +50,16 @@ function gotDepartments(jqXHR) {
     $('#deptName').html('Unable to locate department!');
     var departments = $('#departments');
     departments.change(showDepartmentDetails);
+    var deptCount = 0;
     for(var i = 0; i < array.length; i++) {
       if(array[i].isAdmin) {
         $('#deptName').html(array[i].departmentName);
         addOptiontoSelect(departments[0], array[i].departmentID, array[i].departmentName);
+        deptCount++;
       }
+    }
+    if(deptCount === 0) {
+      alert('Unable to determine which department is assosiated to your account. Please contact your AF to fix your access.');
     }
     if(chart === null) {
       var eventID = $('#events').val();

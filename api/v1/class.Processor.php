@@ -108,7 +108,7 @@ trait Processor
         $uid = $user->uid;
         if(!isset($deptCache[$uid]))
         {
-            if(isset($dept['lead']) && $this->userIsLeadCached($user) && in_array($dept['lead'], $user->title))
+            if(isset($dept['lead']) && $this->userIsLeadCached($user) && is_array($user->title) && in_array($dept['lead'], $user->title))
             {
                 $deptCache[$uid] = true;
             }
