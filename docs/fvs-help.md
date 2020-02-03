@@ -55,13 +55,13 @@ You can click the **x** next to the department name if you don't want to see tha
 ### Shift Status
 Shifts are color-coded to help you easily see what is available or not. 
 
-Color   Meaning
------   --------
-Blue    Unfilled--You should sign up!
-Red     Filled--Someone else has signed up already
-Green   Your shifts--You've got this!
-Gray    Unavailable--Probably means you need certifications/training
-Yellow  Overlapping--You probably want to avoid this!
+| Color  |   Meaning |
+| ------ | --------------- |
+| <span style="color: blue;">Blue</span>   | Unfilled--You should sign up! |
+| <span style="color: red;">Red</span>    | Filled--Someone else has signed up already |
+| <span style="color: blue;">Green</span>  | Your shifts--You've got this! |
+| <span style="color: gray;">Gray</span>   | Unavailable--Probably means you need certifications/training |
+| <span style="color: yellow;">Yellow</span> | Overlapping--You probably want to avoid this! |
 
 Table: Shift color coding.
 
