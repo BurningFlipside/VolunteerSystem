@@ -90,6 +90,14 @@ function renderResource(info) {
     //console.log(resource);
   }
   else {
+    $(info.el).popover({
+      animation:true,
+      delay: 300,
+      title: role.display_name,
+      content: role.description,
+      trigger: 'hover',
+      placement: 'bottom'
+    });
   }
 }
 
@@ -289,6 +297,11 @@ function gotEvents(jqXHR) {
   var id = getParameterByName('event');
   var events = jqXHR.responseJSON;
   var data = [];
+  events.sort(function(a, b) {
+    var aDate = new Date(a.startTime);
+    var bDate = new Date(b.startTime);
+    return aDate.getTime() - bDate.getTime();
+  });
   for(var i = 0; i < events.length; i++) {
     if(events[i]['available']) {
       var option = {id: events[i]['_id']['$oid'], text: events[i]['name']};
@@ -391,7 +404,7 @@ function initPage() {
     complete: gotDepartments
   });
   var header = {
-    left: 'prev,next today',
+    left: 'prev,next',
     center: 'title',
     right: 'dayGridMonth,timeGridDay,listWeek,resourceTimelineDay'
   };

@@ -50,7 +50,7 @@ class EventAPI extends VolunteerAPI
             $entry['available'] = false;
             $entry['why'] = 'Event is private and you are not invited';
         }
-        if(!$entry['available'] && !$this->isVolunteerAdmin($request))
+        if(!$entry['available'] && !$this->isVolunteerAdmin($request) && !$this->userIsLeadCached($this->user))
         {
             return null;
         }
