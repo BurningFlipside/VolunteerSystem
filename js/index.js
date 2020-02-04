@@ -264,10 +264,18 @@ function gotShifts(jqXHR) {
 }
 
 function eventChanged(e) {
+  var extra = '';
+  if(calendar.view !== null) {
+    var defaultView = calendar.optionsManager.computed.defaultView;
+    var currentView = calendar.view.type;
+    if(defaultView !== currentView) {
+      extra = '&view='+currentView;
+    }
+  }
   var eventID = e.target.value;
   if(allEvents.length > 0) {
     //Calendar doesn't reinit well... reload the page
-    location.href = location.origin + location.pathname + "?event=" + eventID;
+    location.href = location.origin + location.pathname + "?event=" + eventID + extra;
   }
   $.ajax({
     url: 'api/v1/events/'+eventID+'/shifts',
@@ -445,6 +453,10 @@ function initPage() {
     filterResourcesWithEvents: true,
     resourceOrder: 'title'
   });
+  var view = getParameterByName('view');
+  if(view !== null) {
+    calendar.changeView(view);
+  }
   var boundRetry = retrySelect2.bind({id: '#shiftTypes', change: shiftChanged, callFirst: false});
   if($('#shiftTypes').select2 === undefined) {
     setTimeout(boundRetry, 100);
