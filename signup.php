@@ -146,6 +146,10 @@ if(!empty($roles))
 
 //Is user eligible for shift?
 $canDo = $processor->canUserDoRole($profile, $roles[0]);
+if(is_array($canDo) && $processor->isAdminForShift($shift, $page->user))
+{
+  $canDo = true;
+}
 if($canDo !== true)
 {
   $page->body .= '<div class="alert alert-danger" role="alert">';
