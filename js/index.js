@@ -313,7 +313,7 @@ function gotEvents(jqXHR) {
   for(var i = 0; i < events.length; i++) {
     if(events[i]['available']) {
       var option = {id: events[i]['_id']['$oid'], text: events[i]['name']};
-      if(id !== null && id === events[i]['_id']['$oid']) {
+      if(id !== null && (id === events[i]['_id']['$oid'] || id === events[i]['alias'])) {
         option.selected = true;
       }
       data.push(option);

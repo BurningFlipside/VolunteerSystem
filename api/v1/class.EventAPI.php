@@ -17,6 +17,11 @@ class EventAPI extends VolunteerAPI
         $app->post('/{event}/Actions/GetEEShiftReport', array($this, 'getEEShiftReportForEvent'));
     }
 
+    protected function getFilterForPrimaryKey($value)
+    {
+        return new \Data\Filter($this->primaryKeyName." eq '$value' or alias eq '$value'");
+    }
+
     protected function canUpdate($request, $entity)
     {
  	if($this->isVolunteerAdmin($request))
