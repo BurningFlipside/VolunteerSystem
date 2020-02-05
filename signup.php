@@ -5,19 +5,19 @@ require_once('app/VolunteerAutoload.php');
 
 class ProcessorUser
 {
-  use Processor;
+    use Processor;
 
-  protected $isAdmin;
+    protected $isAdmin;
 
-  public function __construct($isAdmin)
-  {
-      $this->isAdmin = $isAdmin;
-  }
+    public function __construct($isAdmin)
+    {
+        $this->isAdmin = $isAdmin;
+    }
 
-  protected function isVolunteerAdmin()
-  {
-      return $this->isAdmin;
-  }
+    protected function isVolunteerAdmin()
+    {
+        return $this->isAdmin;
+    }
 }
 
 $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
@@ -30,9 +30,9 @@ $page->body = '<div class="row"><h1>Shift Signup</h1></div>';
 
 if(!isset($_GET['shiftID']))
 {
-  $page->body .= 'Error! Missing Shift ID. You must have followed a bad link!';
-  $page->printPage();
-  return;
+    $page->body .= 'Error! Missing Shift ID. You must have followed a bad link!';
+    $page->printPage();
+    return;
 }
 
 $shiftID = $_GET['shiftID'];
@@ -41,9 +41,9 @@ $filter = new \Data\Filter('_id eq '.$shiftID);
 $shifts = $dataTable->read($filter);
 if(empty($shifts))
 {
-  $page->body .= 'Error! Could not locate shift. You must have followed an old link!';
-  $page->printPage();
-  return;
+    $page->body .= 'Error! Could not locate shift. You must have followed an old link!';
+    $page->printPage();
+    return;
 }
 $shift = $shifts[0];
 $myShift = new \VolunteerShift(false, $shift);
@@ -52,54 +52,54 @@ $profile = new \VolunteerProfile($page->user->uid);
 
 if($processor->isAdminForShift($shift, $page->user))
 {
-  if(isset($shift['groupID']) && strlen($shift['groupID'] > 0))
-  {
-    $page->body .= '
-    <div class="alert alert-info" role="alert">
-      You are an administrator for this shift. You can edit the shift <a href="_admin/shifts.php?shiftID='.$shiftID.'" class="alert-link">here</a>.
-      Or you can edit the shift group <a href="_admin/shifts.php?groupID='.$shift['groupID'].'" class="alert-link">here</a>.
-    </div>
-    ';
-  }
-  else
-  {
-    $page->body .= '
-    <div class="alert alert-info" role="alert">
-      You are an administrator for this shift. You can edit the shift <a href="_admin/shifts.php?shiftID='.$shiftID.'" class="alert-link">here</a>.
-    </div>
-    ';
-  }
-  if(!isset($shift['participant']) || strlen($shift['participant']) === 0)
-  {
-    $page->body .= '
-    <div class="alert alert-info" role="alert">
-      You are an administrator for this shift. You can assign someone to the shift, but it is highly recommended to let the users sign up. But if you are sure click <a href="#" onClick="showAdminSignup()" class="alert-link">here</a>.
-    </div>
-    ';
-  }
+    if(isset($shift['groupID']) && strlen($shift['groupID'] > 0))
+    {
+        $page->body .= '
+            <div class="alert alert-info" role="alert">
+            You are an administrator for this shift. You can edit the shift <a href="_admin/shifts.php?shiftID='.$shiftID.'" class="alert-link">here</a>.
+            Or you can edit the shift group <a href="_admin/shifts.php?groupID='.$shift['groupID'].'" class="alert-link">here</a>.
+            </div>
+            ';
+    }
+    else
+    {
+        $page->body .= '
+            <div class="alert alert-info" role="alert">
+            You are an administrator for this shift. You can edit the shift <a href="_admin/shifts.php?shiftID='.$shiftID.'" class="alert-link">here</a>.
+            </div>
+            ';
+    }
+    if(!isset($shift['participant']) || strlen($shift['participant']) === 0)
+    {
+        $page->body .= '
+            <div class="alert alert-info" role="alert">
+            You are an administrator for this shift. You can assign someone to the shift, but it is highly recommended to let the users sign up. But if you are sure click <a href="#" onClick="showAdminSignup()" class="alert-link">here</a>.
+            </div>
+            ';
+    }
 }
 
 //Is shift already taken?
 if($myShift->isFilled())
 {
-  if(isset($shift['participant']) && $shift['participant'] === $page->user->uid)
-  {
-    $page->body .= '<div class="alert alert-success" role="alert">
-      You already have this shift!
-    </div>
-    <div class="row">
-      <button type="button" class="btn btn-secondary mr-auto" onClick="window.history.back();">Cancel</button>
-      <button type="button" class="btn btn-primary" onclick="abandon();">Abandon Shift</button>
-    </div>';
-  }
-  else
-  {
-    $page->body .= '<div class="alert alert-danger" role="alert">
-      Someone else took this shift!
-    </div>';
-  }
-  $page->printPage();
-  return;
+    if(isset($shift['participant']) && $shift['participant'] === $page->user->uid)
+    {
+        $page->body .= '<div class="alert alert-success" role="alert">
+            You already have this shift!
+            </div>
+            <div class="row">
+            <button type="button" class="btn btn-secondary mr-auto" onClick="window.history.back();">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="abandon();">Abandon Shift</button>
+            </div>';
+    }
+    else
+    {
+        $page->body .= '<div class="alert alert-danger" role="alert">
+            Someone else took this shift!
+            </div>';
+    }
+    $page->printPage();
+    return;
 }
 
 $overlap = false;
@@ -124,50 +124,50 @@ $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
 $depts = $dataTable->read(new \Data\Filter('departmentID eq '.$shift['departmentID']));
 if(!empty($depts))
 {
-  $deptName = $depts[0]['departmentName'];
+    $deptName = $depts[0]['departmentName'];
 }
 
 $dataTable = DataSetFactory::getDataTableByNames('fvs', 'events');
 $events = $dataTable->read(new \Data\Filter('_id eq '.$shift['eventID']));
 if(!empty($events))
 {
-  if($events[0]['tickets'])
-  {
-    //TODO... Event requires tickets. Does this account have tickets?
-  }
+    if($events[0]['tickets'])
+    {
+        //TODO... Event requires tickets. Does this account have tickets?
+    }
 }
 
 $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
 $roles = $dataTable->read(new \Data\Filter('short_name eq '.$shift['roleID']));
 if(!empty($roles))
 {
-  $roleName = $roles[0]['display_name'];
+    $roleName = $roles[0]['display_name'];
 }
 
 //Is user eligible for shift?
 $canDo = $processor->canUserDoRole($profile, $roles[0]);
 if(is_array($canDo) && $processor->isAdminForShift($shift, $page->user))
 {
-  $canDo = true;
+    $canDo = true;
 }
 if($canDo !== true)
 {
-  $page->body .= '<div class="alert alert-danger" role="alert">';
-  switch($canDo['whyClass'])
-  {
-    case 'INVITE':
-      $page->body .= 'This shift requires an invite from the department lead. If you think you should have recieved such an invite please <a href="https://www.burningflipside.com/contact" class="alert-link">contact the lead</a>.';
-      break;
-    case 'CERT':
-       $page->body .= $canDo['whyMsg'].' If you have this certification it is not recorded in your profile. You can <a href="certiciation.php" class="alert-link">record that certification</a> to sign up.';
-       break;
-    default:
-      $page->body .= 'You are not eligible for this shift because: '.$canDo['whyMsg'];
-      break;
-  }
-  $page->body .= '</div>';
-  $page->printPage();
-  return;  
+    $page->body .= '<div class="alert alert-danger" role="alert">';
+    switch($canDo['whyClass'])
+    {
+        case 'INVITE':
+            $page->body .= 'This shift requires an invite from the department lead. If you think you should have recieved such an invite please <a href="https://www.burningflipside.com/contact" class="alert-link">contact the lead</a>.';
+            break;
+        case 'CERT':
+            $page->body .= $canDo['whyMsg'].' If you have this certification it is not recorded in your profile. You can <a href="certiciation.php" class="alert-link">record that certification</a> to sign up.';
+            break;
+        default:
+            $page->body .= 'You are not eligible for this shift because: '.$canDo['whyMsg'];
+            break;
+    }
+    $page->body .= '</div>';
+    $page->printPage();
+    return;  
 }
 
 $start = new \DateTime($shift['startTime']);
@@ -178,7 +178,7 @@ $shiftLength = $diff->h + ($diff->i / 60.0);
 $page->body .= '<div id="signupContent" ';
 if($overlap)
 {
-  $page->body .= 'class="d-none" ';
+    $page->body .= 'class="d-none" ';
 }
 $page->body .= '/>';
 $page->body .= '
@@ -218,39 +218,40 @@ $page->body .= '
 
 if($processor->isAdminForShift($shift, $page->user) && (!isset($shift['participant']) || strlen($shift['participant']) === 0))
 {
-  $page->body .= '
-  <div class="row d-none" id="adminSignup">
-    <div class="alert alert-danger" role="alert">
-      First off, make sure you understand what this will do. While it will let you fill out the details for a shift, it will prevent the user from seeing the shift on their list when the log it, it will not be correctly reported for t-shirts or for rock star volunteers, their camp will not be listed on the shift schedule, and the ability to contact past volunteers will not work for anyone signed up in this manner. Basically, doing this removes about 90% of the advantage of using this system. So please only do this if participant in question is unable to sign up on their own.
-    </div>
-    <label for="participantOverride" class="col-sm-2 col-form-label">Participant Name:</label>
-    <div class="col-sm-10">
-      <input type="text" name="participantOverride" id="participantOverride" class="form-control"/>
-    </div>
-    <button type="button" class="btn btn-primary" onclick="override();">Admin Override</button>
-  </div>
-  ';
+    $page->body .= '
+        <div class="row d-none" id="adminSignup">
+        <div class="alert alert-danger" role="alert">
+        First off, make sure you understand what this will do. While it will let you fill out the details for a shift, it will prevent the user from seeing the shift on their list when the log it, it will not be correctly reported for t-shirts or for rock star volunteers, their camp will not be listed on the shift schedule, and the ability to contact past volunteers will not work for anyone signed up in this manner. Basically, doing this removes about 90% of the advantage of using this system. So please only do this if participant in question is unable to sign up on their own.
+        </div>
+        <label for="participantOverride" class="col-sm-2 col-form-label">Participant Name:</label>
+        <div class="col-sm-10">
+        <input type="text" name="participantOverride" id="participantOverride" class="form-control"/>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="override();">Admin Override</button>
+        </div>
+        ';
 }
 
 //Is group eligible?
 if(isset($shift['groupID']) && isset($roles[0]['groups_allowed']) && $roles[0]['groups_allowed'])
 {
-  $page->body .= '<div id="groupContent" ';
-  if($overlap)
-  {
-    $page->body .= 'class="d-none" ';
-  }
-  $page->body .= '>
-  <div class="row">
-    <div class="alert alert-primary" role="alert">
-      You have selected a group eligible shift. This means you can generate a link for your friends to sign up on the shift with you. Would you like to sign up for the shift and generate that link now?
-    </div>
-  </div>
-  <div class="row">
-    <button type="button" class="btn btn-secondary" onclick="groupSignup();">Signup and Generate Group Link</button>
-  </div>
-  </div>
-  ';
+    $page->body .= '<div id="groupContent" ';
+    if($overlap)
+    {
+        $page->body .= 'class="d-none" ';
+    }
+    $page->body .= '>
+        <div class="row">
+        <div class="alert alert-primary" role="alert">
+        You have selected a group eligible shift. This means you can generate a link for your friends to sign up on the shift with you. Would you like to sign up for the shift and generate that link now?
+        </div>
+        </div>
+        <div class="row">
+        <button type="button" class="btn btn-secondary" onclick="groupSignup();">Signup and Generate Group Link</button>
+        </div>
+        </div>
+        ';
 }
 
 $page->printPage();
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

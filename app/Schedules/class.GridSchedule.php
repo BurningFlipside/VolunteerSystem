@@ -104,7 +104,7 @@ class GridSchedule
         $cell = $sheat->getCellByColumnAndRow($col, $firstRow + 4);
         if($cell->isInMergeRange())
         {
-            while($rows[$firstRow+$i] === $roleID)
+            while($rows[$firstRow + $i] === $roleID)
             {
                 $cell = $sheat->getCellByColumnAndRow($col, $firstRow + 4 + $i);
                 if(!$cell->isInMergeRange())
@@ -162,7 +162,7 @@ class GridSchedule
         $start = date_parse($str);
         $lastShift = $shifts[$count - 1];
         $interval = $lastShift['endTime']->diff($shifts[0]['startTime']);
-        $hourCount = ($interval->d*24) + $interval->h;
+        $hourCount = ($interval->d * 24) + $interval->h;
         $tmp = $this->getHoursArrays($start['hour'], $hourCount);
         $simpleHours = $tmp[0];
         $militaryHours = $tmp[1];
@@ -232,13 +232,13 @@ class GridSchedule
         while($shift)
         {
             $timeDiff = $originalStartTime->diff($shift['startTime']);
-            $hoursFromStart = ($timeDiff->d*24)+$timeDiff->h;
-            $rowForShift = $this->getRowForShift($shift['roleID'], $rows, $hoursFromStart+2, $sheat);
-            $this->createShiftCell($sheat, $hoursFromStart+2, $rowForShift, $shift);
+            $hoursFromStart = ($timeDiff->d * 24)+$timeDiff->h;
+            $rowForShift = $this->getRowForShift($shift['roleID'], $rows, $hoursFromStart + 2, $sheat);
+            $this->createShiftCell($sheat, $hoursFromStart + 2, $rowForShift, $shift);
             $shift = array_shift($shifts);
         }
         $rowCount = count($rows);
-        $style = $sheat->getStyleByColumnAndRow(2, 4, 1+count($simpleHours), 3 + $rowCount);
+        $style = $sheat->getStyleByColumnAndRow(2, 4, 1 + count($simpleHours), 3 + $rowCount);
         $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $hourCount = count($simpleHours);
         $this->grayOutUnused($hourCount, $rowCount, $sheat);

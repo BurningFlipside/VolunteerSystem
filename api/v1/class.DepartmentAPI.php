@@ -77,7 +77,7 @@ class DepartmentAPI extends VolunteerAPI
         $filter = new \Data\Filter("departmentID eq '$deptId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
         $roles = $dataTable->read($filter, $odata->select, $odata->top,
-                                   $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if($roles === false)
         {
             $roles = array();
@@ -114,7 +114,7 @@ class DepartmentAPI extends VolunteerAPI
             }
         }
         $shifts = $dataTable->read($filter, $odata->select, $odata->top,
-                                   $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if($shifts === false)
         {
             $shifts = array();

@@ -91,7 +91,7 @@ class ParticipantAPI extends VolunteerAPI
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, $odata->select, $odata->top,
-                                   $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if(empty($areas))
         {
             return $response->withStatus(404);
@@ -162,7 +162,7 @@ class ParticipantAPI extends VolunteerAPI
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, array('certs'), $odata->top,
-                                   $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if(empty($areas))
         {
             return $response->withStatus(404);
