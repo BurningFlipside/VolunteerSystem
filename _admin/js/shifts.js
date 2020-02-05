@@ -862,6 +862,9 @@ function gotDepartments(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
+  array.sort(function(a, b) {
+    return a.departmentName.localeCompare(b.departmentName);
+  });
   var count = 0;
   var accordian = $('#accordion');
   for(var i = 0; i < array.length; i++) {
