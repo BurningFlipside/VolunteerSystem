@@ -241,4 +241,4 @@ class DepartmentAPI extends VolunteerAPI
         return $response;
     }
 }
-
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

@@ -315,3 +315,4 @@ class ParticipantAPI extends VolunteerAPI
         return $response->withStatus(500);
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

@@ -156,3 +156,4 @@ class EventAPI extends VolunteerAPI
         return $response->withJson($ret);
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

@@ -32,7 +32,7 @@ class ShiftAPI extends VolunteerAPI
 
     protected function canUpdate($request, $entity)
     {
- 	if($this->isVolunteerAdmin($request))
+        if($this->isVolunteerAdmin($request))
         {
             return true;
         }
@@ -568,3 +568,4 @@ class ShiftAPI extends VolunteerAPI
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

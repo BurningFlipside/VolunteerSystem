@@ -25,3 +25,4 @@ class VolunteerAPI extends Http\Rest\DataTableAPI
         return $this->isVolunteerAdmin($request);
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */
