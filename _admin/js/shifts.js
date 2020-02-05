@@ -556,6 +556,8 @@ function saveGroup(e) {
     shifts[i].name = e.data.name;
     shifts[i].startTime = e.data.startTime;
     shifts[i].eventID = e.data.eventID;
+    shifts[i].unbounded = e.data.unbounded;
+    shifts[i].minShifts = e.data.minShifts;
     if(roles[shifts[i].roleID] === undefined) {
       roles[shifts[i].roleID] = 0;
     }
@@ -571,6 +573,8 @@ function saveGroup(e) {
   delete e.data.startTime;
   delete e.data.eventID;
   delete e.data.shifts;
+  delete e.data.unbounded;
+  delete e.data.minShifts;
   for(var role in e.data) {
     e.data[role] = e.data[role]*1;
   }
@@ -593,7 +597,7 @@ function saveGroup(e) {
         while(e.data[role] < 0) {
           for(var i = 0; i < shifts.length; i++) {
             if(shifts[i].roleID === role) {
-              shifts.splice(i, 1);
+              shifts[i].DELETE = true;
               e.data[role]++;
               break;
             }
@@ -604,12 +608,19 @@ function saveGroup(e) {
   }
   var promises = [];
   for(var i = 0; i < shifts.length; i++) {
-    if(shifts[i]['_id'] !== undefined) {
+    if(shifts[i]['_id'] !== undefined && shifts[i].DELETE !== true) {
       promises.push($.ajax({
         url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
         method: 'PATCH',
         contentType: 'application/json',
         data: JSON.stringify(shifts[i])
+      }));
+    }
+    else if(shifts[i].DELETE === true) {
+      promises.push($.ajax({
+        url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
+        method: 'DELETE',
+        contentType: 'application/json'
       }));
     }
     else {
@@ -821,6 +832,11 @@ function gotShifts(jqXHR) {
   }
   var array = jqXHR.responseJSON;
   var groups =  {};
+  array.sort(function(a, b){
+    var aDate = new Date(a.startTime);
+    var bDate = new Date(b.startTime);
+    return aDate.getTime() - bDate.getTime();
+  });
   var singles = array.filter(filterSinglesAndGroups, groups);
   for(var groupID in groups) {
     var group = groups[groupID];
