@@ -841,7 +841,32 @@ function gotShifts(jqXHR) {
   for(var groupID in groups) {
     var group = groups[groupID];
     var groupName = getGroupName(group);
-    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+'</a>');
+    var filledCount = 0;
+    var pendingCount = 0;
+    var emptyCount = 0;
+    for(var i = 0; i < group.length; i++) {
+      if(group[i].status === 'filled') {
+        filledCount++;
+      }
+      else if(singles[i].status === 'pending') {
+        pendingCount++;
+      }
+      else {
+        emptyCount++;
+      }
+    }
+    var badge = '';
+    if(filledCount > 0) {
+      badge += '<span class="badge badge-warning">Filled <span class="badge badge-light">'+filledCount+'</span></span>';
+    }
+    if(pendingCount > 0) {
+      badge += '<span class="badge badge-info">Pending <span class="badge badge-light">'+pendingCount+'</span></span>';
+    }
+    if((filledCount > 0 || pendingCount > 0) && emptyCount != 0) {
+      badge += '<span class="badge badge-secondary">Empty <span class="badge badge-light">'+emptyCount+'</span></span>';
+      console.log(group);
+    }
+    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+' '+badge+'</a>');
   }
   singles.sort(sortEvents);
   for(var i = 0; i < singles.length; i++) {
@@ -853,7 +878,14 @@ function gotShifts(jqXHR) {
       var end = new Date(singles[i].endTime);
       shiftName = singles[i].roleID+': '+start+' to '+end;
     }
-    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+'</a>');
+    var badge = '';
+    if(singles[i].status === 'filled') {
+      badge = '<span class="badge badge-warning">Filled</span>';
+    }
+    else if(singles[i].status === 'pending') {
+      badge = '<span class="badge badge-info">Pending</span>';
+    }
+    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+' '+badge+'</a>');
   }
 }
 
