@@ -17,6 +17,11 @@ class EventAPI extends VolunteerAPI
         $app->post('/{event}/Actions/GetEEShiftReport', array($this, 'getEEShiftReportForEvent'));
     }
 
+    protected function getFilterForPrimaryKey($value)
+    {
+        return new \Data\Filter($this->primaryKeyName." eq '$value' or alias eq '$value'");
+    }
+
     protected function canUpdate($request, $entity)
     {
  	if($this->isVolunteerAdmin($request))
@@ -50,7 +55,7 @@ class EventAPI extends VolunteerAPI
             $entry['available'] = false;
             $entry['why'] = 'Event is private and you are not invited';
         }
-        if(!$entry['available'] && !$this->isVolunteerAdmin($request))
+        if(!$entry['available'] && !$this->isVolunteerAdmin($request) && !$this->userIsLeadCached($this->user))
         {
             return null;
         }

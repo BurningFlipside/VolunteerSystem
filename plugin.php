@@ -1,5 +1,4 @@
 <?php
-/*
 class FVSPlugin extends SecurePlugin
 {
     function get_secure_menu_entries($page, $user)
@@ -7,6 +6,10 @@ class FVSPlugin extends SecurePlugin
         $ret = array(
           'Volunteer' => $page->secure_root.'fvs/index.php'
         );
+        if($user !== null && $user->isInGroupNamed('VolunteerAdmins'))
+        {
+            $ret['Volunteer System Admin']=$page->secure_root.'fvs/_admin/index.php';
+        }
         return $ret;
     }
 
@@ -18,4 +21,3 @@ class FVSPlugin extends SecurePlugin
         );
     }
 }
-*/
