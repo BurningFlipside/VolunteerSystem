@@ -4,8 +4,8 @@ error_reporting(E_ALL);
 require_once('class.VolunteerAdminPage.php');
 $page = new VolunteerAdminPage('Volunteer System Admin');
 
-$page->addJS('//cdn.ckeditor.com/4.7.0/full/ckeditor.js', false);
-$page->addJS('//cdn.ckeditor.com/4.7.0/full/adapters/jquery.js', false);
+$page->addJS('//cdn.ckeditor.com/4.7.0/full/ckeditor.js');
+$page->addJS('//cdn.ckeditor.com/4.7.0/full/adapters/jquery.js');
 
     $page->body .= '
 <div class="row">
