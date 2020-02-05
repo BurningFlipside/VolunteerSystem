@@ -28,8 +28,11 @@ class ParticipantAPI extends VolunteerAPI
         {
             return true;
         }
-        //TODO give access to department leads
-        return true;
+        if($this->user->isInGroupNamed('Leads'))
+        {
+            return true;
+        }
+        return false;
     }
 
     protected function canUpdate($request, $entity)

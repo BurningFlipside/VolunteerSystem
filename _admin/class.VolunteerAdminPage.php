@@ -83,12 +83,15 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $certTable = \DataSetFactory::getDataTableByNames('fvs', 'certifications');
         $userTable = \DataSetFactory::getDataTableByNames('fvs', 'participants');
         $certs = $certTable->read();
-        $count = count($certs);
-        for($i = 0; $i < $count; $i++)
+        if($certs !== false)
         {
-            $filter = new \Data\Filter('certs.'.$certs[$i]['certID'].'.status eq pending');
-            $users = $userTable->read($filter);
-            $certApprovalCount += count($users);
+            $count = count($certs);
+            for($i = 0; $i < $count; $i++)
+            {
+                $filter = new \Data\Filter('certs.'.$certs[$i]['certID'].'.status eq pending');
+                $users = $userTable->read($filter);
+                $certApprovalCount += count($users);
+            }
         }
         $certBadge = '';
         if($certApprovalCount > 0)
