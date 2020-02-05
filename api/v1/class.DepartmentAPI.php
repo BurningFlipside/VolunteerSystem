@@ -74,8 +74,8 @@ class DepartmentAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
-        $filter = new \Data\Filter("departmentID eq '$deptId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        $filter = new \Data\Filter("departmentID eq '$deptId'");
         $roles = $dataTable->read($filter, $odata->select, $odata->top,
                                     $odata->skip, $odata->orderby);
         if($roles === false)
@@ -98,20 +98,11 @@ class DepartmentAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $filter = new \Data\Filter("departmentID eq '$deptId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
-        if($odata->filter !== false)
+        $filter = $this->addRequiredFilter('departmentID', $deptId, $odata);
+        if($filter === false)
         {
-            $clause = $odata->filter->getClause('departmentID');
-            if($clause !== null)
-            {
-                return $response->withStatus(409);
-            }
-            else
-            {
-                $filter->appendChild('and');
-                $filter->appendChild($odata->filter);
-            }
+            return $response->withStatus(409);
         }
         $shifts = $dataTable->read($filter, $odata->select, $odata->top,
                                     $odata->skip, $odata->orderby);
