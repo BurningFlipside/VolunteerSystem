@@ -236,17 +236,7 @@ class ParticipantAPI extends VolunteerAPI
         {
             return $response->withStatus(404);
         }
-        $obj = $request->getParsedBody();
-        if($obj === null)
-        {
-            $request->getBody()->rewind();
-            $obj = $request->getBody()->getContents();
-            $tmp = json_decode($obj, true);
-            if($tmp !== null)
-            {
-                $obj = $tmp;
-            }
-        }
+        $obj = $this->getParsedBody($request);
         $reason = 'Unknown';
         switch($obj['reason'])
         {

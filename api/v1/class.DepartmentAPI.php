@@ -166,17 +166,7 @@ class DepartmentAPI extends VolunteerAPI
         {
             return $response->withStatus(404);
         }
-        $obj = $request->getParsedBody();
-        if($obj === null)
-        {
-            $request->getBody()->rewind();
-            $obj = $request->getBody()->getContents();
-            $tmp = json_decode($obj, true);
-            if($tmp !== null)
-            {
-                $obj = $tmp;
-            }
-        }
+        $obj = $this->getParsedBody($request);
         $ret = $dataTable->update($filter, $obj);
         return $response->withJson($ret);
     }
