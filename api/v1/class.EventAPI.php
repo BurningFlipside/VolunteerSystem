@@ -24,7 +24,7 @@ class EventAPI extends VolunteerAPI
 
     protected function canUpdate($request, $entity)
     {
- 	if($this->isVolunteerAdmin($request))
+        if($this->isVolunteerAdmin($request))
         {
             return true;
         }       
@@ -87,7 +87,7 @@ class EventAPI extends VolunteerAPI
             }
         }
         $shifts = $dataTable->read($filter, $odata->select, $odata->top,
-                                  $odata->skip, $odata->orderby);
+                                   $odata->skip, $odata->orderby);
         if($shifts === false)
         {
             $shifts = array();

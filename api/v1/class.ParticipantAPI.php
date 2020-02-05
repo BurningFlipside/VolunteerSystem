@@ -34,7 +34,7 @@ class ParticipantAPI extends VolunteerAPI
 
     protected function canUpdate($request, $entity)
     {
- 	if($this->isVolunteerAdmin($request))
+        if($this->isVolunteerAdmin($request))
         {
             return true;
         }       
@@ -91,7 +91,7 @@ class ParticipantAPI extends VolunteerAPI
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, $odata->select, $odata->top,
-                                  $odata->skip, $odata->orderby);
+                                   $odata->skip, $odata->orderby);
         if(empty($areas))
         {
             return $response->withStatus(404);
@@ -110,24 +110,24 @@ class ParticipantAPI extends VolunteerAPI
         if($format === false || $format === 'text/calendar')
         {
             $text = "BEGIN:VCALENDAR\r\n";
-            $text.= "VERSION:2.0\r\n";
-            $text.= "PRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\n";
+            $text .= "VERSION:2.0\r\n";
+            $text .= "PRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\n";
             $count = count($shifts);
             for($i = 0; $i < $count; $i++)
             {
-                $text.= "BEGIN:VEVENT\r\n";
-                $text.= "UID:".$this->user->mail."\r\n";
+                $text .= "BEGIN:VEVENT\r\n";
+                $text .= "UID:".$this->user->mail."\r\n";
                 $d = new DateTime($shifts[$i]['startTime']);
                 $d->setTimezone(new \DateTimeZone('UTC'));
-                $text.= "DTSTAMP:".$d->format('Ymd\THis\Z')."\r\n";
-                $text.= "DTSTART:".$d->format('Ymd\THis\Z')."\r\n";
+                $text .= "DTSTAMP:".$d->format('Ymd\THis\Z')."\r\n";
+                $text .= "DTSTART:".$d->format('Ymd\THis\Z')."\r\n";
                 $d = new DateTime($shifts[$i]['endTime']);
                 $d->setTimezone(new \DateTimeZone('UTC'));
-                $text.= "DTEND:".$d->format('Ymd\THis\Z')."\r\n";
-                $text.= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
-                $text.= "END:VEVENT\r\n";
+                $text .= "DTEND:".$d->format('Ymd\THis\Z')."\r\n";
+                $text .= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
+                $text .= "END:VEVENT\r\n";
             }
-            $text.= "END:VCALENDAR\r\n";
+            $text .= "END:VCALENDAR\r\n";
             $response = $response->withHeader('Content-type', 'text/calendar');
             $response = $response->withHeader('Content-Disposition', 'attachment; filename="MyShifts.ics"');
             $body = $response->getBody();
@@ -162,7 +162,7 @@ class ParticipantAPI extends VolunteerAPI
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, array('certs'), $odata->top,
-                                  $odata->skip, $odata->orderby);
+                                   $odata->skip, $odata->orderby);
         if(empty($areas))
         {
             return $response->withStatus(404);
@@ -196,7 +196,7 @@ class ParticipantAPI extends VolunteerAPI
         $user = $users[0];
         if(!isset($user['certs']))
         {
-             $user['certs'] = array();
+            $user['certs'] = array();
         }
         $files = $request->getUploadedFiles();
         $file = $files['file'];
