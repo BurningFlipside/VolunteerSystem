@@ -14,6 +14,7 @@ class ParticipantAPI extends VolunteerAPI
         $app->post('/{uid}/certs/{certId}[/]', array($this, 'uploadCert'));
         $app->post('/{uid}/certs/{certId}/Actions/RejectCert', array($this, 'rejectCert'));
         $app->post('/{uid}/certs/{certId}/Actions/AcceptCert', array($this, 'acceptCert'));
+        $app->get('/{uid}/ticketStatus', array($this, 'getTicketStatus'));
     }
 
     protected function canCreate($request)
@@ -306,6 +307,47 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(200);
         }
         return $response->withStatus(500);
+    }
+
+    public function getTicketStatus($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['uid'];
+        if($uid === 'me')
+        {
+            $uid = $this->user->uid;
+        }
+        else if($uid !== $this->user->uid && $this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($uid);
+        $users = $dataTable->read($filter);
+        if(empty($users))
+        {
+            return $response->withStatus(404);
+        }
+        $user = $users[0];
+        //TODO Ticket IDs for people who don't have tickets associated to their email
+        //Get the ticket year
+        $settingsTable = DataSetFactory::getDataTableByNames('tickets', 'Variables');
+        $settings = $settingsTable->read(new \Data\Filter('name eq \'year\''));
+        $year = $settings[0]['value']; 
+        $email = $user['email'];
+        $ticketTable = DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+        $tickets = $ticketTable->read(new \Data\Filter("email eq '$email' and year eq $year"));
+        if(empty($tickets))
+        {
+            $requestTable = DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
+            $requests = $requestTable->read(new \Data\Filter("mail eq '$email' and year eq $year"));
+            if(empty($requests))
+            {
+                return $response->withJson(array('ticket' => false, 'request' => false));
+            }
+            return $response->withJson(array('ticket' => false, 'request' => true));
+        }
+        return $response->withJson(array('ticket' => true));
     }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */
