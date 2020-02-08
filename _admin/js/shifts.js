@@ -382,7 +382,17 @@ function replaceGroupID(newGroupID, oldGroupID) {
 
 function doGroup(e) {
   var data = e.data;
-  if(data.group === 'single') {
+  if(data.shifts !== undefined) {
+    var obj = {groupID: data['oldGroupID']};
+    $.ajax({
+      url: '../api/v1/shifts/'+data['shiftID'],
+      method: 'PATCH',
+      contentType: 'application/json',
+      data: JSON.stringify(obj),
+      complete: groupDone
+    });
+  }
+  else if(data.group === 'single') {
     //Create a new group...
     var array = [];
     array.push(data.shiftID);
@@ -484,7 +494,7 @@ function gotShiftsToGroup(jqXHR) {
     delete this.groupID;
   }
   var dialogOptions = {
-    title: 'Edit Shift',
+    title: 'Group Shift',
     data: this,
     inputs: [
       groupOptions,
