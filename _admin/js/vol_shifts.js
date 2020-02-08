@@ -7,7 +7,7 @@ function gotShifts(jqXHR) {
   var data = jqXHR.responseJSON;
   var participants = {};
   for(var i = 0; i < data.length; i++) {
-    if(data[i].participant !== undefined) {
+    if(data[i].participant !== undefined && data[i].participant !== '') {
       if(participants[data[i].participant] === undefined) {
         participants[data[i].participant] = 1;
       }
@@ -76,7 +76,6 @@ function departmentSelected(e) {
     url: '../api/v1/departments/'+value+'/roles',
     complete: gotRoles
   });
-  getShifts();
 }
 
 function eventSelected(e) {
