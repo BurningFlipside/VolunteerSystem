@@ -88,7 +88,7 @@ class VolunteerShift extends VolunteerObject
             case 'participantObj':
                 if($this->participantObj === null)
                 {
-                    if(isset($this->dbData['participant']))
+                    if(isset($this->dbData['participant']) && $this->dbData['participant'] !== '' && $this->dbData['participant'] !== '/dev/null')
                     {
                         $this->participantObj = new \VolunteerProfile($this->dbData['participant']);
                     }
