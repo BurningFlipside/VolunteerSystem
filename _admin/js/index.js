@@ -187,6 +187,11 @@ function gotEvents(jqXHR) {
   if(jqXHR.responseJSON !== undefined) {
     var resp = jqXHR.responseJSON;
     $('#eventCount').html(resp['@odata.count']);
+    resp.value.sort(function(a, b) {
+      var aDate = new Date(a.startTime);
+      var bDate = new Date(b.startTime);
+      return aDate.getTime() - bDate.getTime();
+    });
     var events = $('#events');
     events.change(showEventDetails);
     for(var i = 0; i < resp.value.length; i++) {

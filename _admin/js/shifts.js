@@ -382,7 +382,17 @@ function replaceGroupID(newGroupID, oldGroupID) {
 
 function doGroup(e) {
   var data = e.data;
-  if(data.group === 'single') {
+  if(data.shifts !== undefined) {
+    var obj = {groupID: data['oldGroupID']};
+    $.ajax({
+      url: '../api/v1/shifts/'+data['shiftID'],
+      method: 'PATCH',
+      contentType: 'application/json',
+      data: JSON.stringify(obj),
+      complete: groupDone
+    });
+  }
+  else if(data.group === 'single') {
     //Create a new group...
     var array = [];
     array.push(data.shiftID);
@@ -484,7 +494,7 @@ function gotShiftsToGroup(jqXHR) {
     delete this.groupID;
   }
   var dialogOptions = {
-    title: 'Edit Shift',
+    title: 'Group Shift',
     data: this,
     inputs: [
       groupOptions,
@@ -556,6 +566,8 @@ function saveGroup(e) {
     shifts[i].name = e.data.name;
     shifts[i].startTime = e.data.startTime;
     shifts[i].eventID = e.data.eventID;
+    shifts[i].unbounded = e.data.unbounded;
+    shifts[i].minShifts = e.data.minShifts;
     if(roles[shifts[i].roleID] === undefined) {
       roles[shifts[i].roleID] = 0;
     }
@@ -571,6 +583,8 @@ function saveGroup(e) {
   delete e.data.startTime;
   delete e.data.eventID;
   delete e.data.shifts;
+  delete e.data.unbounded;
+  delete e.data.minShifts;
   for(var role in e.data) {
     e.data[role] = e.data[role]*1;
   }
@@ -593,7 +607,7 @@ function saveGroup(e) {
         while(e.data[role] < 0) {
           for(var i = 0; i < shifts.length; i++) {
             if(shifts[i].roleID === role) {
-              shifts.splice(i, 1);
+              shifts[i].DELETE = true;
               e.data[role]++;
               break;
             }
@@ -604,12 +618,19 @@ function saveGroup(e) {
   }
   var promises = [];
   for(var i = 0; i < shifts.length; i++) {
-    if(shifts[i]['_id'] !== undefined) {
+    if(shifts[i]['_id'] !== undefined && shifts[i].DELETE !== true) {
       promises.push($.ajax({
         url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
         method: 'PATCH',
         contentType: 'application/json',
         data: JSON.stringify(shifts[i])
+      }));
+    }
+    else if(shifts[i].DELETE === true) {
+      promises.push($.ajax({
+        url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
+        method: 'DELETE',
+        contentType: 'application/json'
       }));
     }
     else {
@@ -821,11 +842,40 @@ function gotShifts(jqXHR) {
   }
   var array = jqXHR.responseJSON;
   var groups =  {};
+  array.sort(function(a, b){
+    var aDate = new Date(a.startTime);
+    var bDate = new Date(b.startTime);
+    return aDate.getTime() - bDate.getTime();
+  });
   var singles = array.filter(filterSinglesAndGroups, groups);
   for(var groupID in groups) {
     var group = groups[groupID];
     var groupName = getGroupName(group);
-    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+'</a>');
+    var filledCount = 0;
+    var pendingCount = 0;
+    var emptyCount = 0;
+    for(var i = 0; i < group.length; i++) {
+      if(group[i].status === 'filled') {
+        filledCount++;
+      }
+      else if(singles[i].status === 'pending') {
+        pendingCount++;
+      }
+      else {
+        emptyCount++;
+      }
+    }
+    var badge = '';
+    if(filledCount > 0) {
+      badge += '<span class="badge badge-warning">Filled <span class="badge badge-light">'+filledCount+'</span></span>';
+    }
+    if(pendingCount > 0) {
+      badge += '<span class="badge badge-info">Pending <span class="badge badge-light">'+pendingCount+'</span></span>';
+    }
+    if((filledCount > 0 || pendingCount > 0) && emptyCount != 0) {
+      badge += '<span class="badge badge-secondary">Empty <span class="badge badge-light">'+emptyCount+'</span></span>';
+    }
+    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+' '+badge+'</a>');
   }
   singles.sort(sortEvents);
   for(var i = 0; i < singles.length; i++) {
@@ -837,7 +887,14 @@ function gotShifts(jqXHR) {
       var end = new Date(singles[i].endTime);
       shiftName = singles[i].roleID+': '+start+' to '+end;
     }
-    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+'</a>');
+    var badge = '';
+    if(singles[i].status === 'filled') {
+      badge = '<span class="badge badge-warning">Filled</span>';
+    }
+    else if(singles[i].status === 'pending') {
+      badge = '<span class="badge badge-info">Pending</span>';
+    }
+    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+' '+badge+'</a>');
   }
 }
 
@@ -862,6 +919,9 @@ function gotDepartments(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
+  array.sort(function(a, b) {
+    return a.departmentName.localeCompare(b.departmentName);
+  });
   var count = 0;
   var accordian = $('#accordion');
   for(var i = 0; i < array.length; i++) {

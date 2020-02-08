@@ -32,7 +32,7 @@ class ShiftAPI extends VolunteerAPI
 
     protected function canUpdate($request, $entity)
     {
- 	if($this->isVolunteerAdmin($request))
+        if($this->isVolunteerAdmin($request))
         {
             return true;
         }
@@ -75,11 +75,7 @@ class ShiftAPI extends VolunteerAPI
         if($oldShift->isFilled() && ($oldObj['startTime'] != $newObj['startTime'] || $oldObj['endTime'] != $newObj['endTime']))
         {
             $email = new \Emails\ShiftEmail($oldShift, 'shiftChangedSource');
-            $emailProvider = \EmailProvider::getInstance();
-            if($emailProvider->sendEmail($email) === false)
-            {
-                throw new \Exception('Unable to send email!');
-            }
+            $this->sendEmail($email);
         }
         return true;
     }
@@ -94,11 +90,7 @@ class ShiftAPI extends VolunteerAPI
         if($shift->isFilled())
         {
             $email = new \Emails\ShiftEmail($shift, 'shiftCanceledSource');
-            $emailProvider = \EmailProvider::getInstance();
-            if($emailProvider->sendEmail($email) === false)
-            {
-                throw new \Exception('Unable to send email!');
-            } 
+            $this->sendEmail($email);
         }
         return true;
     }
@@ -374,11 +366,7 @@ class ShiftAPI extends VolunteerAPI
         $profile = new \VolunteerProfile($this->user->uid);
         $email = new \Emails\PendingRejectedEmail($profile);
         $email->setShift($entity);
-        $emailProvider = \EmailProvider::getInstance();
-        if($emailProvider->sendEmail($email) === false)
-        {
-            throw new \Exception('Unable to send duplicate email!');
-        }
+        $this->sendEmail($email);
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 
@@ -534,11 +522,7 @@ class ShiftAPI extends VolunteerAPI
         if($ret)
         {
             $email = new \Emails\ShiftEmail($shift, 'shiftEmptiedSource');
-            $emailProvider = \EmailProvider::getInstance();
-            if($emailProvider->sendEmail($email) === false)
-            {
-                throw new \Exception('Unable to send email!');
-            }
+            $this->sendEmail($email);
         }
         return $response->withJSON($ret);
     }
@@ -568,3 +552,4 @@ class ShiftAPI extends VolunteerAPI
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

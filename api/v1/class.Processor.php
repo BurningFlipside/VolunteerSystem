@@ -47,10 +47,10 @@ trait Processor
         }
         for($i = 0; $i < $certCount; $i++)
         {
-             if($this->certCheck($requirements, $userCerts, $certs[$i]['certID']))
-             {
-                 return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires '.$certs[$i]['name'].' and you do not have that certification');
-             }
+            if($this->certCheck($requirements, $userCerts, $certs[$i]['certID']))
+            {
+                return array('whyClass' => 'CERT', 'whyMsg' => 'Shift requires '.$certs[$i]['name'].' and you do not have that certification');
+            }
         }
         return true;
     }
@@ -60,10 +60,13 @@ trait Processor
         static $uids = array();
         if(!isset($uids[$uid]))
         {
-            try {
+            try
+            {
                 $profile = new \VolunteerProfile($uid);
                 $uids[$uid] = $profile->getDisplayName();
-            } catch (Exception $e) {
+            }
+            catch(Exception $e)
+            {
                 $uids[$uid] = $uid;
             }
         }
@@ -174,6 +177,22 @@ trait Processor
         }
     }
 
+    protected function cleanupNonDBFields(&$entry)
+    {
+        if(isset($entry['volunteer']))
+        {
+            unset($entry['volunteer']);
+        }
+        if(isset($entry['why']))
+        {
+            unset($entry['why']);
+        }
+        if(isset($entry['whyClass']))
+        {
+            unset($entry['whyClass']);
+        }
+    }
+
     protected function processShift($entry, $request)
     {
         static $profile = null;
@@ -192,21 +211,10 @@ trait Processor
             $tmp = $dataTable->read();
             foreach($tmp as $role)
             {
-               $roles[$role['short_name']] = $role;
+                $roles[$role['short_name']] = $role;
             }
         }
-        if(isset($entry['volunteer']))
-        {
-          unset($entry['volunteer']);
-        }
-        if(isset($entry['why']))
-        {
-          unset($entry['why']);
-        }
-        if(isset($entry['whyClass']))
-        {
-          unset($entry['whyClass']);
-        }
+        $this->cleanupNonDBFields($entry);
         $shift = new \VolunteerShift(false, $entry);
         $entry['isAdmin'] = $this->isAdminForShift($entry, $this->user);
         $entry['overlap'] = $shift->findOverlaps($this->user->uid, true);

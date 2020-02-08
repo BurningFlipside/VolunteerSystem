@@ -74,10 +74,10 @@ class DepartmentAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
-        $filter = new \Data\Filter("departmentID eq '$deptId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        $filter = new \Data\Filter("departmentID eq '$deptId'");
         $roles = $dataTable->read($filter, $odata->select, $odata->top,
-                                  $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if($roles === false)
         {
             $roles = array();
@@ -98,23 +98,14 @@ class DepartmentAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $filter = new \Data\Filter("departmentID eq '$deptId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
-        if($odata->filter !== false)
+        $filter = $this->addRequiredFilter('departmentID', $deptId, $odata);
+        if($filter === false)
         {
-            $clause = $odata->filter->getClause('departmentID');
-            if($clause !== null)
-            {
-                return $response->withStatus(409);
-            }
-            else
-            {
-                $filter->appendChild('and');
-                $filter->appendChild($odata->filter);
-            }
+            return $response->withStatus(409);
         }
         $shifts = $dataTable->read($filter, $odata->select, $odata->top,
-                                  $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if($shifts === false)
         {
             $shifts = array();
@@ -175,17 +166,7 @@ class DepartmentAPI extends VolunteerAPI
         {
             return $response->withStatus(404);
         }
-        $obj = $request->getParsedBody();
-        if($obj === null)
-        {
-            $request->getBody()->rewind();
-            $obj = $request->getBody()->getContents();
-            $tmp = json_decode($obj, true);
-            if($tmp !== null)
-            {
-                $obj = $tmp;
-            }
-        }
+        $obj = $this->getParsedBody($request);
         $ret = $dataTable->update($filter, $obj);
         return $response->withJson($ret);
     }
@@ -241,4 +222,4 @@ class DepartmentAPI extends VolunteerAPI
         return $response;
     }
 }
-
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

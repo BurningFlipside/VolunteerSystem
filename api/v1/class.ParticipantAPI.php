@@ -14,6 +14,7 @@ class ParticipantAPI extends VolunteerAPI
         $app->post('/{uid}/certs/{certId}[/]', array($this, 'uploadCert'));
         $app->post('/{uid}/certs/{certId}/Actions/RejectCert', array($this, 'rejectCert'));
         $app->post('/{uid}/certs/{certId}/Actions/AcceptCert', array($this, 'acceptCert'));
+        $app->get('/{uid}/ticketStatus', array($this, 'getTicketStatus'));
     }
 
     protected function canCreate($request)
@@ -28,13 +29,16 @@ class ParticipantAPI extends VolunteerAPI
         {
             return true;
         }
-        //TODO give access to department leads
-        return true;
+        if($this->user->isInGroupNamed('Leads'))
+        {
+            return true;
+        }
+        return false;
     }
 
     protected function canUpdate($request, $entity)
     {
- 	if($this->isVolunteerAdmin($request))
+        if($this->isVolunteerAdmin($request))
         {
             return true;
         }       
@@ -91,7 +95,7 @@ class ParticipantAPI extends VolunteerAPI
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, $odata->select, $odata->top,
-                                  $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if(empty($areas))
         {
             return $response->withStatus(404);
@@ -110,24 +114,24 @@ class ParticipantAPI extends VolunteerAPI
         if($format === false || $format === 'text/calendar')
         {
             $text = "BEGIN:VCALENDAR\r\n";
-            $text.= "VERSION:2.0\r\n";
-            $text.= "PRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\n";
+            $text .= "VERSION:2.0\r\n";
+            $text .= "PRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\n";
             $count = count($shifts);
             for($i = 0; $i < $count; $i++)
             {
-                $text.= "BEGIN:VEVENT\r\n";
-                $text.= "UID:".$this->user->mail."\r\n";
+                $text .= "BEGIN:VEVENT\r\n";
+                $text .= "UID:".$this->user->mail."\r\n";
                 $d = new DateTime($shifts[$i]['startTime']);
                 $d->setTimezone(new \DateTimeZone('UTC'));
-                $text.= "DTSTAMP:".$d->format('Ymd\THis\Z')."\r\n";
-                $text.= "DTSTART:".$d->format('Ymd\THis\Z')."\r\n";
+                $text .= "DTSTAMP:".$d->format('Ymd\THis\Z')."\r\n";
+                $text .= "DTSTART:".$d->format('Ymd\THis\Z')."\r\n";
                 $d = new DateTime($shifts[$i]['endTime']);
                 $d->setTimezone(new \DateTimeZone('UTC'));
-                $text.= "DTEND:".$d->format('Ymd\THis\Z')."\r\n";
-                $text.= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
-                $text.= "END:VEVENT\r\n";
+                $text .= "DTEND:".$d->format('Ymd\THis\Z')."\r\n";
+                $text .= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
+                $text .= "END:VEVENT\r\n";
             }
-            $text.= "END:VCALENDAR\r\n";
+            $text .= "END:VCALENDAR\r\n";
             $response = $response->withHeader('Content-type', 'text/calendar');
             $response = $response->withHeader('Content-Disposition', 'attachment; filename="MyShifts.ics"');
             $body = $response->getBody();
@@ -162,7 +166,7 @@ class ParticipantAPI extends VolunteerAPI
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, array('certs'), $odata->top,
-                                  $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if(empty($areas))
         {
             return $response->withStatus(404);
@@ -196,7 +200,7 @@ class ParticipantAPI extends VolunteerAPI
         $user = $users[0];
         if(!isset($user['certs']))
         {
-             $user['certs'] = array();
+            $user['certs'] = array();
         }
         $files = $request->getUploadedFiles();
         $file = $files['file'];
@@ -236,17 +240,7 @@ class ParticipantAPI extends VolunteerAPI
         {
             return $response->withStatus(404);
         }
-        $obj = $request->getParsedBody();
-        if($obj === null)
-        {
-            $request->getBody()->rewind();
-            $obj = $request->getBody()->getContents();
-            $tmp = json_decode($obj, true);
-            if($tmp !== null)
-            {
-                $obj = $tmp;
-            }
-        }
+        $obj = $this->getParsedBody($request);
         $reason = 'Unknown';
         switch($obj['reason'])
         {
@@ -314,4 +308,46 @@ class ParticipantAPI extends VolunteerAPI
         }
         return $response->withStatus(500);
     }
+
+    public function getTicketStatus($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['uid'];
+        if($uid === 'me')
+        {
+            $uid = $this->user->uid;
+        }
+        else if($uid !== $this->user->uid && $this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($uid);
+        $users = $dataTable->read($filter);
+        if(empty($users))
+        {
+            return $response->withStatus(404);
+        }
+        $user = $users[0];
+        //TODO Ticket IDs for people who don't have tickets associated to their email
+        //Get the ticket year
+        $settingsTable = DataSetFactory::getDataTableByNames('tickets', 'Variables');
+        $settings = $settingsTable->read(new \Data\Filter('name eq \'year\''));
+        $year = $settings[0]['value']; 
+        $email = $user['email'];
+        $ticketTable = DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+        $tickets = $ticketTable->read(new \Data\Filter("email eq '$email' and year eq $year"));
+        if(empty($tickets))
+        {
+            $requestTable = DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
+            $requests = $requestTable->read(new \Data\Filter("mail eq '$email' and year eq $year"));
+            if(empty($requests))
+            {
+                return $response->withJson(array('ticket' => false, 'request' => false));
+            }
+            return $response->withJson(array('ticket' => false, 'request' => true));
+        }
+        return $response->withJson(array('ticket' => true));
+    }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

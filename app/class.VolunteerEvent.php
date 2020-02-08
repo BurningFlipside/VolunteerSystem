@@ -11,7 +11,7 @@ class VolunteerEvent extends VolunteerObject
         if($eeListIndex === 1 || $eeListIndex === 0)
         {
             //Check earlier EE lists too
-            $val = $this->hasVolOnEEList($uid, $eeListIndex+1);
+            $val = $this->hasVolOnEEList($uid, $eeListIndex + 1);
             if($val === true)
             {
                 return true;
@@ -49,3 +49,4 @@ class VolunteerEvent extends VolunteerObject
         return true;
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

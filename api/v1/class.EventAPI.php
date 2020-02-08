@@ -24,7 +24,7 @@ class EventAPI extends VolunteerAPI
 
     protected function canUpdate($request, $entity)
     {
- 	if($this->isVolunteerAdmin($request))
+        if($this->isVolunteerAdmin($request))
         {
             return true;
         }       
@@ -71,23 +71,14 @@ class EventAPI extends VolunteerAPI
         $this->validateLoggedIn($request);
         $eventId = $args['event'];
         $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $filter = new \Data\Filter("eventID eq '$eventId'");
         $odata = $request->getAttribute('odata', new \ODataParams(array()));
-        if($odata->filter !== false)
+        $filter = $this->addRequiredFilter('eventID', $eventId, $odata);
+        if($filter === false)
         {
-            $clause = $odata->filter->getClause('eventID');
-            if($clause !== null)
-            {
-                return $response->withStatus(409);
-            }
-            else
-            {
-                $filter->appendChild('and');
-                $filter->appendChild($odata->filter);
-            }
+            return $response->withStatus(409);
         }
         $shifts = $dataTable->read($filter, $odata->select, $odata->top,
-                                  $odata->skip, $odata->orderby);
+                                    $odata->skip, $odata->orderby);
         if($shifts === false)
         {
             $shifts = array();
@@ -156,3 +147,4 @@ class EventAPI extends VolunteerAPI
         return $response->withJson($ret);
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

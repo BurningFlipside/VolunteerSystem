@@ -36,7 +36,7 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
             $this->isLead = $this->user->isInGroupNamed('Leads');
             if($this->isLead)
             {
-                 $this->is_admin = true;
+                $this->is_admin = true;
             }
             else
             {
@@ -44,7 +44,7 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
                 $uid = $this->user->uid;
                 $email = $this->user->mail;
                 $filter = new \Data\Filter("others eq $uid or others eq $email");
-                $dataTable = DataSetFactory::getDataTableByNames('fvs','departments');
+                $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
                 $depts = $dataTable->read($filter);
                 $this->isLead = !empty($depts);
                 $this->is_admin = true;
@@ -83,12 +83,15 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $certTable = \DataSetFactory::getDataTableByNames('fvs', 'certifications');
         $userTable = \DataSetFactory::getDataTableByNames('fvs', 'participants');
         $certs = $certTable->read();
-        $count = count($certs);
-        for($i = 0; $i < $count; $i++)
+        if($certs !== false)
         {
-            $filter = new \Data\Filter('certs.'.$certs[$i]['certID'].'.status eq pending');
-            $users = $userTable->read($filter);
-            $certApprovalCount += count($users);
+            $count = count($certs);
+            for($i = 0; $i < $count; $i++)
+            {
+                $filter = new \Data\Filter('certs.'.$certs[$i]['certID'].'.status eq pending');
+                $users = $userTable->read($filter);
+                $certApprovalCount += count($users);
+            }
         }
         $certBadge = '';
         if($certApprovalCount > 0)
@@ -111,3 +114,4 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         }
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

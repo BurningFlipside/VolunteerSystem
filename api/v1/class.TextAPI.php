@@ -60,10 +60,6 @@ class TextAPI extends VolunteerAPI
             $body->rewind();
             $obj = array('value'=>$body->getContents());
         }
-        if($this->validateUpdate($obj, $request, $entry) === false)
-        {
-            return $response->withStatus(400);
-        }
         $ret = $dataTable->update($filter, $obj);
         return $response->withJson($ret);
     }

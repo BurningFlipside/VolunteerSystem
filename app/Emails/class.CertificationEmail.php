@@ -48,13 +48,13 @@ class CertificationEmail extends VolunteerEmail
         $certType = $this->additionalProps['certType'];
         $rejectReason = $this->additionalProps['reason'];
         $vars = array(
-          '{$firstName}' => $firstName,
-          '{$lastName}' => $lastName,
-          '{$paperName}' => $paperName,
-          '{$webName}' => $webName,
-          '{$certType}' => $certType,
-          '{$rejectReason}' => $rejectReason
-        );
+                '{$firstName}' => $firstName,
+                '{$lastName}' => $lastName,
+                '{$paperName}' => $paperName,
+                '{$webName}' => $webName,
+                '{$certType}' => $certType,
+                '{$rejectReason}' => $rejectReason
+                );
         if($html === true)
         {
             $text = strtr($this->text, $vars);
@@ -69,7 +69,7 @@ class CertificationEmail extends VolunteerEmail
                 $end = strpos($rawText, "</script>");
                 if($index === 0)
                 {
-                    $rawText = substr($rawText, $end+9);
+                    $rawText = substr($rawText, $end + 9);
                 }
             }
             return strtr(strip_tags($rawText), $vars);
@@ -88,3 +88,4 @@ class CertificationEmail extends VolunteerEmail
         return $body;
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */
