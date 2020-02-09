@@ -6,9 +6,8 @@ function gotShifts(jqXHR) {
   var tbody = $('#shiftTable tbody');
   var participants = this;
   tbody.empty();
-  console.log(data);
   for(var i = 0; i < data.length; i++) {
-    if(data[i].participant !== undefined) {
+    if(data[i].participant !== undefined && participants[data[i].participant] !== undefined) {
       participants[data[i].participant].shiftCount++;
     }
   }
@@ -24,7 +23,6 @@ function gotShifts(jqXHR) {
       }
     }
     tbody.append('<tr><td>'+uid+'</td><td>'+certs+'</td></tr>');
-    console.log(part);
   }
 }
 
@@ -38,18 +36,50 @@ function gotVols(jqXHR) {
     data[i].shiftCount = 0;
     participants[data[i].uid] = data[i];
   }
-  $.ajax({
-    url: '../api/v1/events/'+$('#event').val()+'/shifts',
-    complete: gotShifts,
-    context: participants
-  });
+  var event = $('#event').val();
+  if(event !== null) {
+    $.ajax({
+      url: '../api/v1/events/'+event+'/shifts',
+      complete: gotShifts,
+      context: participants
+    });
+  }
+  else {
+    $.ajax({
+      url: '../api/v1/shifts',
+      complete: gotShifts,
+      context: participants
+    });
+  }
 }
 
 function getVols() {
-  $.ajax({
-    url: '../api/v1/participants',
-    complete: gotVols
-  });
+  var certs = $('#certs').val();
+  if(certs.includes('none')) {
+    $.ajax({
+      url: '../api/v1/participants',
+      complete: gotVols
+    });
+  }
+  else {
+    var filter = '';
+    for(var i = 0; i < certs.length; i++) {
+      if(certs[i] === 'none') {
+        certs.splice(i, 1);
+        break;
+      }
+    }
+    for(var i = 0; i < certs.length; i++) {
+      filter += 'certs.'+certs[i]+'.status%20eq%20current';
+      if(i < certs.length - 1) {
+        filter += ' or '
+      }
+    }
+    $.ajax({
+      url: '../api/v1/participants?$filter='+filter,
+      complete: gotVols
+    });
+  }
 }
 
 function eventChanged(e) {

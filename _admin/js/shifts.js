@@ -73,7 +73,7 @@ function gotDepartmentRoles(jqXHR) {
 }
 
 function gotGroupDepartmentRoles(jqXHR) {
-  var mySelect = $('#groupAddRole').select2();
+  var mySelect = $('#groupAddRole');
   var array = jqXHR.responseJSON;
   for(var i = 0; i < array.length; i++) {
     var newOption = new Option(array[i].display_name, array[i].short_name, false, false);

@@ -34,7 +34,10 @@ $page->body .= '
 </div>
 <div class="row">
   <table class="table" id="shiftTable">
-    <tr><th>Username</th><th>Number of Shifts</th></tr>
+    <thead>
+      <tr><th>Username</th><th>Number of Shifts</th></tr>
+    </thead>
+    <tbody></tbody>
   </table>
 </div>
 ';
