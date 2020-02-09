@@ -26,6 +26,7 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $this->addJS('../js/dialog.js');
         $this->secure_root = $this->getSecureRoot();
         $this->content['loginUrl'] = $this->secure_root.'api/v1/login';
+        $this->addLink('Help <i class="fas fa-question"></i>', '../docs/admin_help.html');
     }
 
     protected function getAdminInfo()
