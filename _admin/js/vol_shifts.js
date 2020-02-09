@@ -63,6 +63,7 @@ function gotRoles(jqXHR) {
     return;
   }
   var data = jqXHR.responseJSON;
+  $('#roles').empty();
   for(var i = 0; i < data.length; i++) {
     var newOption = new Option(data[i].display_name, data[i].short_name, true, true);
     $('#roles').append(newOption);
