@@ -210,7 +210,7 @@ function shiftDeleted(jqXHR) {
 function deleteShift(e) {
   var msg = "Are you sure you want to delete this shift?";
   if(e.data.shifts !== undefined) {
-    msg = "Are you sure you want to delete all "+e.data.shifts.length+" shifts in this group?";
+    msg = "Are you sure you want to delete all "+e.data.shifts.length+" shifts in this set?";
   }
   bootbox.confirm({
     message: msg,
@@ -333,7 +333,7 @@ function getGroupName(group) {
   }
   var start = new Date(group[0].startTime);
   var end = new Date(group[0].endTime);
-  return 'Shift Group: '+start+' to '+end;
+  return 'Shift Set: '+start+' to '+end;
 }
 
 function groupDone(jqXHR) {
@@ -348,7 +348,7 @@ function groupDone(jqXHR) {
 function gotShiftstoReplaceGroupIDs(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
-    alert('Unable to get shifts for target group!');
+    alert('Unable to get shifts for target set!');
     return;
   }
   var array = jqXHR.responseJSON;
@@ -449,8 +449,8 @@ function gotShiftsToGroup(jqXHR) {
     bootbox.alert("No shifts for this department have the same start and end times as the indicated shift!");
     return;
   }
-  var groupOptions = {label: 'Existing Group', type: 'radio', id: 'group', value: 'group', onChange: groupTypeChange};
-  var groupSelect = {label: 'Groups', type: 'select', id: 'groupID'};
+  var groupOptions = {label: 'Existing Set', type: 'radio', id: 'group', value: 'group', onChange: groupTypeChange};
+  var groupSelect = {label: 'Sets', type: 'select', id: 'groupID'};
   if(groupCount === 0) {
     groupOptions.disabled = true;
     groupSelect.disabled = true;
@@ -494,7 +494,7 @@ function gotShiftsToGroup(jqXHR) {
     delete this.groupID;
   }
   var dialogOptions = {
-    title: 'Group Shift',
+    title: 'Add to Shift Set',
     data: this,
     inputs: [
       groupOptions,
@@ -503,7 +503,7 @@ function gotShiftsToGroup(jqXHR) {
       singleSelect
     ],
     buttons: [
-      {text: 'Group', callback: doGroup}
+      {text: 'Add to Shift Set', callback: doGroup}
     ]
   };
   flipDialog.dialog(dialogOptions);
@@ -723,7 +723,7 @@ function gotShiftToEdit(jqXHR) {
     ],
     buttons: [
       {text: 'Delete Shift', callback: deleteShift},
-      {text: 'Group Shift', callback: groupShift, disabled: !groupable},
+      {text: 'Add to Shift Set', callback: groupShift, disabled: !groupable},
       {text: 'Save Shift', callback: saveShift}
     ]
   };
@@ -744,7 +744,7 @@ function gotShiftToEdit(jqXHR) {
 function gotGroupToEdit(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
-    alert('Unable to obtain shifts for group!');
+    alert('Unable to obtain shifts for set!');
     return;
   }
   var shifts = jqXHR.responseJSON;
@@ -774,7 +774,7 @@ function gotGroupToEdit(jqXHR) {
     roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[role]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+role+'</span></div></div>';
   }
   var dialogOptions = {
-    title: 'Edit Group',
+    title: 'Edit Shift Set',
     data: group,
     inputs: [
       {type: 'hidden', id: 'departmentID', value: shifts[0].departmentID},
@@ -797,14 +797,14 @@ function gotGroupToEdit(jqXHR) {
       ]}
     ],
     buttons: [
-      {text: 'Delete Shift Group', callback: deleteShift},
-      {text: 'Add Shift/Merge Group', callback: groupShift},
-      {text: 'Save Group', callback: saveGroup}
+      {text: 'Delete Shift Set', callback: deleteShift},
+      {text: 'Add Shift/Merge Set', callback: groupShift},
+      {text: 'Save Shift Set', callback: saveGroup}
     ]
   };
   if(taken) {
     dialogOptions.alerts = [
-      {type: 'warning', text: 'One or more shift in the group is already filled!'}
+      {type: 'warning', text: 'One or more shift in the set is already filled!'}
     ];
   }
   flipDialog.dialog(dialogOptions);
@@ -930,7 +930,7 @@ function gotDepartments(jqXHR) {
     }
     count++;
     departments[array[i].departmentID] = array[i];
-    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift group</a></div></div></div></div>');
+    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
   }
   var eventID = getParameterByName('event');
   var filled = getParameterByName('filled');
