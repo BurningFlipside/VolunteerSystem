@@ -905,6 +905,11 @@ function gotEvents(jqXHR) {
     return;
   }
   events = jqXHR.responseJSON;
+  events.sort(function(a, b){
+    var aDate = new Date(a.startTime);
+    var bDate = new Date(b.startTime);
+    return aDate.getTime() - bDate.getTime();
+  });
   var ef = $('#eventFilter');
   for(var i = 0; i < events.length; i++) {
     var option = $('<option value="'+events[i]['_id']['$oid']+'">'+events[i].name+'</option>');
