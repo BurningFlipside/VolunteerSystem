@@ -978,6 +978,24 @@ function setBoundaryTimes(e) {
   $('#startTime').attr('max', myevent.endTime);
   $('#endTime').attr('min', myevent.startTime);
   $('#endTime').attr('max', myevent.endTime);
+  if(document.querySelector("#startTime")._flatpickr !== undefined) {
+    fp = document.querySelector("#startTime")._flatpickr;
+    fp.set('minDate', myevent.startTime);
+    fp.set('maxDate', myevent.endTime);
+    fp.clear();
+    fp.changeMonth(-12);
+    fp.changeMonth(12);
+    fp.jumpToDate();
+    fp.redraw();
+    fp = document.querySelector("#endTime")._flatpickr;
+    fp.set('minDate', myevent.startTime);
+    fp.set('maxDate', myevent.endTime);
+    fp.clear();
+    fp.changeMonth(-12);
+    fp.changeMonth(12);
+    fp.jumpToDate();
+    fp.redraw();
+  }
 }
 
 function unboundedChanged(e) {
