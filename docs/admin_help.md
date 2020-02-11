@@ -54,7 +54,7 @@ There are three subsections to the Shifts section: add/edit shifts, pending shif
 
 ### Add/Edit Shifts
 
-On this page, you'll see a list of all the departments. If you click on one, that will disclose all the shifts already set up in that department, plus buttons to add a new shift or a new shift group.
+On this page, you'll see a list of all the departments. If you click on one, that will disclose all the shifts already set up in that department, plus buttons to add a new shift or a new shift set.
 
 Some shifts will be filled by more than one person: for example, there will ideally be 10 dirt rangers on a shift. These will be preceded by the "group" icon <i class="far fa-object-group"></i>
 
@@ -67,25 +67,25 @@ When you click on **Add new shift**, you'll be presented with the various option
 - Minimum open shifts: This relates to **Unbounded**—if a shift is unbounded, this is the number of open shifts that will always be visible.
 - Shift name: This is optional, but if you don't fill it in, the system will generate a long name that represents all the key details, so it's a good idea to give each shift a short, clear name, like "Friday afternoon Greeters."
 - Early entry/stay late window: Volunteers who are going to be working Thursday-morning shifts are entitled to arrive Wednesday afternoon. Likewise, volunteers working Monday afternoon are entitled to spend Monday night on the property. This lets you set whether volunteers on this shift are entitled to early entry or late stay, and which specific period they're entitled to.
-- Create copies: You can create multiple identical copies of the same shift. This is a convenient way to spin up a bunch of identical shifts that you'll later edit (to change their dates, for example), but if you actually want multiple instances of exactly the same shift, you probably want to create a **shift group** instead (see below). **Note** If you want to create copies, enter the number of copies and then click **Create copies**: if you press **Create shift**, you'll just create one copy of the shift.
+- Create copies: You can create multiple identical copies of the same shift. This is a convenient way to spin up a bunch of identical shifts that you'll later edit (to change their dates, for example), but if you actually want multiple instances of exactly the same shift, you probably want to create a **shift set** instead (see below). **Note** If you want to create copies, enter the number of copies and then click **Create copies**: if you press **Create shift**, you'll just create one copy of the shift.
 
-#### Shift Groups
+#### Shift Sets
 
-Shift groups and group shifts are not the same thing! Group shifts permit members of a group to sign up for a shift together. A shift group gives someone designing a shift schedule—someone like you—a shorthand for managing shifts in the same department with the same start and end times, but doesn't make those shifts available as group shifts.
+A shift set gives someone designing a shift schedule—someone like you—a shorthand for managing shifts in the same department with the same start and end times, but doesn't make those shifts available as group shifts.
 
-When you click on **Add new shift group**, you'll be presented with the various options for that shift group:
+When you click on **Add new shift set**, you'll be presented with the various options for that shift set:
 
 - First, under **Basic Info**, you'll set up the department, times, etc.
-- Second, under **Roles**, you'll add roles to the group. You can add multiple roles. So, for example, if you're designing a shift for Ice, you can add slingers, pushers, and cashiers. You'll also add the number of volunteers you need in each role for that shift.
+- Second, under **Roles**, you'll add roles to the set. You can add multiple roles. So, for example, if you're designing a shift for Ice, you can add slingers, pushers, and cashiers. You'll also add the number of volunteers you need in each role for that shift.
 
 #### Editing Shifts
 
-You can edit an existing shift or shift group by clicking on it. This will bring up an information panel similar to the shift-creation panel, but with a few different actions.
+You can edit an existing shift or shift set by clicking on it. This will bring up an information panel similar to the shift-creation panel, but with a few different actions.
 
-- If you are editing a shift or shift group, you can group it with other shifts or shift groups to create a shift group (only if there are other shifts in the same department with the same times), or expand an existing shift group.
-- You can delete the shift or shift group.
+- If you are editing a shift or shift set, you can combine it with other shifts or shift sets to create a shift set (only if there are other shifts in the same department with the same times), or expand an existing shift set.
+- You can delete the shift or shift set.
 
-Note that when you are editing an individual shift, you can change the role assigned to it, but when you are editing a shift group, the roles can't be changed.
+Note that when you are editing an individual shift, you can change the role assigned to it, but when you are editing a shift set, the roles can't be changed.
 
 ### Pending shifts
 
