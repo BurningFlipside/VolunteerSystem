@@ -23,7 +23,7 @@ $page->content['body'] = '
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="groupWizardTitle">New Shift Group</h5>
+        <h5 class="modal-title" id="groupWizardTitle">New Shift Set</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -38,7 +38,7 @@ $page->content['body'] = '
           </div>
           <div class="col-12 col-md-8 col-xl-8 bd-content">
             <div id="groupBasic" class="d-block">
-              This is some basic information about the shift group.
+              This is some basic information about the shift set.
               <div class="row">
                 <input type="hidden" id="groupDepartmentID"/>
                 <label for="groupDepartmentName" class="col-sm-2 col-form-label">Department:</label>
