@@ -4,6 +4,10 @@ When you log in at <http://secure.burningflipside.com/fvs>, you should see an **
 
 You'll start off in the dashboard. You'll notice a sidebar that takes you to the major administrative sections (described below), along with a nifty chart showing the overall state of volunteering. You can get more detailed stats on volunteering under **Reports**. We'll talk about that later.
 
+## Caveats
+
+The FVS may work better in Chrome than Firefox or Safari. If you're having trouble with something, try changing browsers.
+
 ## How this all works
 
 ### Events, Departments, Roles, and Shifts
