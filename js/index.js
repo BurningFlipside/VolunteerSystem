@@ -90,6 +90,14 @@ function renderResource(info) {
     //console.log(resource);
   }
   else {
+    $(info.el).popover({
+      animation:true,
+      delay: 300,
+      title: role.display_name,
+      content: role.description,
+      trigger: 'hover',
+      placement: 'bottom'
+    });
   }
 }
 
@@ -256,10 +264,18 @@ function gotShifts(jqXHR) {
 }
 
 function eventChanged(e) {
+  var extra = '';
+  if(calendar.view !== null) {
+    var defaultView = calendar.optionsManager.computed.defaultView;
+    var currentView = calendar.view.type;
+    if(defaultView !== currentView) {
+      extra = '&view='+currentView;
+    }
+  }
   var eventID = e.target.value;
   if(allEvents.length > 0) {
     //Calendar doesn't reinit well... reload the page
-    location.href = location.origin + location.pathname + "?event=" + eventID;
+    location.href = location.origin + location.pathname + "?event=" + eventID + extra;
   }
   $.ajax({
     url: 'api/v1/events/'+eventID+'/shifts',
@@ -289,10 +305,15 @@ function gotEvents(jqXHR) {
   var id = getParameterByName('event');
   var events = jqXHR.responseJSON;
   var data = [];
+  events.sort(function(a, b) {
+    var aDate = new Date(a.startTime);
+    var bDate = new Date(b.startTime);
+    return aDate.getTime() - bDate.getTime();
+  });
   for(var i = 0; i < events.length; i++) {
     if(events[i]['available']) {
       var option = {id: events[i]['_id']['$oid'], text: events[i]['name']};
-      if(id !== null && id === events[i]['_id']['$oid']) {
+      if(id !== null && (id === events[i]['_id']['$oid'] || id === events[i]['alias'])) {
         option.selected = true;
       }
       data.push(option);
@@ -391,7 +412,7 @@ function initPage() {
     complete: gotDepartments
   });
   var header = {
-    left: 'prev,next today',
+    left: 'prev,next',
     center: 'title',
     right: 'dayGridMonth,timeGridDay,listWeek,resourceTimelineDay'
   };
@@ -432,6 +453,10 @@ function initPage() {
     filterResourcesWithEvents: true,
     resourceOrder: 'title'
   });
+  var view = getParameterByName('view');
+  if(view !== null) {
+    calendar.changeView(view);
+  }
   var boundRetry = retrySelect2.bind({id: '#shiftTypes', change: shiftChanged, callFirst: false});
   if($('#shiftTypes').select2 === undefined) {
     setTimeout(boundRetry, 100);

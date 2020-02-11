@@ -17,7 +17,6 @@ function addDone(jqXHR) {
 }
 
 function valueChanged(value, field, id) {
-  console.log('../api/v1/events/'+id);
   var propParts = field.split('.');
   var obj = {};
   var current = obj;
@@ -36,7 +35,7 @@ function valueChanged(value, field, id) {
 }
 
 function dataChanged(cell) {
-  valueChanged(cell.getValue(), cell.getColumn().getField(), cell.getRow().getData()['departmentID']);
+  valueChanged(cell.getValue(), cell.getColumn().getField(), cell.getRow().getData()['_id']['$oid']);
 }
 
 function privateEventChange(target) {
@@ -173,14 +172,15 @@ function initPage() {
     columns:[
       {formatter: delIcon, width:40, align:"center", cellClick: delEvent},
       {formatter: editIcon, width:40, align:"center", cellClick: editEvent},
-      {title:"ID", field:"_id.$id", visible: false},
+      {title:"ID", field:"_id.$oid", visible: false},
       {title:'Name', field: 'name', editor:"input"},
       {title:'Start Date/Time', field: 'startTime', formatter: dateTimeView},
       {title:'End Date/Time', field: 'endTime', formatter: dateTimeView},
       {title:'Private', field: 'private', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Volunteer List', field: 'volList'},
       {title:'Department List', field: 'departments'},
-      {title:'Tickets Needed', field: 'tickets', formatter: 'tickCross'}
+      {title:'Tickets Needed', field: 'tickets', formatter: 'tickCross'},
+      {title:'Alias', field: 'alias', editor: 'input'}
     ],
     cellEdited: dataChanged
   });

@@ -44,16 +44,16 @@ class ShiftEmail extends VolunteerEmail
         $start = $this->shift->startTime->format('r');
         $end = $this->shift->endTime->format('r');
         $vars = array(
-          '{$firstName}' => $firstName,
-          '{$lastName}' => $lastName,
-          '{$paperName}' => $paperName,
-          '{$webName}' => $webName,
-          '{$department}' => $department,
-          '{$role}' => $role,
-          '{$event}' => $event,
-          '{$start}' => $start,
-          '{$end}' => $end
-        );
+                '{$firstName}' => $firstName,
+                '{$lastName}' => $lastName,
+                '{$paperName}' => $paperName,
+                '{$webName}' => $webName,
+                '{$department}' => $department,
+                '{$role}' => $role,
+                '{$event}' => $event,
+                '{$start}' => $start,
+                '{$end}' => $end
+                );
         if(strpos($this->text, '{$newStart}') !== false || strpos($this->text, '{$newEnd}') !== false)
         {
             $newShift = new \VolunteerShift($this->shift->{'_id'});
@@ -76,7 +76,7 @@ class ShiftEmail extends VolunteerEmail
                 $end = strpos($rawText, "</script>");
                 if($index === 0)
                 {
-                    $rawText = substr($rawText, $end+9);
+                    $rawText = substr($rawText, $end + 9);
                 }
             }
             return strtr(strip_tags($rawText), $vars);
@@ -95,3 +95,4 @@ class ShiftEmail extends VolunteerEmail
         return $body;
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

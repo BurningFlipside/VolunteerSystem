@@ -113,6 +113,34 @@ function leadApprovalDisplay(cell) {
   return '<i class="text-secondary">Pending</i>';
 }
 
+function gotTicketStatus(jqXHR) {
+  if(jqXHR.status !== 200) {
+    $('#ticket_'+this.data.id).replaceWith('<i class="text-danger">Error</i>');
+    return;
+  }
+  var data = jqXHR.responseJSON;
+  if(data.ticket) {
+    $('#ticket_'+this.data.id).replaceWith('<p class="text-success">Yes</p>');
+    return;
+  }
+  if(data.request) {
+    $('#ticket_'+this.data.id).replaceWith('<i class="text-warning">Requested</i>');
+    return;
+  }
+  $('#ticket_'+this.data.id).replaceWith('<p class="text-danger">No</p>');
+}
+
+function hasTicketDisplay(cell) {
+  var data = cell.getRow().getData();
+  var context = {data: data, table: cell.getTable()};
+  $.ajax({
+    url: '../api/v1/participants/'+data.id+'/ticketStatus',
+    context: context,
+    complete: gotTicketStatus
+  });
+  return '<div id="ticket_'+data.id+'" class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>';
+}
+
 function gotInitialData(results) {
   var eventResult = results.shift();
   var deptResult = results.shift();
@@ -179,7 +207,8 @@ function gotInitialData(results) {
       {title: 'Shifts', formatter: shiftLinkDisplay, cellClick: showShifts},
       {title: 'AAR', formatter: aarApprovalDisplay},
       {title: 'AF', formatter: afApprovalDisplay},
-      {title: 'Lead', formatter: leadApprovalDisplay}
+      {title: 'Lead', formatter: leadApprovalDisplay},
+      {title: 'Has Ticket', formatter: hasTicketDisplay}
     ]
   });
   table.setData(rows);

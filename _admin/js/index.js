@@ -50,11 +50,16 @@ function gotDepartments(jqXHR) {
     $('#deptName').html('Unable to locate department!');
     var departments = $('#departments');
     departments.change(showDepartmentDetails);
+    var deptCount = 0;
     for(var i = 0; i < array.length; i++) {
       if(array[i].isAdmin) {
         $('#deptName').html(array[i].departmentName);
         addOptiontoSelect(departments[0], array[i].departmentID, array[i].departmentName);
+        deptCount++;
       }
+    }
+    if(deptCount === 0) {
+      alert('Unable to determine which department is assosiated to your account. Please contact your AF to fix your access.');
     }
     if(chart === null) {
       var eventID = $('#events').val();
@@ -182,6 +187,11 @@ function gotEvents(jqXHR) {
   if(jqXHR.responseJSON !== undefined) {
     var resp = jqXHR.responseJSON;
     $('#eventCount').html(resp['@odata.count']);
+    resp.value.sort(function(a, b) {
+      var aDate = new Date(a.startTime);
+      var bDate = new Date(b.startTime);
+      return aDate.getTime() - bDate.getTime();
+    });
     var events = $('#events');
     events.change(showEventDetails);
     for(var i = 0; i < resp.value.length; i++) {

@@ -73,7 +73,7 @@ function gotDepartmentRoles(jqXHR) {
 }
 
 function gotGroupDepartmentRoles(jqXHR) {
-  var mySelect = $('#groupAddRole').select2();
+  var mySelect = $('#groupAddRole');
   var array = jqXHR.responseJSON;
   for(var i = 0; i < array.length; i++) {
     var newOption = new Option(array[i].display_name, array[i].short_name, false, false);
@@ -210,7 +210,7 @@ function shiftDeleted(jqXHR) {
 function deleteShift(e) {
   var msg = "Are you sure you want to delete this shift?";
   if(e.data.shifts !== undefined) {
-    msg = "Are you sure you want to delete all "+e.data.shifts.length+" shifts in this group?";
+    msg = "Are you sure you want to delete all "+e.data.shifts.length+" shifts in this set?";
   }
   bootbox.confirm({
     message: msg,
@@ -333,7 +333,7 @@ function getGroupName(group) {
   }
   var start = new Date(group[0].startTime);
   var end = new Date(group[0].endTime);
-  return 'Shift Group: '+start+' to '+end;
+  return 'Shift Set: '+start+' to '+end;
 }
 
 function groupDone(jqXHR) {
@@ -348,7 +348,7 @@ function groupDone(jqXHR) {
 function gotShiftstoReplaceGroupIDs(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
-    alert('Unable to get shifts for target group!');
+    alert('Unable to get shifts for target set!');
     return;
   }
   var array = jqXHR.responseJSON;
@@ -382,7 +382,17 @@ function replaceGroupID(newGroupID, oldGroupID) {
 
 function doGroup(e) {
   var data = e.data;
-  if(data.group === 'single') {
+  if(data.shifts !== undefined) {
+    var obj = {groupID: data['oldGroupID']};
+    $.ajax({
+      url: '../api/v1/shifts/'+data['shiftID'],
+      method: 'PATCH',
+      contentType: 'application/json',
+      data: JSON.stringify(obj),
+      complete: groupDone
+    });
+  }
+  else if(data.group === 'single') {
     //Create a new group...
     var array = [];
     array.push(data.shiftID);
@@ -439,8 +449,8 @@ function gotShiftsToGroup(jqXHR) {
     bootbox.alert("No shifts for this department have the same start and end times as the indicated shift!");
     return;
   }
-  var groupOptions = {label: 'Existing Group', type: 'radio', id: 'group', value: 'group', onChange: groupTypeChange};
-  var groupSelect = {label: 'Groups', type: 'select', id: 'groupID'};
+  var groupOptions = {label: 'Existing Set', type: 'radio', id: 'group', value: 'group', onChange: groupTypeChange};
+  var groupSelect = {label: 'Sets', type: 'select', id: 'groupID'};
   if(groupCount === 0) {
     groupOptions.disabled = true;
     groupSelect.disabled = true;
@@ -484,7 +494,7 @@ function gotShiftsToGroup(jqXHR) {
     delete this.groupID;
   }
   var dialogOptions = {
-    title: 'Edit Shift',
+    title: 'Add to Shift Set',
     data: this,
     inputs: [
       groupOptions,
@@ -493,7 +503,7 @@ function gotShiftsToGroup(jqXHR) {
       singleSelect
     ],
     buttons: [
-      {text: 'Group', callback: doGroup}
+      {text: 'Add to Shift Set', callback: doGroup}
     ]
   };
   flipDialog.dialog(dialogOptions);
@@ -556,6 +566,8 @@ function saveGroup(e) {
     shifts[i].name = e.data.name;
     shifts[i].startTime = e.data.startTime;
     shifts[i].eventID = e.data.eventID;
+    shifts[i].unbounded = e.data.unbounded;
+    shifts[i].minShifts = e.data.minShifts;
     if(roles[shifts[i].roleID] === undefined) {
       roles[shifts[i].roleID] = 0;
     }
@@ -571,6 +583,8 @@ function saveGroup(e) {
   delete e.data.startTime;
   delete e.data.eventID;
   delete e.data.shifts;
+  delete e.data.unbounded;
+  delete e.data.minShifts;
   for(var role in e.data) {
     e.data[role] = e.data[role]*1;
   }
@@ -593,7 +607,7 @@ function saveGroup(e) {
         while(e.data[role] < 0) {
           for(var i = 0; i < shifts.length; i++) {
             if(shifts[i].roleID === role) {
-              shifts.splice(i, 1);
+              shifts[i].DELETE = true;
               e.data[role]++;
               break;
             }
@@ -604,12 +618,19 @@ function saveGroup(e) {
   }
   var promises = [];
   for(var i = 0; i < shifts.length; i++) {
-    if(shifts[i]['_id'] !== undefined) {
+    if(shifts[i]['_id'] !== undefined && shifts[i].DELETE !== true) {
       promises.push($.ajax({
         url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
         method: 'PATCH',
         contentType: 'application/json',
         data: JSON.stringify(shifts[i])
+      }));
+    }
+    else if(shifts[i].DELETE === true) {
+      promises.push($.ajax({
+        url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
+        method: 'DELETE',
+        contentType: 'application/json'
       }));
     }
     else {
@@ -702,7 +723,7 @@ function gotShiftToEdit(jqXHR) {
     ],
     buttons: [
       {text: 'Delete Shift', callback: deleteShift},
-      {text: 'Group Shift', callback: groupShift, disabled: !groupable},
+      {text: 'Add to Shift Set', callback: groupShift, disabled: !groupable},
       {text: 'Save Shift', callback: saveShift}
     ]
   };
@@ -723,7 +744,7 @@ function gotShiftToEdit(jqXHR) {
 function gotGroupToEdit(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
-    alert('Unable to obtain shifts for group!');
+    alert('Unable to obtain shifts for set!');
     return;
   }
   var shifts = jqXHR.responseJSON;
@@ -753,7 +774,7 @@ function gotGroupToEdit(jqXHR) {
     roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[role]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+role+'</span></div></div>';
   }
   var dialogOptions = {
-    title: 'Edit Group',
+    title: 'Edit Shift Set',
     data: group,
     inputs: [
       {type: 'hidden', id: 'departmentID', value: shifts[0].departmentID},
@@ -776,14 +797,14 @@ function gotGroupToEdit(jqXHR) {
       ]}
     ],
     buttons: [
-      {text: 'Delete Shift Group', callback: deleteShift},
-      {text: 'Add Shift/Merge Group', callback: groupShift},
-      {text: 'Save Group', callback: saveGroup}
+      {text: 'Delete Shift Set', callback: deleteShift},
+      {text: 'Add Shift/Merge Set', callback: groupShift},
+      {text: 'Save Shift Set', callback: saveGroup}
     ]
   };
   if(taken) {
     dialogOptions.alerts = [
-      {type: 'warning', text: 'One or more shift in the group is already filled!'}
+      {type: 'warning', text: 'One or more shift in the set is already filled!'}
     ];
   }
   flipDialog.dialog(dialogOptions);
@@ -821,11 +842,40 @@ function gotShifts(jqXHR) {
   }
   var array = jqXHR.responseJSON;
   var groups =  {};
+  array.sort(function(a, b){
+    var aDate = new Date(a.startTime);
+    var bDate = new Date(b.startTime);
+    return aDate.getTime() - bDate.getTime();
+  });
   var singles = array.filter(filterSinglesAndGroups, groups);
   for(var groupID in groups) {
     var group = groups[groupID];
     var groupName = getGroupName(group);
-    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+'</a>');
+    var filledCount = 0;
+    var pendingCount = 0;
+    var emptyCount = 0;
+    for(var i = 0; i < group.length; i++) {
+      if(group[i].status === 'filled') {
+        filledCount++;
+      }
+      else if(singles[i].status === 'pending') {
+        pendingCount++;
+      }
+      else {
+        emptyCount++;
+      }
+    }
+    var badge = '';
+    if(filledCount > 0) {
+      badge += '<span class="badge badge-warning">Filled <span class="badge badge-light">'+filledCount+'</span></span>';
+    }
+    if(pendingCount > 0) {
+      badge += '<span class="badge badge-info">Pending <span class="badge badge-light">'+pendingCount+'</span></span>';
+    }
+    if((filledCount > 0 || pendingCount > 0) && emptyCount != 0) {
+      badge += '<span class="badge badge-secondary">Empty <span class="badge badge-light">'+emptyCount+'</span></span>';
+    }
+    $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+' '+badge+'</a>');
   }
   singles.sort(sortEvents);
   for(var i = 0; i < singles.length; i++) {
@@ -837,7 +887,14 @@ function gotShifts(jqXHR) {
       var end = new Date(singles[i].endTime);
       shiftName = singles[i].roleID+': '+start+' to '+end;
     }
-    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+'</a>');
+    var badge = '';
+    if(singles[i].status === 'filled') {
+      badge = '<span class="badge badge-warning">Filled</span>';
+    }
+    else if(singles[i].status === 'pending') {
+      badge = '<span class="badge badge-info">Pending</span>';
+    }
+    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+' '+badge+'</a>');
   }
 }
 
@@ -848,6 +905,11 @@ function gotEvents(jqXHR) {
     return;
   }
   events = jqXHR.responseJSON;
+  events.sort(function(a, b){
+    var aDate = new Date(a.startTime);
+    var bDate = new Date(b.startTime);
+    return aDate.getTime() - bDate.getTime();
+  });
   var ef = $('#eventFilter');
   for(var i = 0; i < events.length; i++) {
     var option = $('<option value="'+events[i]['_id']['$oid']+'">'+events[i].name+'</option>');
@@ -862,6 +924,9 @@ function gotDepartments(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
+  array.sort(function(a, b) {
+    return a.departmentName.localeCompare(b.departmentName);
+  });
   var count = 0;
   var accordian = $('#accordion');
   for(var i = 0; i < array.length; i++) {
@@ -870,7 +935,7 @@ function gotDepartments(jqXHR) {
     }
     count++;
     departments[array[i].departmentID] = array[i];
-    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift group</a></div></div></div></div>');
+    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
   }
   var eventID = getParameterByName('event');
   var filled = getParameterByName('filled');
@@ -918,6 +983,24 @@ function setBoundaryTimes(e) {
   $('#startTime').attr('max', myevent.endTime);
   $('#endTime').attr('min', myevent.startTime);
   $('#endTime').attr('max', myevent.endTime);
+  if(document.querySelector("#startTime")._flatpickr !== undefined) {
+    fp = document.querySelector("#startTime")._flatpickr;
+    fp.set('minDate', myevent.startTime);
+    fp.set('maxDate', myevent.endTime);
+    fp.clear();
+    fp.changeMonth(-12);
+    fp.changeMonth(12);
+    fp.jumpToDate();
+    fp.redraw();
+    fp = document.querySelector("#endTime")._flatpickr;
+    fp.set('minDate', myevent.startTime);
+    fp.set('maxDate', myevent.endTime);
+    fp.clear();
+    fp.changeMonth(-12);
+    fp.changeMonth(12);
+    fp.jumpToDate();
+    fp.redraw();
+  }
 }
 
 function unboundedChanged(e) {

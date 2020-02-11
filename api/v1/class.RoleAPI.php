@@ -32,3 +32,4 @@ class RoleAPI extends VolunteerAPI
         return $this->processRole($entry, $request);
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

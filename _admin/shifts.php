@@ -85,7 +85,12 @@ $page->content['body'] = '
             <div id="groupRoles" class="d-none">
               What roles share this same shift?
               <div class="row">
-                <select id="groupAddRole" name="groupAddRole"></select><button type="button" class="btn btn-primary" onClick="addRoleToShift()">Add Role To Shift</button>
+                <div class="col-sm-6">
+                  <select class="form-control" id="groupAddRole" name="groupAddRole"></select>
+                </div>
+                <div class="col-sm-6">
+                  <button type="button" class="btn btn-primary" onClick="addRoleToShift()">Add Role To Shift</button>
+                </div>
               </div>
               <div class="row">
                 <table id="groupRoleTable" class="table">

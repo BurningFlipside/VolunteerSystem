@@ -9,15 +9,17 @@ $page->addWellKnownJS(JS_BOOTBOX);
 $page->addJS('../js/wizard.js');
 
 $dataTable = DataSetFactory::getDataTableByNames('fvs', 'certifications');
-$certs = $dataTable->read();
-$certCount = count($certs);
 $certText = '';
-
-for($i = 0; $i < $certCount; $i++)
+$certs = $dataTable->read();
+if($certs !== false)
 {
-    $cert = $certs[$i];
-    $certText .= '<label for="requirements.'.$cert['certID'].'" class="col-sm-3 col-form-label">'.$cert['name'].':</label>
-      <div class="col-sm-2"><input class="form-control" type="checkbox" name="requirements.'.$cert['certID'].'" id="requirements.'.$cert['certID'].'" disabled/></div>';
+    $certCount = count($certs);
+    for($i = 0; $i < $certCount; $i++)
+    {
+        $cert = $certs[$i];
+        $certText .= '<label for="requirements.'.$cert['certID'].'" class="col-sm-3 col-form-label">'.$cert['name'].':</label>
+          <div class="col-sm-2"><input class="form-control" type="checkbox" name="requirements.'.$cert['certID'].'" id="requirements.'.$cert['certID'].'" disabled/></div>';
+    }
 }
 
 $page->content['pageHeader'] = 'Roles: <span id="deptName"></span>';

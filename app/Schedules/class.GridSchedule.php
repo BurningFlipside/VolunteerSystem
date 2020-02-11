@@ -51,17 +51,17 @@ class GridSchedule
         {
             for($j = 0; $j < $rowCount; $j++)
             {
-                 $cell = $sheat->getCellByColumnAndRow($i+2, $j+4);
-                 if($cell->isInMergeRange())
-                 {
-                      continue;
-                 }
-                 else
-                 {
-                     $style = $cell->getStyle();
-                     $style->getBorders()->getAllBorders()->setBorderStyle(false);
-                     $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_PATTERN_LIGHTGRAY);
-                 }
+                $cell = $sheat->getCellByColumnAndRow($i + 2, $j + 4);
+                if($cell->isInMergeRange())
+                {
+                    continue;
+                }
+                else
+                {
+                    $style = $cell->getStyle();
+                    $style->getBorders()->getAllBorders()->setBorderStyle(false);
+                    $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_PATTERN_LIGHTGRAY);
+                }
             }
         }
     }
@@ -93,7 +93,7 @@ class GridSchedule
 
     protected function createShiftCell($sheat, $col, $row, $shift)
     {
-        $sheat->mergeCellsByColumnAndRow($col, $row, $col+$shift['length']-1, $row);
+        $sheat->mergeCellsByColumnAndRow($col, $row, $col + $shift['length'] - 1, $row);
         $this->setShiftNameInCell($sheat, $col, $row, $shift);
     }
 
@@ -101,21 +101,21 @@ class GridSchedule
     {
         $i = 1;
         $firstRow = array_search($roleID, $rows);
-        $cell = $sheat->getCellByColumnAndRow($col, $firstRow+4);
+        $cell = $sheat->getCellByColumnAndRow($col, $firstRow + 4);
         if($cell->isInMergeRange())
         {
-            while($rows[$firstRow+$i] === $roleID)
+            while($rows[$firstRow + $i] === $roleID)
             {
-                $cell = $sheat->getCellByColumnAndRow($col, $firstRow+4+$i);
+                $cell = $sheat->getCellByColumnAndRow($col, $firstRow + 4 + $i);
                 if(!$cell->isInMergeRange())
                 {
                     break;
                 }
                 $i++;
             }
-            return $firstRow+4+$i;
+            return $firstRow + 4 + $i;
         }
-        return $firstRow+4;
+        return $firstRow + 4;
     }
 
     protected function createSpreadSheet()
@@ -143,15 +143,15 @@ class GridSchedule
             $shifts[$i]['length'] = $diff->h;
             if(!isset($roles[$shifts[$i]['roleID']]))
             {
-                 $roles[$shifts[$i]['roleID']] = $shifts[$i]['length'];
-                 $roles2[$shifts[$i]['roleID']] = array();
+                $roles[$shifts[$i]['roleID']] = $shifts[$i]['length'];
+                $roles2[$shifts[$i]['roleID']] = array();
             }
             else
             {
-                 if($roles[$shifts[$i]['roleID']] < $shifts[$i]['length'])
-                 {
-                     $roles[$shifts[$i]['roleID']] = $shifts[$i]['length'];
-                 }
+                if($roles[$shifts[$i]['roleID']] < $shifts[$i]['length'])
+                {
+                    $roles[$shifts[$i]['roleID']] = $shifts[$i]['length'];
+                }
             }
             array_push($roles2[$shifts[$i]['roleID']], array('start'=>$start, 'end'=>$end));
         }
@@ -162,7 +162,7 @@ class GridSchedule
         $start = date_parse($str);
         $lastShift = $shifts[$count - 1];
         $interval = $lastShift['endTime']->diff($shifts[0]['startTime']);
-        $hourCount = ($interval->d*24) + $interval->h;
+        $hourCount = ($interval->d * 24) + $interval->h;
         $tmp = $this->getHoursArrays($start['hour'], $hourCount);
         $simpleHours = $tmp[0];
         $militaryHours = $tmp[1];
@@ -232,13 +232,13 @@ class GridSchedule
         while($shift)
         {
             $timeDiff = $originalStartTime->diff($shift['startTime']);
-            $hoursFromStart = ($timeDiff->d*24)+$timeDiff->h;
-            $rowForShift = $this->getRowForShift($shift['roleID'], $rows, $hoursFromStart+2, $sheat);
-            $this->createShiftCell($sheat, $hoursFromStart+2, $rowForShift, $shift);
+            $hoursFromStart = ($timeDiff->d * 24)+$timeDiff->h;
+            $rowForShift = $this->getRowForShift($shift['roleID'], $rows, $hoursFromStart + 2, $sheat);
+            $this->createShiftCell($sheat, $hoursFromStart + 2, $rowForShift, $shift);
             $shift = array_shift($shifts);
         }
         $rowCount = count($rows);
-        $style = $sheat->getStyleByColumnAndRow(2, 4, 1+count($simpleHours), 3 + $rowCount);
+        $style = $sheat->getStyleByColumnAndRow(2, 4, 1 + count($simpleHours), 3 + $rowCount);
         $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $hourCount = count($simpleHours);
         $this->grayOutUnused($hourCount, $rowCount, $sheat);
@@ -314,3 +314,4 @@ class GridSchedule
         die();
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */

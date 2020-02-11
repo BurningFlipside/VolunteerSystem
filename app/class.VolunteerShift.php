@@ -88,7 +88,7 @@ class VolunteerShift extends VolunteerObject
             case 'participantObj':
                 if($this->participantObj === null)
                 {
-                    if(isset($this->dbData['participant']))
+                    if(isset($this->dbData['participant']) && $this->dbData['participant'] !== '' && $this->dbData['participant'] !== '/dev/null')
                     {
                         $this->participantObj = new \VolunteerProfile($this->dbData['participant']);
                     }
@@ -155,7 +155,7 @@ class VolunteerShift extends VolunteerObject
 
     public function isFilled()
     {
-         return isset($this->dbData['status']) && ($this->dbData['status'] === 'pending' || $this->dbData['status'] === 'filled' || $this->dbData['status'] === 'groupPending');
+        return isset($this->dbData['status']) && ($this->dbData['status'] === 'pending' || $this->dbData['status'] === 'filled' || $this->dbData['status'] === 'groupPending');
     }
 
     public function findOverlaps($uid, $shortCircuit = false)
@@ -199,3 +199,4 @@ class VolunteerShift extends VolunteerObject
         $dataTable->create($tmp);
     }
 }
+/* vim: set tabstop=4 shiftwidth=4 expandtab: */
