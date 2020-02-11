@@ -918,6 +918,10 @@ function gotEvents(jqXHR) {
     var option = $('<option value="'+events[i]['_id']['$oid']+'">'+events[i].name+'</option>');
     ef.append(option);
   }
+  var faveEvent = localStorage.getItem('adminEvent');
+  if(faveEvent !== null) {
+    ef.val(faveEvent).trigger('change');
+  }
 }
 
 function gotDepartments(jqXHR) {
@@ -941,6 +945,12 @@ function gotDepartments(jqXHR) {
     accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
   }
   var eventID = getParameterByName('event');
+  if(eventID === null) {
+    let tmp = $('#eventFilter').val();
+    if(tmp !== '') {
+      eventID = tmp;
+    }
+  }
   var filled = getParameterByName('filled');
   var uri = '../api/v1/shifts';
   if(eventID !== null && filled !== null) {
@@ -1017,10 +1027,18 @@ function unboundedChanged(e) {
 
 function efChanged(e) {
   $('.shift').remove();
-  $.ajax({
-    url: '../api/v1/shifts?$filter=eventID eq '+e.target.value,
-    complete: gotShifts
-  });
+  if(e.target.value === '') {
+    $.ajax({
+      url: '../api/v1/shifts',
+      complete: gotShifts
+    });
+  }
+  else {
+    $.ajax({
+      url: '../api/v1/shifts?$filter=eventID eq '+e.target.value,
+      complete: gotShifts
+    });
+  }
 }
 
 function initPage() {
