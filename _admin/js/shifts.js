@@ -858,7 +858,7 @@ function gotShifts(jqXHR) {
       if(group[i].status === 'filled') {
         filledCount++;
       }
-      else if(singles[i].status === 'pending') {
+      else if(group[i].status === 'pending') {
         pendingCount++;
       }
       else {
@@ -895,6 +895,9 @@ function gotShifts(jqXHR) {
       badge = '<span class="badge badge-info">Pending</span>';
     }
     $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+' '+badge+'</a>');
+  }
+  if(getParameterByName('hideEmpty') !== null) {
+    $('.card:not(:has(.shift))').hide();
   }
 }
 

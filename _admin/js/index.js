@@ -92,10 +92,10 @@ function chartClick(e) {
   var eventId = $('#events').val();
   var deptId = $('#departments').val();
   if(deptId === '*') {
-    location.href = 'shifts.php?event='+eventId+'&filled='+index;
+    location.href = 'shifts.php?event='+eventId+'&filled='+index+'&hideEmpty=true';
   }
   else {
-    location.href = 'shifts.php?event='+eventId+'&department='+deptId+'&filled='+index;
+    location.href = 'shifts.php?event='+eventId+'&department='+deptId+'&filled='+index+'&hideEmpty=true';
   }
 }
 
