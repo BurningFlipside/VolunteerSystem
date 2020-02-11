@@ -66,6 +66,11 @@ $page->content['body'] = '
                   <input type="checkbox" name="groupEnabled" id="groupEnabled" class="form-control" checked="checked">
                 </div>
                 <div class="w-100"></div>
+                <label for="groupApprovalNeeded" class="col-sm-2 col-form-label">Requires Approval:</label>
+                <div class="col-sm-10">
+                  <input type="checkbox" name="groupApprovalNeeded" id="groupApprovalNeeded" class="form-control">
+                </div>
+                <div class="w-100"></div>
                 <label for="groupName" class="col-sm-2 col-form-label">Shift Name:</label>
                 <div class="col-sm-10">
                   <input type="text" name="groupName" id="groupName" class="form-control"/>

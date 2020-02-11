@@ -170,6 +170,11 @@ if($canDo !== true)
     return;  
 }
 
+if(isset($shift['approvalNeeded']) && $shift['approvalNeeded'])
+{
+    $page->body .= '<div class="alert alert-warning" role="alert">This shift requires explicit permission from the lead in order to sign up. The lead may decline your signup for this shift.</div>';
+}
+
 $start = new \DateTime($shift['startTime']);
 $end = new \DateTime($shift['endTime']);
 $diff = $end->diff($start);

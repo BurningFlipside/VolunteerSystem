@@ -103,6 +103,7 @@ function addNewShift(elem) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: min, max: max, onChange: setMinEndTime, required: true},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: min, max: max, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
+      {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded'},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
       {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: true}, 
       {label: 'Shift Name', type: 'text', id: 'name'},
@@ -562,6 +563,7 @@ function saveGroup(e) {
     shifts[i].departmentID = e.data.departmentID;
     shifts[i].earlyLate = e.data.earlyLate;
     shifts[i].enabled = e.data.enabled;
+    shifts[i].approvalNeeded = e.data.approvalNeeded;
     shifts[i].endTime = e.data.endTime;
     shifts[i].name = e.data.name;
     shifts[i].startTime = e.data.startTime;
@@ -577,6 +579,7 @@ function saveGroup(e) {
   delete e.data.departmentID;
   delete e.data.earlyLate;
   delete e.data.enabled;
+  delete e.data.approvalNeeded;
   delete e.data.endTime;
   delete e.data.groupID;
   delete e.data.name;
@@ -710,6 +713,7 @@ function gotShiftToEdit(jqXHR) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
+      {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded'},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
       {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: !shift.unbounded},
       {label: 'Shift Name', type: 'text', id: 'name'},
@@ -785,6 +789,7 @@ function gotGroupToEdit(jqXHR) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true, value: shifts[0].startTime},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true, value: shifts[0].endTime},
       {label: 'Enabled', type: 'checkbox', id: 'enabled', checked: shifts[0].enabled},
+      {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded', checked: shifts[0].approvalNeeded},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
       {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: !shifts[0].unbounded},
       {label: 'Shift Name', type: 'text', id: 'name', value: shifts[0].name},
