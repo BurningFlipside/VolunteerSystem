@@ -15,6 +15,10 @@ $page->body .= '
   <div class="col-sm-10">
     <select name="event" id="event" class="form-control"></select>
   </div>
+  <label for="depts" class="col-sm-2 col-form-label">Departments:</label>
+  <div class="col-sm-10">
+    <select name="depts" id="depts" class="form-control" multiple></select>
+  </div>
   <label for="startTime" class="col-sm-2 col-form-label">Shift Start Time:</label>
   <div class="col-sm-10">
     <input class="form-control" type="datetime-local" name="startTime" id="startTime"/>

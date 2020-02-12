@@ -5,8 +5,12 @@ function gotShifts(jqXHR) {
   var data = jqXHR.responseJSON;
   var tbody = $('#shiftTable tbody');
   var nameObj = tbody.data('names');
+  var depts = $('#depts').val();
   tbody.empty();
   for(var i = 0; i < data.length; i++) {
+    if(!depts.includes(data[i].departmentID)) {
+      continue;
+    }
     let dept = data[i].departmentID;
     let role = data[i].roleID;
     let startDate = new Date(data[i].startTime);
@@ -23,7 +27,7 @@ function gotShifts(jqXHR) {
     if(startDate.getDate() !== endDate.getDate()) {
       date = startDate.toDateString()+' - '+endDate.toDateString();
     }
-    tbody.append('<tr><td>'+dept+'</td><td>'+role+'</td><td>'+date+'</td><td>'+startDate.toLocaleTimeString()+'</td><td>'+endDate.toLocaleTimeString()+'</td></tr>');
+    tbody.append('<tr class="dept-'+data[i].departmentID+'"><td>'+dept+'</td><td>'+role+'</td><td>'+date+'</td><td>'+startDate.toLocaleTimeString()+'</td><td>'+endDate.toLocaleTimeString()+'</td></tr>');
   }
 }
 
@@ -48,11 +52,31 @@ function gotEvent(jqXHR) {
   getShifts();
 }
 
+function deptChanged(e) {
+  var depts = $(e.target).val();
+  $('[class|=dept]').hide();
+  for(let i = 0; i < depts.length; i++) {
+    $('.dept-'+depts[i]).show();
+  }
+}
+
 function processDepartments(depts) {
   let deptObj = {};
+  let groups = {};
+  let data = [];
   for(let i = 0; i < depts.length; i++) {
     deptObj[depts[i].departmentID] = depts[i];
+    if(groups[depts[i]['area']] === undefined) {
+      groups[depts[i]['area']] = [];
+    }
+    var tmp = {id: depts[i]['departmentID'], text: depts[i]['departmentName'], selected: true};
+    groups[depts[i]['area']].push(tmp);
   }
+  for(var group in groups) {
+    data.push({text: group, children: groups[group]});
+  }
+  $('#depts').select2({data: data});
+  $('#depts').change(deptChanged);
   return deptObj;
 }
 
