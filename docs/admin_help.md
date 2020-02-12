@@ -60,6 +60,8 @@ Some shifts will be filled by more than one person: for example, there will idea
 
 When you click on **Add new shift**, you'll be presented with the various options for that shift:
 
+![Adding a new shift](images/newshift.png)
+
 - Roles: The role that this shift applies to, and, if there are multiple people in this role on this shift, the number of people.
 - Start time and end time: Self-explanatory.
 - Enabled: Self-explanatory.
@@ -76,13 +78,17 @@ A shift set gives someone designing a shift schedule—someone like you—a shor
 When you click on **Add new shift set**, you'll be presented with the various options for that shift set:
 
 - First, under **Basic Info**, you'll set up the department, times, etc.
+    ![Add new shift set, 1](images/newshiftset_1.png)
 - Second, under **Roles**, you'll add roles to the set. You can add multiple roles. So, for example, if you're designing a shift for Ice, you can add slingers, pushers, and cashiers. You'll also add the number of volunteers you need in each role for that shift.
+    ![Add new shift set, 2](images/newshiftset_2.png)
 
 #### Editing Shifts
 
 You can edit an existing shift or shift set by clicking on it. This will bring up an information panel similar to the shift-creation panel, but with a few different actions.
 
 - If you are editing a shift or shift set, you can combine it with other shifts or shift sets to create a shift set (only if there are other shifts in the same department with the same times), or expand an existing shift set.
+    ![Editing a shift](images/editshift_1.png)
+    ![Editing a shift](images/editshiftset_1.png)
 - You can delete the shift or shift set.
 
 Note that when you are editing an individual shift, you can change the role assigned to it, but when you are editing a shift set, the roles can't be changed.
