@@ -23,10 +23,11 @@ $page->addCard('fa-user', '<div id="volCount">?</div> Volunteers', 'volunteers.p
 $page->content['body'] = '
 <div class="row">
   <label for="events" class="col-sm-2 col-form-label">Events:</label>
-  <div class="col-sm-10">
+  <div class="col-sm-9">
     <select class="form-control" id="events">
     </select>
   </div>
+  <button type="button" class="col-sm-1 btn btn-link" onClick="favoriteEvent();"><i id="eventStar" class="far fa-star"></i></button>
   <label for="departments" class="col-sm-2 col-form-label">Departments:</label> 
   <div class="col-sm-10">
     <select class="form-control" id="departments">

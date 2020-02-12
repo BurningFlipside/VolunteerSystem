@@ -26,7 +26,10 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $this->addJS('../js/dialog.js');
         $this->secure_root = $this->getSecureRoot();
         $this->content['loginUrl'] = $this->secure_root.'api/v1/login';
-        $this->addLink('Help <i class="fas fa-question"></i>', '../docs/admin_help.html');
+        $split = explode('/', $_SERVER["REQUEST_URI"]);
+        $page = end($split);
+        $noExt = pathinfo($page, PATHINFO_FILENAME);
+        $this->addLink('Help <i class="fas fa-question"></i>', '../docs/admin_help.html#'.$noExt);
     }
 
     protected function getAdminInfo()

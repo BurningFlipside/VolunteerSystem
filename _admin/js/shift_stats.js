@@ -1,4 +1,4 @@
-var tableData;
+var tableData = {};
 
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
@@ -52,6 +52,14 @@ function gotShifts(jqXHR) {
 }
 
 function eventChanged(e) {
+  for(var dept in tableData) {
+    tableData[dept].shifts = 0;
+    tableData[dept].hours = 0;
+    tableData[dept].unfilled = 0;
+    tableData[dept].unfilledHours = 0;
+    tableData[dept].filled = 0;
+    tableData[dept].filledHours = 0;
+  }
   $.ajax({
     url: '../api/v1/events/'+e.target.value+'/shifts',
     complete: gotShifts

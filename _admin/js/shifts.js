@@ -103,6 +103,7 @@ function addNewShift(elem) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: min, max: max, onChange: setMinEndTime, required: true},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: min, max: max, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
+      {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded'},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
       {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: true}, 
       {label: 'Shift Name', type: 'text', id: 'name'},
@@ -562,6 +563,7 @@ function saveGroup(e) {
     shifts[i].departmentID = e.data.departmentID;
     shifts[i].earlyLate = e.data.earlyLate;
     shifts[i].enabled = e.data.enabled;
+    shifts[i].approvalNeeded = e.data.approvalNeeded;
     shifts[i].endTime = e.data.endTime;
     shifts[i].name = e.data.name;
     shifts[i].startTime = e.data.startTime;
@@ -577,6 +579,7 @@ function saveGroup(e) {
   delete e.data.departmentID;
   delete e.data.earlyLate;
   delete e.data.enabled;
+  delete e.data.approvalNeeded;
   delete e.data.endTime;
   delete e.data.groupID;
   delete e.data.name;
@@ -710,6 +713,7 @@ function gotShiftToEdit(jqXHR) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
+      {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded'},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
       {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: !shift.unbounded},
       {label: 'Shift Name', type: 'text', id: 'name'},
@@ -785,6 +789,7 @@ function gotGroupToEdit(jqXHR) {
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true, value: shifts[0].startTime},
       {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true, value: shifts[0].endTime},
       {label: 'Enabled', type: 'checkbox', id: 'enabled', checked: shifts[0].enabled},
+      {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded', checked: shifts[0].approvalNeeded},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
       {label: 'Minimum Open Shifts', type: 'number', id: 'minShifts', disabled: !shifts[0].unbounded},
       {label: 'Shift Name', type: 'text', id: 'name', value: shifts[0].name},
@@ -858,7 +863,7 @@ function gotShifts(jqXHR) {
       if(group[i].status === 'filled') {
         filledCount++;
       }
-      else if(singles[i].status === 'pending') {
+      else if(group[i].status === 'pending') {
         pendingCount++;
       }
       else {
@@ -896,15 +901,12 @@ function gotShifts(jqXHR) {
     }
     $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+' '+badge+'</a>');
   }
+  if(getParameterByName('hideEmpty') !== null) {
+    $('.card:not(:has(.shift))').hide();
+  }
 }
 
-function gotEvents(jqXHR) {
-  if(jqXHR.status !== 200) {
-    alert('Unable to obtain events');
-    console.log(jqXHR);
-    return;
-  }
-  events = jqXHR.responseJSON;
+function processEvents(events) {
   events.sort(function(a, b){
     var aDate = new Date(a.startTime);
     var bDate = new Date(b.startTime);
@@ -915,29 +917,34 @@ function gotEvents(jqXHR) {
     var option = $('<option value="'+events[i]['_id']['$oid']+'">'+events[i].name+'</option>');
     ef.append(option);
   }
+  var faveEvent = localStorage.getItem('adminEvent');
+  if(faveEvent !== null) {
+    ef.val(faveEvent);
+  }
+  return events;
 }
 
-function gotDepartments(jqXHR) {
-  if(jqXHR.status !== 200) {
-    alert('Unable to obtain departments');
-    console.log(jqXHR);
-    return;
-  }
-  var array = jqXHR.responseJSON;
+function processDepartments(array) {
   array.sort(function(a, b) {
     return a.departmentName.localeCompare(b.departmentName);
+  });
+  array = array.filter(function(elem) {
+    return elem.isAdmin;
   });
   var count = 0;
   var accordian = $('#accordion');
   for(var i = 0; i < array.length; i++) {
-    if(array[i].isAdmin === false) {
-      continue;
-    }
     count++;
     departments[array[i].departmentID] = array[i];
     accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
   }
   var eventID = getParameterByName('event');
+  if(eventID === null) {
+    let tmp = $('#eventFilter').val();
+    if(tmp !== '') {
+      eventID = tmp;
+    }
+  }
   var filled = getParameterByName('filled');
   var uri = '../api/v1/shifts';
   if(eventID !== null && filled !== null) {
@@ -965,6 +972,14 @@ function gotDepartments(jqXHR) {
   else if (count > 2) {
     accordian.find('.show').removeClass('show');
   }
+}
+
+function gotInitialData(results) {
+  var eventResult = results.shift();
+  var deptResult = results.shift();
+  var obj = {};
+  obj.events = processEvents(eventResult.value);
+  obj.depts = processDepartments(deptResult.value);
 }
 
 function setMinEndTime(e) {
@@ -1014,21 +1029,29 @@ function unboundedChanged(e) {
 
 function efChanged(e) {
   $('.shift').remove();
-  $.ajax({
-    url: '../api/v1/shifts?$filter=eventID eq '+e.target.value,
-    complete: gotShifts
-  });
+  if(e.target.value === '') {
+    $.ajax({
+      url: '../api/v1/shifts',
+      complete: gotShifts
+    });
+  }
+  else {
+    $.ajax({
+      url: '../api/v1/shifts?$filter=eventID eq '+e.target.value,
+      complete: gotShifts
+    });
+  }
 }
 
 function initPage() {
-  $.ajax({
-    url: '../api/v1/events',
-    complete: gotEvents
-  });
-  $.ajax({
-    url: '../api/v1/departments',
-    complete: gotDepartments
-  });
+  var promises = [];
+  promises.push($.ajax({
+    url: '../api/v1/events'
+  }));
+  promises.push($.ajax({
+    url: '../api/v1/departments'
+  }));
+  Promise.allSettled(promises).then(gotInitialData);
   $('#startTime').change(setMinEndTime);
   $('#eventID').change(setBoundaryTimes);
   var shiftID = getParameterByName('shiftID');

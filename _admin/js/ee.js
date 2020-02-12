@@ -1,9 +1,31 @@
+var table;
+
 function eventChanged(e) {
-  console.log(e);
+  var eventID = e.target.value;
+  table.setFilter(function(data) {
+    let ret = false;
+    for(let i = 0; i < data.shifts.length; i++) {
+      if(data.shifts[i].eventID === eventID) {
+        ret = true;
+        break;
+      }
+    }
+    return ret;
+  });
 }
 
 function deptChanged(e) {
-  console.log(e);
+  var deptID = e.target.value;
+  table.setFilter(function(data) {
+    let ret = false;
+    for(let i = 0; i < data.shifts.length; i++) {
+      if(data.shifts[i].departmentID === deptID) {
+        ret = true;
+        break;
+      }
+    }
+    return ret;
+  });
 }
 
 function processEvents(data) {
@@ -21,9 +43,12 @@ function processEvents(data) {
 function processDepts(data) {
   var depts = {};
   var deptSelect = $('#deptFilter');
+  data.sort(function(a, b) {
+    return a.departmentName.localeCompare(b.departmentName);
+  });
   for(var i = 0; i < data.length; i++) {
     depts[data[i].departmentID] = data[i];
-    deptSelect.append($('<option/>', {value: data[i].departmentId, text: data[i].departmentName}));
+    deptSelect.append($('<option/>', {value: data[i].departmentID, text: data[i].departmentName}));
   }
   deptSelect.data('depts', depts);
   deptSelect.change(deptChanged);
@@ -45,8 +70,15 @@ function shiftLinkDisplay(cell) {
 function showShifts(e, cell) {
   var data = cell.getRow().getData();
   var msg = '<table class="table"><thead><tr><th>Department</th><th>Role</th><th>Start Time</th><th>End Time</th></tr></thead><tbody>';
+  var eventFilter = $('#eventFilter').val();
   for(var i = 0; i < data.shifts.length; i++) {
-    msg += '<tr><td>'+data.shifts[i].department+'</td><td>'+data.shifts[i].roleID+'</td><td>'+data.shifts[i].startTime+'</td><td>'+data.shifts[i].endTime+'</td></tr>';
+    let name = data.shifts[i].department;
+    if(name === undefined) {
+      name = data.shifts[i].departmentID;
+    }
+    if(eventFilter === '*' || eventFilter === data.shifts[i].eventID) {
+      msg += '<tr><td>'+name+'</td><td>'+data.shifts[i].roleID+'</td><td>'+data.shifts[i].startTime+'</td><td>'+data.shifts[i].endTime+'</td></tr>';
+    }
   }
   msg += '</tbody></table>'; 
   bootbox.alert({
@@ -200,7 +232,7 @@ function gotInitialData(results) {
       rows.push(row);
     }
   }
-  var table = new Tabulator('#ee', {
+  table = new Tabulator('#ee', {
     columns: [
       {title: 'Name', field: 'name'},
       {title: 'Early Entry Type', field: 'eeType'},

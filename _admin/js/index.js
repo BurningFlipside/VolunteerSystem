@@ -92,10 +92,10 @@ function chartClick(e) {
   var eventId = $('#events').val();
   var deptId = $('#departments').val();
   if(deptId === '*') {
-    location.href = 'shifts.php?event='+eventId+'&filled='+index;
+    location.href = 'shifts.php?event='+eventId+'&filled='+index+'&hideEmpty=true';
   }
   else {
-    location.href = 'shifts.php?event='+eventId+'&department='+deptId+'&filled='+index;
+    location.href = 'shifts.php?event='+eventId+'&department='+deptId+'&filled='+index+'&hideEmpty=true';
   }
 }
 
@@ -161,12 +161,19 @@ function gotShifts(jqXHR) {
 }
 
 function showEventDetails(e) {
+  var favorite = localStorage.getItem('adminEvent');
   var eventID = e.target.value;
   if($('#departments').val() !== null) {
     $.ajax({
       url: '../api/v1/events/'+eventID+'/shifts',
       complete: gotShifts
     });
+  }
+  if(favorite === eventID) {
+    $('#eventStar').removeClass('far').addClass('fas');
+  }
+  else {
+    $('#eventStar').removeClass('fas').addClass('far');
   }
 }
 
@@ -197,6 +204,10 @@ function gotEvents(jqXHR) {
     for(var i = 0; i < resp.value.length; i++) {
       events.append('<option value="'+resp.value[i]['_id']['$oid']+'">'+resp.value[i].name+'</option>');
     }
+    let eventID = localStorage.getItem('adminEvent');
+    if(eventID !== null) {
+      events.val(eventID);
+    }
     showEventDetails({target: events[0]});
   }
 }
@@ -206,6 +217,11 @@ function gotVols(jqXHR) {
     var resp = jqXHR.responseJSON;
     $('#volCount').html(resp['@odata.count']);
   }
+}
+
+function favoriteEvent() {
+  localStorage.setItem('adminEvent', $('#events').val());
+  $('#eventStar').removeClass('far').addClass('fas');
 }
 
 function initIndex() {

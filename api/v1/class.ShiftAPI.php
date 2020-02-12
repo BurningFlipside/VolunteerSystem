@@ -177,6 +177,7 @@ class ShiftAPI extends VolunteerAPI
         $shift['departmentID'] = $data['groupDepartmentID'];
         $shift['earlyLate'] = $data['groupEarlyLate'];
         $shift['enabled'] = $data['groupEnabled'];
+        $shift['approvalNeeded'] = $data['groupApprovalNeeded'];
         $shift['endTime'] = $data['groupEndTime'];
         $shift['eventID'] = $data['groupEvent'];
         $shift['name'] = $data['groupName'];
@@ -231,6 +232,10 @@ class ShiftAPI extends VolunteerAPI
                 $entity['needEEApproval'] = true;
                 $event->addToEEList($uid, intval($entity['earlyLate']));
             }
+        }
+        else if(isset($entity['approvalNeeded']) && $entity['approvalNeeded'])
+        {
+            $status = 'pending';
         }
         $entity['participant'] = $uid;
         $entity['status'] = $status;

@@ -170,6 +170,11 @@ if($canDo !== true)
     return;  
 }
 
+if(isset($shift['approvalNeeded']) && $shift['approvalNeeded'])
+{
+    $page->body .= '<div class="alert alert-warning" role="alert">This shift requires explicit permission from the lead in order to sign up. The lead may decline your signup for this shift.</div>';
+}
+
 $start = new \DateTime($shift['startTime']);
 $end = new \DateTime($shift['endTime']);
 $diff = $end->diff($start);
@@ -194,11 +199,11 @@ $page->body .= '
   </div>
   <label for="startTime" class="col-sm-2 col-form-label">Start Time:</label>
   <div class="col-sm-10">
-    <input type="datetime-local" name="startTime" id="startTime" class="form-control" readonly="readonly" value="'.$shift['startTime'].'">
+    <input type="datetime-local" name="startTime" id="startTime" class="form-control" readonly="readonly" value="'.$start->format('Y-m-d\Th:i').'">
   </div>
   <label for="endTime" class="col-sm-2 col-form-label">End Time:</label>
   <div class="col-sm-10">
-    <input type="datetime-local" name="endTime" id="endTime" class="form-control" readonly="readonly" value="'.$shift['endTime'].'">
+    <input type="datetime-local" name="endTime" id="endTime" class="form-control" readonly="readonly" value="'.$end->format('Y-m-d\Th:i').'">
   </div>
   <label for="length" class="col-sm-2 col-form-label">Length:</label>
   <div class="col-sm-10">
