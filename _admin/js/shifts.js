@@ -906,13 +906,7 @@ function gotShifts(jqXHR) {
   }
 }
 
-function gotEvents(jqXHR) {
-  if(jqXHR.status !== 200) {
-    alert('Unable to obtain events');
-    console.log(jqXHR);
-    return;
-  }
-  events = jqXHR.responseJSON;
+function processEvents(events) {
   events.sort(function(a, b){
     var aDate = new Date(a.startTime);
     var bDate = new Date(b.startTime);
@@ -925,26 +919,21 @@ function gotEvents(jqXHR) {
   }
   var faveEvent = localStorage.getItem('adminEvent');
   if(faveEvent !== null) {
-    ef.val(faveEvent).trigger('change');
+    ef.val(faveEvent);
   }
+  return events;
 }
 
-function gotDepartments(jqXHR) {
-  if(jqXHR.status !== 200) {
-    alert('Unable to obtain departments');
-    console.log(jqXHR);
-    return;
-  }
-  var array = jqXHR.responseJSON;
+function processDepartments(array) {
   array.sort(function(a, b) {
     return a.departmentName.localeCompare(b.departmentName);
+  });
+  array = array.filter(function(elem) {
+    return elem.isAdmin;
   });
   var count = 0;
   var accordian = $('#accordion');
   for(var i = 0; i < array.length; i++) {
-    if(array[i].isAdmin === false) {
-      continue;
-    }
     count++;
     departments[array[i].departmentID] = array[i];
     accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
@@ -983,6 +972,14 @@ function gotDepartments(jqXHR) {
   else if (count > 2) {
     accordian.find('.show').removeClass('show');
   }
+}
+
+function gotInitialData(results) {
+  var eventResult = results.shift();
+  var deptResult = results.shift();
+  var obj = {};
+  obj.events = processEvents(eventResult.value);
+  obj.depts = processDepartments(deptResult.value);
 }
 
 function setMinEndTime(e) {
@@ -1047,14 +1044,14 @@ function efChanged(e) {
 }
 
 function initPage() {
-  $.ajax({
-    url: '../api/v1/events',
-    complete: gotEvents
-  });
-  $.ajax({
-    url: '../api/v1/departments',
-    complete: gotDepartments
-  });
+  var promises = [];
+  promises.push($.ajax({
+    url: '../api/v1/events'
+  }));
+  promises.push($.ajax({
+    url: '../api/v1/departments'
+  }));
+  Promise.allSettled(promises).then(gotInitialData);
   $('#startTime').change(setMinEndTime);
   $('#eventID').change(setBoundaryTimes);
   var shiftID = getParameterByName('shiftID');
