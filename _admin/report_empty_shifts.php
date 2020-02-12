@@ -23,7 +23,7 @@ $page->body .= '
 <div class="row">
   <table class="table" id="shiftTable">
     <thead>
-      <tr><th>Department</th><th>Role</th></tr>
+      <tr><th>Department</th><th>Role</th><th>Date</th><th>Start Time</th><th>End Time</th></tr>
     </thead>
     <tbody></tbody>
   </table>
