@@ -5,7 +5,7 @@ require_once('class.VolunteerAdminPage.php');
 $page = new VolunteerAdminPage('Volunteer System Admin');
 $page->setTemplateName('admin-table-new.html');
 
-$page->content['pageHeader'] = 'Shift Statistics:';
+$page->content['pageHeader'] = 'Shift Statistics <button type="button" class="btn btn-link" onClick="tableToCSV();"><i class="fas fa-file-csv"></i></button>';
 $page->content['table'] = array('id' => 'shift_stats');
 $page->content['selectors'] = '<label for="event" class="col-sm-2 col-form-label">Event</label>
   <div class="col-sm-10">
