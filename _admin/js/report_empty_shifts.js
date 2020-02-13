@@ -110,16 +110,25 @@ function startTimeChanged(e) {
   }
 }
 
-function generateCSV() {
+function getReport(format) {
   if($('#event').val() === null) {
     alert('Select an event first!');
+    return;
   }
   var extra = "";
   var start = $('#startTime').val();
   if(start !== '') {
     extra = ' and startTime eq '+start;
   }
-  window.location = '../api/v1/events/'+$('#event').val()+'/shifts?$format=csv&$filter=enabled eq true and status ne filled'+extra;
+  window.location = '../api/v1/events/'+$('#event').val()+'/shifts?$format='+format+'&$filter=enabled eq true and status ne filled'+extra;
+}
+
+function generateCSV() {
+  getReport('csv');
+}
+
+function generateXLSX() {
+  getReport('xlsx');
 }
 
 function initPage() {

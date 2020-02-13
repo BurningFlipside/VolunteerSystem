@@ -978,7 +978,7 @@ function gotInitialData(results) {
   var eventResult = results.shift();
   var deptResult = results.shift();
   var obj = {};
-  obj.events = processEvents(eventResult.value);
+  events = obj.events = processEvents(eventResult.value);
   obj.depts = processDepartments(deptResult.value);
 }
 
