@@ -50,6 +50,15 @@ class EventAPI extends VolunteerAPI
             $entry['available'] = false;
             $entry['why'] = 'Event is in the past';
         }
+        if(isset($entry['volList']) && !is_array($entry['volList']))
+        {
+            $entry['volList'] = explode(',', $entry['volList']);
+            $count = count($entry['volList']);
+            for($i = 0; $i < $count; $i++)
+            {
+                $entry['volList'][$i] = trim($entry['volList'][$i]);
+            }
+        }
         if($entry['private'] && !in_array($this->user->mail, $entry['volList']))
         {
             $entry['available'] = false;
