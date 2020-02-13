@@ -103,6 +103,52 @@ class ParticipantAPI extends VolunteerAPI
         return $response->withJson($areas[0]);
     }
 
+    public function updateEntry($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['name'];
+        if($uid === 'me')
+        {
+            $uid = $this->user->uid;
+        }
+        else if($uid !== $this->user->uid && $this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $filter = $this->getFilterForPrimaryKey($uid);
+        $dataTable = $this->getDataTable();
+        $entry = $dataTable->read($filter);
+        if(empty($entry))
+        {
+            return $response->withStatus(404);
+        }
+        if(count($entry) === 1 && isset($entry[0]))
+        {
+            $entry = $entry[0];
+        }
+        if($uid !== $this->user->uid && $this->canUpdate($request, $entry) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $obj = $request->getParsedBody();
+        if($obj === null)
+        {
+            $request->getBody()->rewind();
+            $obj = $request->getBody()->getContents();
+            $tmp = json_decode($obj, true);
+            if($tmp !== null)
+            {
+                $obj = $tmp;
+            }
+        }
+        if($this->validateUpdate($obj, $request, $entry) === false)
+        {
+            return $response->withStatus(400);
+        }
+        $ret = $dataTable->update($filter, $obj);
+        return $response->withJson($ret);
+    }
+
     public function getMyShifts($request, $response, $args)
     {
         $this->validateLoggedIn($request);
