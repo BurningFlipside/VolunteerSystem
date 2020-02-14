@@ -1,4 +1,5 @@
 var tableData = {};
+var table;
 
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
@@ -33,7 +34,7 @@ function gotShifts(jqXHR) {
   for(var key in tableData) {
     array.push(tableData[key]);
   }
-  var table = new Tabulator("#shift_stats", {
+  table = new Tabulator("#shift_stats", {
     columns: [
       {title:'Name', field: 'name'},
       {title:'Shift Count', field: 'shifts', sorter:"number"},
@@ -64,6 +65,10 @@ function tableToCSV() {
   document.body.appendChild(link);
   link.click();
   link.remove();
+}
+
+function tableToXLSX() {
+  table.download("xlsx", "shift_stats.xlsx", {sheetName: $('#event option:selected')[0].text});
 }
 
 function eventChanged(e) {
@@ -130,6 +135,14 @@ function waitForSelect2(resolve, reject) {
   setTimeout(boundRetry, 100);
 }
 
+function checkXLSX() {
+  if(window.XLSX === undefined) {
+    setTimeout(checkXLSX, 100);
+    return;
+  }
+  $('.page-header').append('<button type="button" class="btn btn-link" onclick="tableToXLSX();"><i class="fas fa-file-excel"></i></button>');
+}
+
 function initPage() {
   let promises = [];
   promises.push($.ajax({
@@ -140,6 +153,7 @@ function initPage() {
   }));
   promises.push(new Promise(waitForSelect2));
   Promise.allSettled(promises).then(gotInitialData);
+  setTimeout(checkXLSX, 1);
 }
 
 $(initPage);

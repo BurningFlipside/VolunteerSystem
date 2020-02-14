@@ -4,6 +4,7 @@ error_reporting(E_ALL);
 require_once('class.VolunteerAdminPage.php');
 $page = new VolunteerAdminPage('Volunteer System Admin');
 $page->setTemplateName('admin-table-new.html');
+$page->addJS('//unpkg.com/xlsx/dist/xlsx.full.min.js');
 
 $page->content['pageHeader'] = 'Shift Statistics <button type="button" class="btn btn-link" onClick="tableToCSV();"><i class="fas fa-file-csv"></i></button>';
 $page->content['table'] = array('id' => 'shift_stats');
