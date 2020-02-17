@@ -122,7 +122,11 @@ trait Processor
             else
             {
                 $email = $user->mail;
-                $otherAdmins = explode(',', $dept['others']);
+                $otherAdmins = $dept['others'];
+                if(!is_array($dept['others']))
+                {
+                    $otherAdmins = explode(',', $dept['others']);
+                }
                 $deptCache[$uid] = in_array($email, $otherAdmins);
             }
         }

@@ -907,6 +907,11 @@ function gotShifts(jqXHR) {
 }
 
 function processEvents(events) {
+  if(getParameterByName('showOld') === null) {
+    events = events.filter(function(evt) {
+      return evt.why !== "Event is in the past";
+    });
+  }
   events.sort(function(a, b){
     var aDate = new Date(a.startTime);
     var bDate = new Date(b.startTime);
