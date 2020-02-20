@@ -231,6 +231,10 @@ function gotShifts(jqXHR) {
         evnt.borderColor = 'SpringGreen';
       }
     }
+    if(shifts[i].status === 'pending') {
+      evnt.backgroundColor = 'fireBrick';
+      evnt.borderColor = 'lightGray';
+    }
     if(shifts[i].status === 'filled' && shifts[i].whyClass !== 'MINE') {
       evnt.backgroundColor = 'fireBrick';
       evnt.borderColor = 'fireBrick';
