@@ -202,6 +202,9 @@ function gotEvents(jqXHR) {
     var events = $('#events');
     events.change(showEventDetails);
     for(var i = 0; i < resp.value.length; i++) {
+      if(resp.value[i].why === "Event is in the past") {
+        continue;
+      }
       events.append('<option value="'+resp.value[i]['_id']['$oid']+'">'+resp.value[i].name+'</option>');
     }
     let eventID = localStorage.getItem('adminEvent');
