@@ -745,6 +745,17 @@ function gotShiftToEdit(jqXHR) {
   });
 }
 
+function removeGroupSignup(e) {
+  $.ajax({
+    url: '../api/v1/shifts/Actions/RemoveGroupSignupLink',
+    contentType: 'application/json',
+    data: JSON.stringify(e.data),
+    type: 'POST',
+    dataType: 'json',
+    complete: doneCreatingShift
+  });
+}
+
 function gotGroupToEdit(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -765,6 +776,7 @@ function gotGroupToEdit(jqXHR) {
   var roleText = '';
   var roles = {};
   var taken = false;
+  var group = false;
   for(var i = 0; i < shifts.length; i++) {
     if(roles[shifts[i].roleID] === undefined) {
       roles[shifts[i].roleID] = 0;
@@ -772,6 +784,9 @@ function gotGroupToEdit(jqXHR) {
     roles[shifts[i].roleID]++;
     if(shifts[i].status === 'filled' || shifts[i].status === 'pending') {
       taken = true;
+    }
+    if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
+      group = true;
     }
   }
   for(var role in roles) {
@@ -807,10 +822,27 @@ function gotGroupToEdit(jqXHR) {
       {text: 'Save Shift Set', callback: saveGroup}
     ]
   };
+  dialogOptions.alerts = [];
   if(taken) {
-    dialogOptions.alerts = [
-      {type: 'warning', text: 'One or more shift in the set is already filled!'}
-    ];
+    dialogOptions.alerts.push({type: 'warning', text: 'One or more shift in the set is already filled!'});
+    for(var i = 0; i < shifts.length; i++) {
+      if(shifts[i].status === 'filled') {
+        dialogOptions.inputs.push({label: 'Shift '+i+' ('+shifts[i].roleID+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'">'+shifts[i].participant+'</a>'});
+      }
+      else if(shifts[i].status === 'pending') {
+        dialogOptions.inputs.push({label: 'Shift '+i+' ('+shifts[i].roleID+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'"><i>Pending:</i> '+shifts[i].participant+'</a>'});
+      }
+    }
+  }
+  if(group) {
+    dialogOptions.alerts.push({type: 'info', text: 'A group signup link exists for this group!'});
+    for(var i = 0; i < shifts.length; i++) {
+      if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
+        dialogOptions.inputs.push({label: 'Group Signup Link', type: 'html', id: 'signupLink', text: '<a href="https://secure.burningflipside.com/fvs/groupSignup.php?id='+shifts[i].signupLink+'">https://secure.burningflipside.com/fvs/groupSignup.php?id='+shifts[i].signupLink+'</a>'});
+        break;
+      }
+    }
+    dialogOptions.buttons.push({text: 'Remove Group Signup', callback: removeGroupSignup});
   }
   flipDialog.dialog(dialogOptions);
 }

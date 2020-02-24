@@ -119,6 +119,9 @@ function dialogButtonClick(e) {
   if(e.data === undefined) {
     e.data = {};
   }
+  if(e.data === true) {
+    e.data = {'originalData': true};
+  }
   var group = $(e.target).parents('.input-group');
   if(group.length > 0) {
     var inputs = group.find('input');

@@ -14,6 +14,7 @@ class ShiftAPI extends VolunteerAPI
         $app->post('/Actions/CreateGroup', array($this, 'createGroup'));
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
         $app->post('/Actions/DeleteGroup', array($this, 'deleteGroup'));
+        $app->post('/Actions/RemoveGroupSignupLink', array($this, 'removeGroupLink'));
         $app->post('/{shift}/Actions/Signup[/]', array($this, 'signup'));
         $app->post('/{shift}/Actions/Abandon[/]', array($this, 'abandon'));
         $app->post('/{shift}/Actions/Approve[/]', array($this, 'approvePending'));
@@ -452,6 +453,7 @@ class ShiftAPI extends VolunteerAPI
         $entities = $dataTable->read($filter);
         $count = count($entities);
         $uuid = $this->genUUID();
+        $time = date('c');
         for($i = 0; $i < $count; $i++)
         {
             if(isset($entities[$i]['status']) && ($entities[$i]['status'] === 'filled' || $entities[$i]['status'] === 'pending'))
@@ -464,11 +466,14 @@ class ShiftAPI extends VolunteerAPI
                 $entities[$i]['participant'] = $this->user->uid;
                 $entities[$i]['status'] = 'filled';
                 $entities[$i]['signupLink'] = $uuid;
+                $entities[$i]['groupLinkCreated'] = $time;
+                $entities[$i]['signupOn'] = $time;
             }
             else if(isset($roles[$entities[$i]['roleID']]))
             {
                 $entities[$i]['status'] = 'groupPending';
                 $entities[$i]['signupLink'] = $uuid;
+                $entities[$i]['groupLinkCreated'] = $time;
                 $roles[$entities[$i]['roleID']]--;
                 if($roles[$entities[$i]['roleID']] === 0)
                 {
@@ -498,6 +503,40 @@ class ShiftAPI extends VolunteerAPI
             }
         }
         return $response->withJSON(array('uuid' => $uuid));
+    }
+
+    public function removeGroupLink($request, $response, $args)
+    {
+        if(!$this->canCreate($request))
+        {
+            return $response->withStatus(401);
+        }
+        $data = $this->getParsedBody($request);
+        if(!isset($data['groupID']))
+        {
+            return $response->withStatus(400);
+        }
+        $groupID = $data['groupID'];
+        $dataTable = $this->getDataTable();
+        $filter = new \Data\Filter("groupID eq '$groupID'");
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $count = count($entity);
+        $res = true;
+        for($i = 0; $i < $count; $i++)
+        {
+            $entity[$i]['signupLink'] = '';
+            $upFilter = new \Data\Filter('_id eq '.$entity[$i]['_id']);
+            $tmp = $dataTable->update($upFilter, $entity[$i]);
+            if($tmp === false)
+            {
+                $res = false;
+            }
+        }
+        return $response->withJSON($res);
     }
 
     function emptyShift($request, $response, $args)
