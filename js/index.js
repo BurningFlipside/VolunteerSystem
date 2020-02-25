@@ -287,28 +287,9 @@ function eventChanged(e) {
   });
 }
 
-function retrySelect2() {
-  if($(this.id).select2 !== undefined) {
-    var sel2 = $(this.id).select2({data: this.data});
-    if(this.change !== undefined) {
-      sel2.change(this.change);
-      if(this.callFirst !== false) {
-        this.change({target: $(this.id)[0]});
-      }
-    }
-    return;
-  }
-  var boundRetry = retrySelect2.bind(this);
-  setTimeout(boundRetry, 100);
-}
-
-function gotEvents(jqXHR) {
-  if(jqXHR.status !== 200) {
-    return;
-  }
-  var id = getParameterByName('event');
-  var events = jqXHR.responseJSON;
+function processEvents(events) {
   var data = [];
+  var id = getParameterByName('event');
   events.sort(function(a, b) {
     var aDate = new Date(a.startTime);
     var bDate = new Date(b.startTime);
@@ -323,20 +304,13 @@ function gotEvents(jqXHR) {
       data.push(option);
     }
   }
-  var boundRetry = retrySelect2.bind({id: '#event', data: data, change: eventChanged});
-  if($('#departments').select2 === undefined) {
-    setTimeout(boundRetry, 100);
-    return;
-  }
-  boundRetry();
+  var sel2 = $('#event').select2({data: data});
+  sel2.change(eventChanged);
+  eventChanged({target: sel2[0]});
 }
 
-function gotDepartments(jqXHR) {
-  if(jqXHR.status !== 200) {
-    return;
-  }
+function processDepartments(depts) {
   var id = getParameterByName('department');
-  var depts = jqXHR.responseJSON;
   var groups = {};
   for(var i = 0; i < depts.length; i++) {
     if(!depts[i]['available']) {
@@ -359,12 +333,7 @@ function gotDepartments(jqXHR) {
     //TODO Get Area's real name...
     data.push({text: group, children: groups[group]});
   }
-  var boundRetry = retrySelect2.bind({id: '#departments', data: data});
-  if($('#departments').select2 === undefined) {
-    setTimeout(boundRetry, 100);
-    return;
-  }
-  boundRetry();
+  $('#departments').select2({data: data});
   $.ajax({
     url: 'api/v1/roles',
     complete: gotRoles
@@ -406,15 +375,46 @@ function unhideFilters() {
   }
 }
 
+function gotInitialData(results) {
+  var eventResult = results.shift();
+  var deptResult = results.shift();
+  var obj = {};
+  obj.events = processEvents(eventResult.value);
+  obj.depts = processDepartments(deptResult.value);
+  var sel2 = $('#shiftTypes').select2();
+  sel2.change(shiftChanged);
+}
+
+function retrySelect2() {
+  if($('#departments').select2 !== undefined) {
+    this.resolve(true);
+  }
+  if(this.count > 10) {
+    this.reject(false);
+  }
+  this.count++;
+  var boundRetry = retrySelect2.bind(this);
+  setTimeout(boundRetry, 100);
+}
+
+function waitForSelect2(resolve, reject) {
+  if($('#departments').select2 !== undefined) {
+    resolve(true);
+  }
+  var boundRetry = retrySelect2.bind({resolve: resolve, reject: reject, count: 0});
+  setTimeout(boundRetry, 100);
+}
+
 function initPage() {
-  $.ajax({
-    url: 'api/v1/events',
-    complete: gotEvents
-  });
-  $.ajax({
-    url: 'api/v1/departments',
-    complete: gotDepartments
-  });
+  let promises = [];
+  promises.push($.ajax({
+    url: 'api/v1/events'
+  }));
+  promises.push($.ajax({
+    url: 'api/v1/departments'
+  }));
+  promises.push(new Promise(waitForSelect2));
+  Promise.allSettled(promises).then(gotInitialData);
   var header = {
     left: 'prev,next',
     center: 'title',
@@ -461,12 +461,6 @@ function initPage() {
   if(view !== null) {
     calendar.changeView(view);
   }
-  var boundRetry = retrySelect2.bind({id: '#shiftTypes', change: shiftChanged, callFirst: false});
-  if($('#shiftTypes').select2 === undefined) {
-    setTimeout(boundRetry, 100);
-    return;
-  }
-  boundRetry();
 }
 
 $(() => {

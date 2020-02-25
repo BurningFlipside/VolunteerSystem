@@ -166,7 +166,7 @@ trait Processor
         return !in_array($deptId, $privateDepts);
     }
 
-    protected function doShiftTimeChecks($shift, $entry)
+    protected function doShiftTimeChecks($shift, &$entry)
     {
         $now = new DateTime();
         if($shift->startTime < $now)
@@ -178,6 +178,11 @@ trait Processor
         {
             $entry['available'] = false;
             $entry['why'] = 'Shift already ended';
+        }
+        if(strpbrk($entry['startTime'], 'Z+') === false)
+        {
+            $entry['startTime'] = $shift->startTime->format('c');
+            $entry['endTime'] = $shift->endTime->format('c');
         }
     }
 

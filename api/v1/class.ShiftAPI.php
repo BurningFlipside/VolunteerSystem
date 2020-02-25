@@ -240,6 +240,7 @@ class ShiftAPI extends VolunteerAPI
         }
         $entity['participant'] = $uid;
         $entity['status'] = $status;
+        $entity['signupTime'] = date('c');
         return $dataTable->update($filter, $entity);
     }
 
@@ -327,6 +328,7 @@ class ShiftAPI extends VolunteerAPI
         }
         $entity['participant'] = '';
         $entity['status'] = 'unfilled';
+        $entity['signupTime'] = '';
         if(isset($entity['needEEApproval']))
         {
           unset($entity['needEEApproval']);
@@ -529,6 +531,11 @@ class ShiftAPI extends VolunteerAPI
         for($i = 0; $i < $count; $i++)
         {
             $entity[$i]['signupLink'] = '';
+            if($entity[$i]['status'] === 'groupPending')
+            {
+                $entity['status'] = 'unfilled';
+            }
+            $entity[$i]['groupLinkCreated'] = '';
             $upFilter = new \Data\Filter('_id eq '.$entity[$i]['_id']);
             $tmp = $dataTable->update($upFilter, $entity[$i]);
             if($tmp === false)
