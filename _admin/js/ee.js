@@ -146,20 +146,22 @@ function leadApprovalDisplay(cell) {
 }
 
 function gotTicketStatus(jqXHR) {
+  let id = encodeURI(this.data.id);
+  let elem = $(document.getElementById('ticket_'+id));
   if(jqXHR.status !== 200) {
-    $('#ticket_'+this.data.id).replaceWith('<i class="text-danger">Error</i>');
+    elem.replaceWith('<i class="text-danger">Error</i>');
     return;
   }
   var data = jqXHR.responseJSON;
   if(data.ticket) {
-    $('#ticket_'+this.data.id).replaceWith('<p class="text-success">Yes</p>');
+    elem.replaceWith('<p class="text-success">Yes</p>');
     return;
   }
   if(data.request) {
-    $('#ticket_'+this.data.id).replaceWith('<i class="text-warning">Requested</i>');
+    elem.replaceWith('<i class="text-warning">Requested</i>');
     return;
   }
-  $('#ticket_'+this.data.id).replaceWith('<p class="text-danger">No</p>');
+  elem.replaceWith('<p class="text-danger">No</p>');
 }
 
 function hasTicketDisplay(cell) {
@@ -170,7 +172,7 @@ function hasTicketDisplay(cell) {
     context: context,
     complete: gotTicketStatus
   });
-  return '<div id="ticket_'+data.id+'" class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>';
+  return '<div id="ticket_'+encodeURI(data.id)+'" class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>';
 }
 
 function gotInitialData(results) {
