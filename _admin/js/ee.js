@@ -63,27 +63,46 @@ function processParticipants(data) {
   return vols;
 }
 
+function processRoles(data) {
+  var obj = {};
+  for(var i = 0; i < data.length; i++) {
+    obj[data[i].short_name] = data[i];
+  }
+  return obj;
+}
+
 function shiftLinkDisplay(cell) {
   return '<i class="far fa-window-maximize"></i>';
 }
 
 function showShifts(e, cell) {
   var data = cell.getRow().getData();
+  var backend = $('body').data('backend');
   var msg = '<table class="table"><thead><tr><th>Department</th><th>Role</th><th>Start Time</th><th>End Time</th></tr></thead><tbody>';
   var eventFilter = $('#eventFilter').val();
   for(var i = 0; i < data.shifts.length; i++) {
     let name = data.shifts[i].department;
     if(name === undefined) {
       name = data.shifts[i].departmentID;
+      if(backend.depts[data.shifts[i].departmentID] !== undefined) {
+        name = backend.depts[data.shifts[i].departmentID].departmentName;
+      }
     }
+    let roleName = data.shifts[i].roleID;
+    if(backend.roles[roleName] !== undefined) {
+      roleName = backend.roles[roleName].display_name;
+    }
+    let start = new Date(data.shifts[i].startTime);
+    let end = new Date(data.shifts[i].endTime);
     if(eventFilter === '*' || eventFilter === data.shifts[i].eventID) {
-      msg += '<tr><td>'+name+'</td><td>'+data.shifts[i].roleID+'</td><td>'+data.shifts[i].startTime+'</td><td>'+data.shifts[i].endTime+'</td></tr>';
+      msg += '<tr><td>'+name+'</td><td>'+roleName+'</td><td>'+start+'</td><td>'+end+'</td></tr>';
     }
   }
   msg += '</tbody></table>'; 
   bootbox.alert({
     title: 'Shifts for '+data.name,
-    message: msg
+    message: msg,
+    size: 'xl'
   });
   console.log(data);
 }
@@ -178,12 +197,14 @@ function hasTicketDisplay(cell) {
 function gotInitialData(results) {
   var eventResult = results.shift();
   var deptResult = results.shift();
+  var roleResult = results.shift();
   var participantResults = results.shift();
   var shiftResults = results.shift();
   var obj = {};
   obj.events = processEvents(eventResult.value);
   obj.depts = processDepts(deptResult.value);
   obj.vols = processParticipants(participantResults.value);
+  obj.roles = processRoles(roleResult.value);
   for(var i = 0; i < shiftResults.value.length; i++) {
     if(shiftResults.value[i].participant === '') {
       continue;
@@ -246,6 +267,7 @@ function gotInitialData(results) {
     ]
   });
   table.setData(rows);
+  $('body').data('backend', obj);
 }
 
 function initPage() {
@@ -266,10 +288,16 @@ function initPage() {
     promises.push($.ajax({
       url: '../api/v1/departments',
     }));
+    promises.push($.ajax({
+      url: '../api/v1/roles',
+    }));
   }
   else {
     promises.push($.ajax({
       url: '../api/v1/departments$filter=departmentID eq '+deptId,
+    }));
+    promises.push($.ajax({
+      url: '../api/v1/departments/'+deptId+'/roles',
     }));
   }
   promises.push($.ajax({
