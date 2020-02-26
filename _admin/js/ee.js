@@ -176,6 +176,10 @@ function gotTicketStatus(jqXHR) {
     elem.replaceWith('<p class="text-success">Yes</p>');
     return;
   }
+  if(data.requestRecieved) {
+    elem.replaceWith('<i class="text-info">Pending</i>');
+    return;
+  }
   if(data.request) {
     elem.replaceWith('<i class="text-warning">Requested</i>');
     return;

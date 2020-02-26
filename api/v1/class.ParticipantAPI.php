@@ -391,6 +391,10 @@ class ParticipantAPI extends VolunteerAPI
             {
                 return $response->withJson(array('ticket' => false, 'request' => false));
             }
+            if($requests[0]['status'] === '1')
+            {
+                return $response->withJson(array('ticket' => false, 'request' => true, 'requestRecieved' => true));
+            }
             return $response->withJson(array('ticket' => false, 'request' => true));
         }
         return $response->withJson(array('ticket' => true));
