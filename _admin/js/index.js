@@ -99,6 +99,74 @@ function chartClick(e) {
   }
 }
 
+function makeShiftTimeLine(shifts) {
+  let canvas = document.getElementById('shiftsFilledTimeLine');
+  let ctx = canvas.getContext('2d');
+  let dates = {};
+  for(let i = 0; i < shifts.length; i++) {
+    if(shifts[i].signupTime === undefined || shifts[i].signupTime === '') {
+      continue;
+    }
+    let datetime = new Date(shifts[i].signupTime);
+    let year = datetime.getFullYear();
+    let month = datetime.getMonth();
+    let day = datetime.getDate();
+    let id = year+'-'+month+'-'+day;
+    if(dates[id] === undefined) {
+      dates[id] = {filled: 0, pending: 0};
+    }
+    if(shifts[i].status === 'filled') {
+      dates[id].filled++;
+    }
+    else if(shifts[i].status === 'pending') {
+      dates[id].pending++;
+    }
+  }
+  let dateIds = Object.keys(dates);
+  dateIds.sort();
+  let lastFilled = 0;
+  let lastPending = 0;
+  let filled = [];
+  let pending = [];
+  for(let i = 0; i < dateIds.length; i++)
+  {
+    let id = dateIds[i];
+    dates[id].filled += lastFilled;
+    lastFilled = dates[id].filled;
+    filled.push(dates[id].filled);
+    dates[id].pending += lastPending;
+    lastPending = dates[id].pending;
+    pending.push(dates[id].pending);
+  }
+  let data = {
+    datasets: [{
+      label: 'Filled',
+      backgroundColor: "#66c2a5",
+      data: filled
+    },
+    {
+      label: 'Pending',
+      backgroundColor: "#f46d43",
+      data: pending
+    }],
+    labels: dateIds
+  };
+  let options = {
+    tooltips: {
+      mode: 'index'
+    },
+    scales: {
+      yAxes: [{
+        stacked: true
+      }]
+    }
+  };
+  new Chart(ctx, {type: 'line',
+    data: data,
+    options: options
+  });
+}
+
 var chart = null;
 
 function gotShifts(jqXHR) {
@@ -157,6 +225,7 @@ function gotShifts(jqXHR) {
         options: options
       });
     }
+    makeShiftTimeLine(jqXHR.responseJSON);
   }
 }
 

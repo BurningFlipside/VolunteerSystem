@@ -36,7 +36,28 @@ $page->content['body'] = '
   </div>
 </div>
 <div class="row">
-  <canvas id="shiftsFilled" class="w-auto"></canvas>
+  <div id="chartRotate" class="carousel slide w-auto" data-ride="carousel">
+    <ol class="carousel-indicators">
+      <li data-target="#chartRotate" data-slide-to="0" class="active"></li>
+      <li data-target="#chartRotate" data-slide-to="1"></li>
+    </ol>
+    <div class="carousel-inner">
+      <div class="carousel-item active">
+        <canvas id="shiftsFilled" class="d-block w-100"></canvas>
+      </div>
+      <div class="carousel-item">
+        <canvas id="shiftsFilledTimeLine" class="d-block w-100"></canvas>
+      </div>
+    </div>
+    <a class="carousel-control-prev" href="#chartRotate" role="button" data-slide="prev">
+      <i class="fas fa-arrow-left" style="color: black;"></i>
+      <span class="sr-only">Previous</span>
+    </a>
+    <a class="carousel-control-next" href="#chartRotate" role="button" data-slide="next">
+      <i class="fas fa-arrow-right" style="color: black;"></i>
+      <span class="sr-only">Next</span>
+    </a>
+  </div>
 </div>
 ';
 
