@@ -405,6 +405,24 @@ function waitForSelect2(resolve, reject) {
   setTimeout(boundRetry, 100);
 }
 
+function fakePromiseSettled(promises) {
+  let values = Array.from(promises);
+  return Promise.all(values.map(function (item) {
+    var onFulfill = function (value) {
+      return { status: 'fulfilled', value: value };
+    };
+    var onReject = function (reason) {
+      return { status: 'rejected', reason: reason };
+    };
+    var itemPromise = Promise.resolve(item);
+    try {
+      return itemPromise.then(onFulfill, onReject);
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }));
+}
+
 function initPage() {
   let promises = [];
   promises.push($.ajax({
@@ -414,7 +432,13 @@ function initPage() {
     url: 'api/v1/departments'
   }));
   promises.push(new Promise(waitForSelect2));
-  Promise.allSettled(promises).then(gotInitialData);
+  if(Promise.allSettled !== undefined) {
+    Promise.allSettled(promises).then(gotInitialData);
+  }
+  else {
+    //Older browser...
+    fakePromiseSettled(promises).then(gotInitialData);
+  }
   var header = {
     left: 'prev,next',
     center: 'title',

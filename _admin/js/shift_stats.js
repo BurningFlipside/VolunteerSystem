@@ -1,6 +1,15 @@
 var tableData = {};
 var table;
 
+function timeToString(time) {
+  if(time % 1 === 0) {
+    return time;
+  }
+  let mins = Math.round((time % 1)*60);
+  let hours = Math.floor(time);
+  return hours+':'+mins;
+}
+
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     alert('Unable to get events!');
@@ -32,7 +41,11 @@ function gotShifts(jqXHR) {
   }
   var array = [];
   for(var key in tableData) {
-    array.push(tableData[key]);
+    let tmp = tableData[key];
+    tmp.hours = timeToString(tmp.hours);
+    tmp.filledHours = timeToString(tmp.filledHours);
+    tmp.unfilledHours = timeToString(tmp.unfilledHours);
+    array.push(tmp);
   }
   table = new Tabulator("#shift_stats", {
     columns: [
