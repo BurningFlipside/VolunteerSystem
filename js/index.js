@@ -231,7 +231,7 @@ function gotShifts(jqXHR) {
         evnt.borderColor = 'SpringGreen';
       }
     }
-    if(shifts[i].status === 'pending') {
+    if(shifts[i].status === 'pending' || shifts[i].status === 'groupPending') {
       evnt.backgroundColor = 'fireBrick';
       evnt.borderColor = 'lightGray';
     }
