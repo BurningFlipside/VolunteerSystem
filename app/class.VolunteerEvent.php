@@ -8,6 +8,8 @@ class VolunteerEvent extends VolunteerObject
 
     public function hasVolOnEEList($uid, $eeListIndex)
     {
+        $uid = urlencode($uid);
+        $uid = str_replace('.', '%2E', $uid);
         if($eeListIndex === 1 || $eeListIndex === 0)
         {
             //Check earlier EE lists too
@@ -30,6 +32,8 @@ class VolunteerEvent extends VolunteerObject
 
     public function addToEEList($uid, $eeListIndex)
     {
+        $uid = urlencode($uid);
+        $uid = str_replace('.', '%2E', $uid);
         if(!isset($this->dbData['eeLists']))
         {
             $this->dbData['eeLists'] = array();

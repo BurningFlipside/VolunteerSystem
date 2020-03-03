@@ -42,15 +42,20 @@ window.flipDialog.dialog = function(options) {
     else {
       inputEnt.attr('type', input.type);
     }
-    if(!browser_supports_input_type('datetime-local') && input.type === 'datetime-local') {
-      var myOptions = {enableTime: true};
-      if(input.min !== undefined) {
-        myOptions.minDate = new Date(input.min);
+    if(input.type === 'datetime-local') {
+      if(!browser_supports_input_type('datetime-local')) {
+        var myOptions = {enableTime: true};
+        if(input.min !== undefined) {
+          myOptions.minDate = new Date(input.min);
+        }
+        if(input.max !== undefined) {
+          myOptions.maxDate = new Date(input.max);
+        }
+        inputEnt.flatpickr(myOptions);
       }
-      if(input.max !== undefined) {
-        myOptions.maxDate = new Date(input.max);
+      else if(input.value) {
+        inputEnt[0].valueAsNumber = new Date(input.value).getTime();
       }
-      inputEnt.flatpickr(myOptions);
     }
     delete input.type;
     inputEnt.attr('name', input.id);

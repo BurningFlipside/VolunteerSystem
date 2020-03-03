@@ -1038,6 +1038,20 @@ function gotInitialData(results) {
   events = obj.events = processEvents(eventResult.value);
   obj.depts = processDepartments(deptResult.value);
   roles = obj.roles = processRoles(roleResult.value);
+  var shiftID = getParameterByName('shiftID');
+  var groupID = getParameterByName('groupID');
+  if(shiftID !== null) {
+    $.ajax({
+      url: '../api/v1/shifts/'+shiftID,
+      complete: gotShiftToEdit
+    });
+  }
+  else if(groupID !== null) {
+    $.ajax({
+      url: '../api/v1/shifts?$filter=groupID eq '+groupID,
+      complete: gotGroupToEdit
+    });
+  }
 }
 
 function setMinEndTime(e) {
@@ -1115,20 +1129,6 @@ function initPage() {
   Promise.allSettled(promises).then(gotInitialData);
   $('#startTime').change(setMinEndTime);
   $('#eventID').change(setBoundaryTimes);
-  var shiftID = getParameterByName('shiftID');
-  var groupID = getParameterByName('groupID');
-  if(shiftID !== null) {
-    $.ajax({
-      url: '../api/v1/shifts/'+shiftID,
-      complete: gotShiftToEdit
-    });
-  }
-  else if(groupID !== null) {
-    $.ajax({
-      url: '../api/v1/shifts?$filter=groupID eq '+groupID,
-      complete: gotGroupToEdit
-    });
-  }
   $('#eventFilter').change(efChanged);
 }
 

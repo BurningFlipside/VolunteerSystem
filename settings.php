@@ -73,6 +73,20 @@ $page->body .= '
     <button type="button" class="btn btn-primary float-right" onClick="return saveData();">Save</button>
   </div>
 </div>
+<div class="row border rounded" id="ticketStatus">
+  <legend>Tickets</legend>
+  <div class="alert alert-primary" role="alert">
+    Some events require tickets and leads may decide to remove participants without tickets from shifts at a certain point.
+  </div>
+  <div class="w-100"></div>
+  <label for="ticketCode" class="col-sm-2 col-form-label">Ticket Short Code:</label>
+  <div class="col-sm-10">
+    <input class="form-control" type="text" name="ticketCode" id="ticketCode"/>
+  </div>
+  <div class="col-sm-12">
+    <button type="button" class="btn btn-primary float-right" onClick="return linkTicket();">Link Ticket</button>
+  </div>
+</div>
 <div class="row border rounded">
   <legend>User Certifications</legend>
   <div class="alert alert-primary" role="alert">

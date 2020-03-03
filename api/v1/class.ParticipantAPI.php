@@ -375,14 +375,20 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(404);
         }
         $user = $users[0];
-        //TODO Ticket IDs for people who don't have tickets associated to their email
-        //Get the ticket year
         $settingsTable = DataSetFactory::getDataTableByNames('tickets', 'Variables');
         $settings = $settingsTable->read(new \Data\Filter('name eq \'year\''));
-        $year = $settings[0]['value']; 
-        $email = $user['email'];
+        $year = $settings[0]['value'];
         $ticketTable = DataSetFactory::getDataTableByNames('tickets', 'Tickets');
-        $tickets = $ticketTable->read(new \Data\Filter("email eq '$email' and year eq $year"));
+        if(isset($user['ticketCode']))
+        {
+            $code = $user['ticketCode'];
+            $tickets = $ticketTable->read(new \Data\Filter("contains(hash,$code) and year eq $year"));
+        }
+        else
+        {
+            $email = $user['email'];
+            $tickets = $ticketTable->read(new \Data\Filter("email eq '$email' and year eq $year"));
+        }
         if(empty($tickets))
         {
             $requestTable = DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
