@@ -32,8 +32,18 @@ function processEvents(data) {
   var events = {};
   var eventSelect = $('#eventFilter');
   for(var i = 0; i < data.length; i++) {
+    if(data[i].why === 'Event is in the past') {
+      continue;
+    }
+    if(data[i].eeLists === undefined) {
+      continue;
+    }
     events[data[i]['_id']['$oid']] = data[i];
     eventSelect.append($('<option/>', {value: data[i]['_id']['$oid'], text: data[i].name}));
+  }
+  let ids = Object.keys(events);
+  if(ids.length === 1) {
+    eventSelect.val(ids[0]);
   }
   eventSelect.data('events', events);
   eventSelect.change(eventChanged);
@@ -63,27 +73,46 @@ function processParticipants(data) {
   return vols;
 }
 
+function processRoles(data) {
+  var obj = {};
+  for(var i = 0; i < data.length; i++) {
+    obj[data[i].short_name] = data[i];
+  }
+  return obj;
+}
+
 function shiftLinkDisplay(cell) {
   return '<i class="far fa-window-maximize"></i>';
 }
 
 function showShifts(e, cell) {
   var data = cell.getRow().getData();
+  var backend = $('body').data('backend');
   var msg = '<table class="table"><thead><tr><th>Department</th><th>Role</th><th>Start Time</th><th>End Time</th></tr></thead><tbody>';
   var eventFilter = $('#eventFilter').val();
   for(var i = 0; i < data.shifts.length; i++) {
     let name = data.shifts[i].department;
     if(name === undefined) {
       name = data.shifts[i].departmentID;
+      if(backend.depts[data.shifts[i].departmentID] !== undefined) {
+        name = backend.depts[data.shifts[i].departmentID].departmentName;
+      }
     }
+    let roleName = data.shifts[i].roleID;
+    if(backend.roles[roleName] !== undefined) {
+      roleName = backend.roles[roleName].display_name;
+    }
+    let start = new Date(data.shifts[i].startTime);
+    let end = new Date(data.shifts[i].endTime);
     if(eventFilter === '*' || eventFilter === data.shifts[i].eventID) {
-      msg += '<tr><td>'+name+'</td><td>'+data.shifts[i].roleID+'</td><td>'+data.shifts[i].startTime+'</td><td>'+data.shifts[i].endTime+'</td></tr>';
+      msg += '<tr><td>'+name+'</td><td>'+roleName+'</td><td>'+start+'</td><td>'+end+'</td></tr>';
     }
   }
   msg += '</tbody></table>'; 
   bootbox.alert({
     title: 'Shifts for '+data.name,
-    message: msg
+    message: msg,
+    size: 'xl'
   });
   console.log(data);
 }
@@ -92,13 +121,88 @@ function approveDone(jqXHR) {
   console.log(jqXHR);
 }
 
+function reallyApprove(obj) {
+  $.ajax({
+    url: '../api/v1/events/'+obj.event+'/Actions/ApproveEE',
+    data: JSON.stringify(obj),
+    contentType: 'application/json',
+    method: 'POST',
+    complete: approveDone
+  });
+}
+
+function gotTicketStatusForConfirm(jqXHR) {
+  let data = this;
+  if(jqXHR.status !== 200) {
+    bootbox.confirm({
+      message: "There was an error obtaining the current ticket status! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?",
+      buttons: {
+        confirm: {
+          label: 'Yes'
+        },
+        cancel: {
+          label: 'No'
+        }
+      },
+      callback: function(result){
+        if(result) {
+          reallyApprove(data);
+        }
+      }
+    });
+  }
+  else if(jqXHR.responseJSON.ticket !== true) {
+    bootbox.confirm({
+      message: "We could not find a ticket for this user! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?",
+      buttons: {
+        confirm: {
+          label: 'Yes'
+        },
+        cancel: {
+          label: 'No'
+        }
+      },
+      callback: function(result){
+        if(result) {
+          reallyApprove(data);
+        }
+      }
+    });
+  }
+  else {
+    reallyApprove(data);
+  }
+}
+
 function approve(type, uid, ee) {
   var obj = {};
+  obj.event = $('#eventFilter').val();
+  if(obj.event === null) {
+    alert('More than one event has early entry/late stay! Please select and event first!');
+    return;
+  }
   obj.approvalType = type;
   obj.uid = uid;
   obj.eeList = ee;
   $.ajax({
-    url: '../api/v1/events/Actions/ApproveEE',
+    url: '../api/v1/participants/'+uid+'/ticketStatus',
+    context: obj,
+    complete: gotTicketStatusForConfirm
+  });
+}
+
+function dispprove(type, uid, ee) {
+  var obj = {};
+  obj.event = $('#eventFilter').val();
+  if(obj.event === null) {
+    alert('More than one event has early entry/late stay! Please select and event first!');
+    return;
+  }
+  obj.approvalType = type;
+  obj.uid = uid;
+  obj.eeList = ee;
+  $.ajax({
+    url: '../api/v1/events/'+obj.event+'/Actions/DisapproveEE',
     data: JSON.stringify(obj),
     contentType: 'application/json',
     method: 'POST',
@@ -146,20 +250,26 @@ function leadApprovalDisplay(cell) {
 }
 
 function gotTicketStatus(jqXHR) {
+  let id = encodeURI(this.data.id);
+  let elem = $(document.getElementById('ticket_'+id));
   if(jqXHR.status !== 200) {
-    $('#ticket_'+this.data.id).replaceWith('<i class="text-danger">Error</i>');
+    elem.replaceWith('<i class="text-danger">Error</i>');
     return;
   }
   var data = jqXHR.responseJSON;
   if(data.ticket) {
-    $('#ticket_'+this.data.id).replaceWith('<p class="text-success">Yes</p>');
+    elem.replaceWith('<p class="text-success">Yes</p>');
+    return;
+  }
+  if(data.requestRecieved) {
+    elem.replaceWith('<i class="text-info">Pending</i>');
     return;
   }
   if(data.request) {
-    $('#ticket_'+this.data.id).replaceWith('<i class="text-warning">Requested</i>');
+    elem.replaceWith('<i class="text-warning">Requested</i>');
     return;
   }
-  $('#ticket_'+this.data.id).replaceWith('<p class="text-danger">No</p>');
+  elem.replaceWith('<p class="text-danger">No</p>');
 }
 
 function hasTicketDisplay(cell) {
@@ -170,18 +280,20 @@ function hasTicketDisplay(cell) {
     context: context,
     complete: gotTicketStatus
   });
-  return '<div id="ticket_'+data.id+'" class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>';
+  return '<div id="ticket_'+encodeURI(data.id)+'" class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>';
 }
 
 function gotInitialData(results) {
   var eventResult = results.shift();
   var deptResult = results.shift();
+  var roleResult = results.shift();
   var participantResults = results.shift();
   var shiftResults = results.shift();
   var obj = {};
   obj.events = processEvents(eventResult.value);
   obj.depts = processDepts(deptResult.value);
   obj.vols = processParticipants(participantResults.value);
+  obj.roles = processRoles(roleResult.value);
   for(var i = 0; i < shiftResults.value.length; i++) {
     if(shiftResults.value[i].participant === '') {
       continue;
@@ -244,6 +356,7 @@ function gotInitialData(results) {
     ]
   });
   table.setData(rows);
+  $('body').data('backend', obj);
 }
 
 function initPage() {
@@ -264,10 +377,16 @@ function initPage() {
     promises.push($.ajax({
       url: '../api/v1/departments',
     }));
+    promises.push($.ajax({
+      url: '../api/v1/roles',
+    }));
   }
   else {
     promises.push($.ajax({
       url: '../api/v1/departments$filter=departmentID eq '+deptId,
+    }));
+    promises.push($.ajax({
+      url: '../api/v1/departments/'+deptId+'/roles',
     }));
   }
   promises.push($.ajax({

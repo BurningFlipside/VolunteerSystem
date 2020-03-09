@@ -1,5 +1,16 @@
 var departments = {};
 var events;
+var roles;
+
+function getRoleName(roleID) {
+  if(roles === undefined) {
+    return roleID;
+  }
+  if(roles[roleID] === undefined) {
+    return roleID;
+  }
+  return roles[roleID].display_name;
+}
 
 function doneCreatingShift(jqXHR) {
   if(jqXHR.status !== 200) {
@@ -480,12 +491,12 @@ function gotShiftsToGroup(jqXHR) {
     singleSelect.options = [];
     for(var i = 0; i < singles.length; i++) {
       if(singles[i].name !== undefined && singles[i].name.length > 0) {
-        shiftName = singles[i].name+': '+singles[i].roleID;
+        shiftName = singles[i].name+': '+getRoleName(singles[i].roleID);
       }
       else {
         var start = new Date(singles[i].startTime);
         var end = new Date(singles[i].endTime);
-        shiftName = singles[i].roleID+': '+start+' to '+end;
+        shiftName = getRoleName(singles[i].roleID)+': '+start+' to '+end;
       }
       singleSelect.options.push({value: singles[i]['_id']['$oid'], text: shiftName});
     }
@@ -745,6 +756,17 @@ function gotShiftToEdit(jqXHR) {
   });
 }
 
+function removeGroupSignup(e) {
+  $.ajax({
+    url: '../api/v1/shifts/Actions/RemoveGroupSignupLink',
+    contentType: 'application/json',
+    data: JSON.stringify(e.data),
+    type: 'POST',
+    dataType: 'json',
+    complete: doneCreatingShift
+  });
+}
+
 function gotGroupToEdit(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -765,6 +787,7 @@ function gotGroupToEdit(jqXHR) {
   var roleText = '';
   var roles = {};
   var taken = false;
+  var group = false;
   for(var i = 0; i < shifts.length; i++) {
     if(roles[shifts[i].roleID] === undefined) {
       roles[shifts[i].roleID] = 0;
@@ -773,9 +796,12 @@ function gotGroupToEdit(jqXHR) {
     if(shifts[i].status === 'filled' || shifts[i].status === 'pending') {
       taken = true;
     }
+    if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
+      group = true;
+    }
   }
   for(var role in roles) {
-    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[role]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+role+'</span></div></div>';
+    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[role]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+getRoleName(role)+'</span></div></div>';
   }
   var dialogOptions = {
     title: 'Edit Shift Set',
@@ -807,10 +833,27 @@ function gotGroupToEdit(jqXHR) {
       {text: 'Save Shift Set', callback: saveGroup}
     ]
   };
+  dialogOptions.alerts = [];
   if(taken) {
-    dialogOptions.alerts = [
-      {type: 'warning', text: 'One or more shift in the set is already filled!'}
-    ];
+    dialogOptions.alerts.push({type: 'warning', text: 'One or more shift in the set is already filled!'});
+    for(var i = 0; i < shifts.length; i++) {
+      if(shifts[i].status === 'filled') {
+        dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'">'+shifts[i].participant+'</a>'});
+      }
+      else if(shifts[i].status === 'pending') {
+        dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'"><i>Pending:</i> '+shifts[i].participant+'</a>'});
+      }
+    }
+  }
+  if(group) {
+    dialogOptions.alerts.push({type: 'info', text: 'A group signup link exists for this group!'});
+    for(var i = 0; i < shifts.length; i++) {
+      if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
+        dialogOptions.inputs.push({label: 'Group Signup Link', type: 'html', id: 'signupLink', text: '<a href="https://secure.burningflipside.com/fvs/groupSignup.php?id='+shifts[i].signupLink+'">https://secure.burningflipside.com/fvs/groupSignup.php?id='+shifts[i].signupLink+'</a>'});
+        break;
+      }
+    }
+    dialogOptions.buttons.push({text: 'Remove Group Signup', callback: removeGroupSignup});
   }
   flipDialog.dialog(dialogOptions);
 }
@@ -885,12 +928,12 @@ function gotShifts(jqXHR) {
   singles.sort(sortEvents);
   for(var i = 0; i < singles.length; i++) {
     if(singles[i].name !== undefined && singles[i].name.length > 0) {
-      shiftName = singles[i].name+': '+singles[i].roleID;
+      shiftName = singles[i].name+': '+getRoleName(singles[i].roleID);
     }
     else {
       var start = new Date(singles[i].startTime);
       var end = new Date(singles[i].endTime);
-      shiftName = singles[i].roleID+': '+start+' to '+end;
+      shiftName = getRoleName(singles[i].roleID)+': '+start+' to '+end;
     }
     var badge = '';
     if(singles[i].status === 'filled') {
@@ -907,6 +950,11 @@ function gotShifts(jqXHR) {
 }
 
 function processEvents(events) {
+  if(getParameterByName('showOld') === null) {
+    events = events.filter(function(evt) {
+      return evt.why !== "Event is in the past";
+    });
+  }
   events.sort(function(a, b){
     var aDate = new Date(a.startTime);
     var bDate = new Date(b.startTime);
@@ -974,12 +1022,36 @@ function processDepartments(array) {
   }
 }
 
+function processRoles(roleData) {
+  roles = {};
+  for(let i = 0; i < roleData.length; i++) {
+    roles[roleData[i].short_name] = roleData[i];
+  }
+  return roles;
+}
+
 function gotInitialData(results) {
   var eventResult = results.shift();
   var deptResult = results.shift();
+  var roleResult = results.shift();
   var obj = {};
-  obj.events = processEvents(eventResult.value);
+  events = obj.events = processEvents(eventResult.value);
   obj.depts = processDepartments(deptResult.value);
+  roles = obj.roles = processRoles(roleResult.value);
+  var shiftID = getParameterByName('shiftID');
+  var groupID = getParameterByName('groupID');
+  if(shiftID !== null) {
+    $.ajax({
+      url: '../api/v1/shifts/'+shiftID,
+      complete: gotShiftToEdit
+    });
+  }
+  else if(groupID !== null) {
+    $.ajax({
+      url: '../api/v1/shifts?$filter=groupID eq '+groupID,
+      complete: gotGroupToEdit
+    });
+  }
 }
 
 function setMinEndTime(e) {
@@ -1051,23 +1123,12 @@ function initPage() {
   promises.push($.ajax({
     url: '../api/v1/departments'
   }));
+  promises.push($.ajax({
+    url: '../api/v1/roles'
+  }));
   Promise.allSettled(promises).then(gotInitialData);
   $('#startTime').change(setMinEndTime);
   $('#eventID').change(setBoundaryTimes);
-  var shiftID = getParameterByName('shiftID');
-  var groupID = getParameterByName('groupID');
-  if(shiftID !== null) {
-    $.ajax({
-      url: '../api/v1/shifts/'+shiftID,
-      complete: gotShiftToEdit
-    });
-  }
-  else if(groupID !== null) {
-    $.ajax({
-      url: '../api/v1/shifts?$filter=groupID eq '+groupID,
-      complete: gotGroupToEdit
-    });
-  }
   $('#eventFilter').change(efChanged);
 }
 

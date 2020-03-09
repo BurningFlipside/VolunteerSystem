@@ -103,6 +103,52 @@ class ParticipantAPI extends VolunteerAPI
         return $response->withJson($areas[0]);
     }
 
+    public function updateEntry($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['name'];
+        if($uid === 'me')
+        {
+            $uid = $this->user->uid;
+        }
+        else if($uid !== $this->user->uid && $this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $filter = $this->getFilterForPrimaryKey($uid);
+        $dataTable = $this->getDataTable();
+        $entry = $dataTable->read($filter);
+        if(empty($entry))
+        {
+            return $response->withStatus(404);
+        }
+        if(count($entry) === 1 && isset($entry[0]))
+        {
+            $entry = $entry[0];
+        }
+        if($uid !== $this->user->uid && $this->canUpdate($request, $entry) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $obj = $request->getParsedBody();
+        if($obj === null)
+        {
+            $request->getBody()->rewind();
+            $obj = $request->getBody()->getContents();
+            $tmp = json_decode($obj, true);
+            if($tmp !== null)
+            {
+                $obj = $tmp;
+            }
+        }
+        if($this->validateUpdate($obj, $request, $entry) === false)
+        {
+            return $response->withStatus(400);
+        }
+        $ret = $dataTable->update($filter, $obj);
+        return $response->withJson($ret);
+    }
+
     public function getMyShifts($request, $response, $args)
     {
         $this->validateLoggedIn($request);
@@ -329,14 +375,20 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(404);
         }
         $user = $users[0];
-        //TODO Ticket IDs for people who don't have tickets associated to their email
-        //Get the ticket year
         $settingsTable = DataSetFactory::getDataTableByNames('tickets', 'Variables');
         $settings = $settingsTable->read(new \Data\Filter('name eq \'year\''));
-        $year = $settings[0]['value']; 
-        $email = $user['email'];
+        $year = $settings[0]['value'];
         $ticketTable = DataSetFactory::getDataTableByNames('tickets', 'Tickets');
-        $tickets = $ticketTable->read(new \Data\Filter("email eq '$email' and year eq $year"));
+        if(isset($user['ticketCode']))
+        {
+            $code = $user['ticketCode'];
+            $tickets = $ticketTable->read(new \Data\Filter("contains(hash,$code) and year eq $year"));
+        }
+        else
+        {
+            $email = $user['email'];
+            $tickets = $ticketTable->read(new \Data\Filter("email eq '$email' and year eq $year"));
+        }
         if(empty($tickets))
         {
             $requestTable = DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
@@ -344,6 +396,10 @@ class ParticipantAPI extends VolunteerAPI
             if(empty($requests))
             {
                 return $response->withJson(array('ticket' => false, 'request' => false));
+            }
+            if($requests[0]['status'] === '1')
+            {
+                return $response->withJson(array('ticket' => false, 'request' => true, 'requestRecieved' => true));
             }
             return $response->withJson(array('ticket' => false, 'request' => true));
         }

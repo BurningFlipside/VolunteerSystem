@@ -63,6 +63,16 @@ function gotCerts(jqXHR) {
   getMyCerts();
 }
 
+function gotTicketStatus(jqXHR) {
+  if(jqXHR.status !== 200) {
+    return;
+  }
+  var data = jqXHR.responseJSON;
+  if(data.ticket === true) {
+    $('#ticketStatus').html('<div class="alert alert-success" role="alert">You have a ticket linked to this profile!</div>');
+  }
+}
+
 function uploadedCert(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -151,6 +161,19 @@ function saveData() {
   return false;
 }
 
+function linkTicket() {
+  var data = {};
+  data.ticketCode = $('#ticketCode').val();
+  $.ajax({
+    url: 'api/v1/participants/me',
+    method: 'PATCH',
+    data: JSON.stringify(data),
+    contentType: 'application/json',
+    complete: saveDone
+  });
+  return false;
+}
+
 function initPage() {
   $.ajax({
     url: 'api/v1/participants/me',
@@ -159,6 +182,10 @@ function initPage() {
   $.ajax({
     url: 'api/v1/certs',
     complete: gotCerts
+  });
+  $.ajax({
+    url: 'api/v1/participants/me/ticketStatus',
+    complete: gotTicketStatus
   });
 }
 

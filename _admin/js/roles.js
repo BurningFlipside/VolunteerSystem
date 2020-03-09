@@ -184,6 +184,9 @@ function gotDeptList(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
+  array.sort(function(a, b) {
+    return a.departmentName.localeCompare(b.departmentName);
+  });
   var sel = $('#deptFilter');
   for(var i = 0; i < array.length; i++) {
     if(array[i].isAdmin) {

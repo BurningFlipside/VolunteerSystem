@@ -117,7 +117,8 @@ function fullImage(e, cell) {
   var imagedata = data.certs[certType].image;
   var imagetype = data.certs[certType].imageType;
   if(imagetype === 'application/pdf') {
-    bootbox.alert({size: 'xl', message:'<object data="data:'+imagetype+';base64, '+imagedata+'"/>'});
+    bootbox.alert({size: 'xl', message:'<object data="data:'+imagetype+';base64, '+imagedata+'" style="width: 100%; height: '+screen.height*3/5+'px"/>'});
+    return;
   }
   bootbox.alert({size: 'xl', message:'<img src="data:'+imagetype+';base64, '+imagedata+'"/>'});
 }
