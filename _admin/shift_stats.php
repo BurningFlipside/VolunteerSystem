@@ -12,6 +12,16 @@ $page->content['selectors'] = '<label for="event" class="col-sm-2 col-form-label
   <div class="col-sm-10">
     <select class="form-control" id="event"></select>
   </div>
+  <div class="w-100"></div>
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="hideEmpty">
+    <label class="form-check-label" for="hideEmpty">Hide Empty Departments</label>
+  </div>
+  <div class="w-100"></div>
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="hideInviteOnly">
+    <label class="form-check-label" for="hideInviteOnly">Hide Invite Only Shifts</label>
+  </div>
 ';
 
 $page->printPage();
