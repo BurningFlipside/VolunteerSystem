@@ -2,11 +2,18 @@
 
 Table of Contents
 
+1. [Caveats](#caveats-end-user)
 1. [Setup Wizard](#setup-wizard)
 2. [FVS Dashboard](#flipside-volunteer-system-dashboard)
 
+## Caveats
+
+* The FVS may work better in Chrome than Firefox or Safari. If you're having trouble with something, try changing browsers. At the very least, try using the most recent version of the browser.
+
+* The Flipside Volunteer System (FVS) is a **single-user signup** process. Unlike the ticket request system where you can make one request for multiple people, FVS needs a separate login for each person volunteering.  
+
 ## Setup Wizard
-The first time you open the Flipside Volunteer System (FVS), you'll be asked a series of questions to set up your profile. It starts with _Basic Info_.
+The first time you open the Flipside Volunteer System, you'll be asked a series of questions to set up your profile. It starts with _Basic Info_.
 
 ![Wizard - Basic Info screen](images/FlipsideVolunteerWizardBasic.jpg){ width=500px }
 
@@ -76,3 +83,4 @@ Click _Signup_ to officially sign up for the shift. When you see the _Success!_ 
 Your dashboard should look like this, now.
 
 ![My Shift Selection](images/Mine.jpg){ width=500px }
+
