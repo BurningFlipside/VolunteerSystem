@@ -15,6 +15,7 @@ class EventAPI extends VolunteerAPI
         $app->post('/{event}/shifts[/]', array($this, 'createShiftForEvent'));
         $app->get('/{event}/Actions/GetEEShiftReport', array($this, 'getEEShiftReportForEvent'));
         $app->post('/{event}/Actions/GetEEShiftReport', array($this, 'getEEShiftReportForEvent'));
+        $app->post('/{event}/Actions/ApproveEE', array($this, 'approveEEForEvent'));
     }
 
     protected function getFilterForPrimaryKey($value)
@@ -153,6 +154,45 @@ class EventAPI extends VolunteerAPI
             $entry = array('name' => $vol->getDisplayName('paperName'), 'email'=> $vol->email, 'dept'=> $shift->departmentID, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate);
             array_push($ret, $entry);
         }
+        return $response->withJson($ret);
+    }
+
+    protected function userCanAuth($type)
+    {
+        switch($type)
+        {
+            case 'aar':
+                return $this->user->isInGroupNamed('AAR');
+            case 'af':
+                return $this->user->isInGroupNamed('AFs');
+            case 'lead':
+                return $this->user->isInGroupNamed('Leads');
+            default:
+                error_log('Unknown auth type: '.$type);
+                return false;
+        }
+    }
+
+    public function approveEEForEvent($request, $response, $args)
+    {
+        $eventId = $args['event'];
+        if($this->canUpdate($request, null) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $event = new \VolunteerEvent($eventId);
+        $obj = $this->getParsedBody($request);
+        //First make sure the current user can do the auth they are trying...
+        if($this->userCanAuth($obj['approvalType']) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $eeList = $event->eeLists[intval($obj['eeList'])];
+        if(!isset($eeList[$obj['uid']]))
+        {
+            return $response->withStatus(404);
+        }
+        $ret = $event->approveEE($obj['uid'], intval($obj['eeList']), $obj['approvalType']);
         return $response->withJson($ret);
     }
 }

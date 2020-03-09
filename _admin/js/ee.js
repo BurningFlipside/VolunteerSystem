@@ -32,8 +32,18 @@ function processEvents(data) {
   var events = {};
   var eventSelect = $('#eventFilter');
   for(var i = 0; i < data.length; i++) {
+    if(data[i].why === 'Event is in the past') {
+      continue;
+    }
+    if(data[i].eeLists === undefined) {
+      continue;
+    }
     events[data[i]['_id']['$oid']] = data[i];
     eventSelect.append($('<option/>', {value: data[i]['_id']['$oid'], text: data[i].name}));
+  }
+  let ids = Object.keys(events);
+  if(ids.length === 1) {
+    eventSelect.val(ids[0]);
   }
   eventSelect.data('events', events);
   eventSelect.change(eventChanged);
@@ -111,13 +121,88 @@ function approveDone(jqXHR) {
   console.log(jqXHR);
 }
 
+function reallyApprove(obj) {
+  $.ajax({
+    url: '../api/v1/events/'+obj.event+'/Actions/ApproveEE',
+    data: JSON.stringify(obj),
+    contentType: 'application/json',
+    method: 'POST',
+    complete: approveDone
+  });
+}
+
+function gotTicketStatusForConfirm(jqXHR) {
+  let data = this;
+  if(jqXHR.status !== 200) {
+    bootbox.confirm({
+      message: "There was an error obtaining the current ticket status! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?",
+      buttons: {
+        confirm: {
+          label: 'Yes'
+        },
+        cancel: {
+          label: 'No'
+        }
+      },
+      callback: function(result){
+        if(result) {
+          reallyApprove(data);
+        }
+      }
+    });
+  }
+  else if(jqXHR.responseJSON.ticket !== true) {
+    bootbox.confirm({
+      message: "We could not find a ticket for this user! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?",
+      buttons: {
+        confirm: {
+          label: 'Yes'
+        },
+        cancel: {
+          label: 'No'
+        }
+      },
+      callback: function(result){
+        if(result) {
+          reallyApprove(data);
+        }
+      }
+    });
+  }
+  else {
+    reallyApprove(data);
+  }
+}
+
 function approve(type, uid, ee) {
   var obj = {};
+  obj.event = $('#eventFilter').val();
+  if(obj.event === null) {
+    alert('More than one event has early entry/late stay! Please select and event first!');
+    return;
+  }
   obj.approvalType = type;
   obj.uid = uid;
   obj.eeList = ee;
   $.ajax({
-    url: '../api/v1/events/Actions/ApproveEE',
+    url: '../api/v1/participants/'+uid+'/ticketStatus',
+    context: obj,
+    complete: gotTicketStatusForConfirm
+  });
+}
+
+function dispprove(type, uid, ee) {
+  var obj = {};
+  obj.event = $('#eventFilter').val();
+  if(obj.event === null) {
+    alert('More than one event has early entry/late stay! Please select and event first!');
+    return;
+  }
+  obj.approvalType = type;
+  obj.uid = uid;
+  obj.eeList = ee;
+  $.ajax({
+    url: '../api/v1/events/'+obj.event+'/Actions/DisapproveEE',
     data: JSON.stringify(obj),
     contentType: 'application/json',
     method: 'POST',
