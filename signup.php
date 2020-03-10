@@ -24,7 +24,12 @@ $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 $page->addJS('js/signup.js');
 $page->addJS('js/dialog.js');
 $page->addWellKnownJS(JS_BOOTBOX);
-$processor = new ProcessorUser($page->user->isInGroupNamed('VolunteerAdmins'));
+$admin = false;
+if($page->user !== null)
+{
+  $admin = $page->user->isInGroupNamed('VolunteerAdmins');
+}
+$processor = new ProcessorUser($admin);
 
 $page->body = '<div class="row"><h1>Shift Signup</h1></div>';
 
