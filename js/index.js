@@ -379,6 +379,10 @@ function gotInitialData(results) {
   var eventResult = results.shift();
   var deptResult = results.shift();
   var obj = {};
+  if(eventResult.status === 'rejected') {
+    //User isn't logged in
+    return;
+  }
   obj.events = processEvents(eventResult.value);
   obj.depts = processDepartments(deptResult.value);
   var sel2 = $('#shiftTypes').select2();
