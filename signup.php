@@ -59,7 +59,13 @@ if(empty($shifts))
 $shift = $shifts[0];
 $myShift = new \VolunteerShift(false, $shift);
 
+try {
 $profile = new \VolunteerProfile($page->user->uid);
+} catch(Exception $e) {
+//User hasn't made a profile yet... Let the wizard take care of them
+$page->printPage();
+return;
+}
 
 if($processor->isAdminForShift($shift, $page->user))
 {
