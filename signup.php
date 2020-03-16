@@ -29,6 +29,12 @@ if($page->user !== null)
 {
   $admin = $page->user->isInGroupNamed('VolunteerAdmins');
 }
+else
+{
+    $page->body .= 'Not logged in! Please log in to sign up for this shift.';
+    $page->printPage();
+    return;
+}
 $processor = new ProcessorUser($admin);
 
 $page->body = '<div class="row"><h1>Shift Signup</h1></div>';
