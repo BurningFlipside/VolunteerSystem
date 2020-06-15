@@ -204,7 +204,7 @@ class ShiftAPI extends VolunteerAPI
     {
         $data = $request->getParsedBody();
         $dataTable = $this->getDataTable();
-        $filter = new \Data\Filter('groupID eq '.$data['groupID']);
+        $filter = new \Flipside\Data\Filter('groupID eq '.$data['groupID']);
         $entities = $dataTable->read($filter);
         if(empty($entities))
         {
@@ -276,7 +276,7 @@ class ShiftAPI extends VolunteerAPI
                 $dept = new \VolunteerDepartment($overlaps[$i]->departmentID);
                 $leads = array_merge($leads, $dept->getLeadEmails());
                 $overlaps[$i]->status = 'pending';
-                $tmp = new \Data\Filter('_id eq '.$overlaps[$i]->{'_id'});
+                $tmp = new \Flipside\Data\Filter('_id eq '.$overlaps[$i]->{'_id'});
                 $res = $dataTable->update($tmp, $overlaps[$i]);
                 if($res === false)
                 {
@@ -290,7 +290,7 @@ class ShiftAPI extends VolunteerAPI
             $profile = new \VolunteerProfile($this->user->uid);
             $email = new \Emails\TwoShiftsAtOnceEmail($profile);
             $email->addLeads($leads);
-            $emailProvider = \EmailProvider::getInstance();
+            $emailProvider = \Flipside\EmailProvider::getInstance();
             if($emailProvider->sendEmail($email) === false)
             {
                 throw new \Exception('Unable to send duplicate email!');
@@ -394,7 +394,7 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $filter = new \Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
         $entities = $dataTable->read($filter);
         $count = count($entities);
         $dept = new \VolunteerDepartment($entity['departmentID']);
@@ -451,7 +451,7 @@ class ShiftAPI extends VolunteerAPI
                 $roles[substr($key, 6)] = $value;
             }
         }
-        $filter = new \Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
         $entities = $dataTable->read($filter);
         $count = count($entities);
         $uuid = $this->genUUID();
@@ -497,7 +497,7 @@ class ShiftAPI extends VolunteerAPI
             {
                 continue;
             }
-            $filter = new \Data\Filter('_id eq '.$entities[$i]['_id']);
+            $filter = new \Flipside\Data\Filter('_id eq '.$entities[$i]['_id']);
             $res = $dataTable->update($filter, $entities[$i]);
             if($res === false)
             {
@@ -520,7 +520,7 @@ class ShiftAPI extends VolunteerAPI
         }
         $groupID = $data['groupID'];
         $dataTable = $this->getDataTable();
-        $filter = new \Data\Filter("groupID eq '$groupID'");
+        $filter = new \Flipside\Data\Filter("groupID eq '$groupID'");
         $entity = $dataTable->read($filter);
         if(empty($entity))
         {
@@ -536,7 +536,7 @@ class ShiftAPI extends VolunteerAPI
                 $entity['status'] = 'unfilled';
             }
             $entity[$i]['groupLinkCreated'] = '';
-            $upFilter = new \Data\Filter('_id eq '.$entity[$i]['_id']);
+            $upFilter = new \Flipside\Data\Filter('_id eq '.$entity[$i]['_id']);
             $tmp = $dataTable->update($upFilter, $entity[$i]);
             if($tmp === false)
             {

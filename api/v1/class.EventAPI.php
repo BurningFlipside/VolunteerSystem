@@ -20,7 +20,7 @@ class EventAPI extends VolunteerAPI
 
     protected function getFilterForPrimaryKey($value)
     {
-        return new \Data\Filter($this->primaryKeyName." eq '$value' or alias eq '$value'");
+        return new \Flipside\Data\Filter($this->primaryKeyName." eq '$value' or alias eq '$value'");
     }
 
     protected function canUpdate($request, $entity)
@@ -80,8 +80,8 @@ class EventAPI extends VolunteerAPI
     {
         $this->validateLoggedIn($request);
         $eventId = $args['event'];
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
         $filter = $this->addRequiredFilter('eventID', $eventId, $odata);
         if($filter === false)
         {
@@ -109,7 +109,7 @@ class EventAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $obj = $request->getParsedBody();
         if($obj == NULL)
         {
@@ -127,7 +127,7 @@ class EventAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $shiftDataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $shiftDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $obj = $request->getParsedBody();
         if($obj == NULL)
         {
@@ -142,7 +142,7 @@ class EventAPI extends VolunteerAPI
         {
             $filterStr .= " and earlyLate ne '-1'";
         }
-        $filter = new \Data\Filter($filterStr);
+        $filter = new \Flipside\Data\Filter($filterStr);
         $shifts = $shiftDataTable->read($filter);
         $ret = array();
         $count = count($shifts);

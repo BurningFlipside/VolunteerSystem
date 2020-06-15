@@ -8,7 +8,7 @@ $page->setTemplateName('admin-table-new.html');
 $page->addWellKnownJS(JS_BOOTBOX);
 $page->addJS('../js/wizard.js');
 
-$dataTable = DataSetFactory::getDataTableByNames('fvs', 'certifications');
+$dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');
 $certText = '';
 $certs = $dataTable->read();
 if($certs !== false)

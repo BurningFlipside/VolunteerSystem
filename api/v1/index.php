@@ -13,7 +13,7 @@ require_once('class.ParticipantAPI.php');
 require_once('class.CertificatonAPI.php');
 require_once('class.TextAPI.php');
 
-$site = new \Http\WebSite();
+$site = new \Flipside\Http\WebSite();
 $site->registerAPI('/events', new EventAPI());
 $site->registerAPI('/departments', new DepartmentAPI());
 $site->registerAPI('/roles', new RoleAPI());

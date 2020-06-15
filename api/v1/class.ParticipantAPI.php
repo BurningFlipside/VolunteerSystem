@@ -92,7 +92,7 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = $this->getDataTable();
-        $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, $odata->select, $odata->top,
                                     $odata->skip, $odata->orderby);
@@ -153,8 +153,8 @@ class ParticipantAPI extends VolunteerAPI
     {
         $this->validateLoggedIn($request);
         $uid = $this->user->uid;
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $filter = new \Data\Filter("participant eq '$uid'");
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $filter = new \Flipside\Data\Filter("participant eq '$uid'");
         $shifts = $dataTable->read($filter);
         $format = $request->getAttribute('format', false);
         if($format === false || $format === 'text/calendar')
@@ -209,7 +209,7 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = $this->getDataTable();
-        $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, array('certs'), $odata->top,
                                     $odata->skip, $odata->orderby);
@@ -303,7 +303,7 @@ class ParticipantAPI extends VolunteerAPI
         {
             $profile = new \VolunteerProfile(false, $user);
             $email = new \Emails\CertificationEmail($profile, 'certifcationRejected', $certType, array('reason'=>$reason));
-            $emailProvider = \EmailProvider::getInstance();
+            $emailProvider = \Flipside\EmailProvider::getInstance();
             if($emailProvider->sendEmail($email) === false)
             {
                 throw new \Exception('Unable to send email!');
@@ -345,7 +345,7 @@ class ParticipantAPI extends VolunteerAPI
         {
             $profile = new \VolunteerProfile(false, $user);
             $email = new \Emails\CertificationEmail($profile, 'certifcationAccepted', $certType);
-            $emailProvider = \EmailProvider::getInstance();
+            $emailProvider = \Flipside\EmailProvider::getInstance();
             if($emailProvider->sendEmail($email) === false)
             {
                 throw new \Exception('Unable to send email!');
@@ -375,24 +375,24 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(404);
         }
         $user = $users[0];
-        $settingsTable = DataSetFactory::getDataTableByNames('tickets', 'Variables');
-        $settings = $settingsTable->read(new \Data\Filter('name eq \'year\''));
+        $settingsTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Variables');
+        $settings = $settingsTable->read(new \Flipside\Data\Filter('name eq \'year\''));
         $year = $settings[0]['value'];
-        $ticketTable = DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+        $ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
         if(isset($user['ticketCode']))
         {
             $code = $user['ticketCode'];
-            $tickets = $ticketTable->read(new \Data\Filter("contains(hash,$code) and year eq $year"));
+            $tickets = $ticketTable->read(new \Flipside\Data\Filter("contains(hash,$code) and year eq $year"));
         }
         else
         {
             $email = $user['email'];
-            $tickets = $ticketTable->read(new \Data\Filter("email eq '$email' and year eq $year"));
+            $tickets = $ticketTable->read(new \Flipside\Data\Filter("email eq '$email' and year eq $year"));
         }
         if(empty($tickets))
         {
-            $requestTable = DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
-            $requests = $requestTable->read(new \Data\Filter("mail eq '$email' and year eq $year"));
+            $requestTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
+            $requests = $requestTable->read(new \Flipside\Data\Filter("mail eq '$email' and year eq $year"));
             if(empty($requests))
             {
                 return $response->withJson(array('ticket' => false, 'request' => false));

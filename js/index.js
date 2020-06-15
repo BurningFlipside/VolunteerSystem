@@ -304,6 +304,10 @@ function processEvents(events) {
       data.push(option);
     }
   }
+  if(data.length === 0) {
+    alert('All events are in the past!');
+    return;
+  }
   var sel2 = $('#event').select2({data: data});
   sel2.change(eventChanged);
   eventChanged({target: sel2[0]});

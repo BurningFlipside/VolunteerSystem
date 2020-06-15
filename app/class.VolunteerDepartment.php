@@ -9,8 +9,8 @@ class VolunteerDepartment extends VolunteerObject
     public function getLeadEmails()
     {
         $leadTitle = $this->dbData['lead'];
-        $auth = \AuthProvider::getInstance();
-        $users = $auth->getUsersByFilter(new \Data\Filter('title eq '.$leadTitle), array('mail'));
+        $auth = \Flipside\AuthProvider::getInstance();
+        $users = $auth->getUsersByFilter(new \Flipside\Data\Filter('title eq '.$leadTitle), array('mail'));
         if(empty($users))
         {
             return null;
@@ -25,8 +25,8 @@ class VolunteerDepartment extends VolunteerObject
 
     public static function getPrivateDepartments()
     {
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
-        $filter = new \Data\Filter('public eq false');
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
+        $filter = new \Flipside\Data\Filter('public eq false');
         $depts = $dataTable->read($filter);
         $res = array();
         if(empty($depts))

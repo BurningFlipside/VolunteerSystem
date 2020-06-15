@@ -2,7 +2,6 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require_once('class.SecurePage.php');
-require_once('class.FlipSession.php');
 require_once('app/VolunteerAutoload.php');
 class VolunteerPage extends SecurePage
 {

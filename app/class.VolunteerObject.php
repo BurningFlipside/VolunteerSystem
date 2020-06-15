@@ -12,8 +12,8 @@ class VolunteerObject
         $this->index = $index;
         if($dbData === null)
         {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', $tableName);
-            $filter = new \Data\Filter($index.' eq '.$id);
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', $tableName);
+            $filter = new \Flipside\Data\Filter($index.' eq '.$id);
             $objs = $dataTable->read($filter);
             if(empty($objs))
             {
@@ -31,12 +31,12 @@ class VolunteerObject
 
     public function getDataTable()
     {
-        return DataSetFactory::getDataTableByNames('fvs', $this->tableName);
+        return \Flipside\DataSetFactory::getDataTableByNames('fvs', $this->tableName);
     }
 
     public function getDataFilter()
     {
-        return new \Data\Filter($this->index.' eq '.$this->id);
+        return new \Flipside\Data\Filter($this->index.' eq '.$this->id);
     }
 
     public function __get($propName)
