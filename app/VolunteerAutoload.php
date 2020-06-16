@@ -1,4 +1,9 @@
 <?php
+if(file_exists(__DIR__ . '/../vendor/autoload.php'))
+{
+    require __DIR__ . '/../vendor/autoload.php';
+}
+
 function VolunteerAutoload($classname)
 {
     $classname = str_replace('/', '\\', $classname);
