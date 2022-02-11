@@ -1,5 +1,5 @@
 <?php
-require_once('app/VolunteerAutoload.php');
+require_once('../app/VolunteerAutoload.php');
 require_once('../../class.SecurePage.php');
 class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
 {

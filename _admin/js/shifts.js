@@ -721,8 +721,8 @@ function gotShiftToEdit(jqXHR) {
       {label: 'Department', type: 'text', readonly: true, id: 'department', value: getDepartmentName(shift.departmentID)},
       {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
-      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true},
-      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true, value: shift.startTime},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true, value: shift.endTime},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
       {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded'},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
@@ -787,7 +787,7 @@ function gotGroupToEdit(jqXHR) {
   var roleText = '';
   var roles = {};
   var taken = false;
-  var group = false;
+  var groupLink = false;
   for(var i = 0; i < shifts.length; i++) {
     if(roles[shifts[i].roleID] === undefined) {
       roles[shifts[i].roleID] = 0;
@@ -797,7 +797,7 @@ function gotGroupToEdit(jqXHR) {
       taken = true;
     }
     if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
-      group = true;
+      groupLink = true;
     }
   }
   for(var role in roles) {
@@ -845,7 +845,7 @@ function gotGroupToEdit(jqXHR) {
       }
     }
   }
-  if(group) {
+  if(groupLink) {
     dialogOptions.alerts.push({type: 'info', text: 'A group signup link exists for this group!'});
     for(var i = 0; i < shifts.length; i++) {
       if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
@@ -1101,6 +1101,7 @@ function unboundedChanged(e) {
 
 function efChanged(e) {
   $('.shift').remove();
+  $('.card').show();
   if(e.target.value === '') {
     $.ajax({
       url: '../api/v1/shifts',
@@ -1108,6 +1109,22 @@ function efChanged(e) {
     });
   }
   else {
+    for(let i = 0; i < events.length; i++) {
+      if(events[i]['_id']['$oid'] === e.target.value) {
+	let fvsEvent = events[i];
+        if(fvsEvent.departments.length > 0) {
+	  let cards = $('.card');
+	  for(let j = 0; j < cards.length; j++) {
+            let header = cards[j].querySelector('.card-header');
+            let headerName = header.id.substring(7);
+            if(!fvsEvent.departments.includes(headerName)) {
+              $(cards[j]).hide();
+	    }
+	  }
+	}
+        break;
+      }
+    }
     $.ajax({
       url: '../api/v1/shifts?$filter=eventID eq '+e.target.value,
       complete: gotShifts

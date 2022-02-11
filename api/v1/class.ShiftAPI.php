@@ -45,6 +45,27 @@ class ShiftAPI extends VolunteerAPI
         return $this->canUpdate($request, $entity);
     }
 
+    protected function manipulateParameters($request, &$odata)
+    {
+        if($odata->filter === false)
+        {
+            //By default only get shifts for events that are from this point forward
+            $eventDB = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
+            $now = new DateTime();
+            $events = $eventDB->read(array('endTime' => array('$gte'=>$now->format('Y-m-d\TG:i'))));
+            $ids = array();
+            $count = count($events);
+            if($count > 0) {
+                for($i = 0; $i < $count; $i++)
+                {
+                    array_push($ids, (string)$events[$i]['_id']);
+                }
+                $odata->filter = array('eventID'=>array('$in'=>$ids));
+            }
+        }
+        return false;
+    }
+
     protected function validateCreate(&$obj, $request)
     {
         if($this->isVolunteerAdmin($request))

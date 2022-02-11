@@ -200,6 +200,9 @@ function gotShifts(jqXHR) {
     deptHasShifts[depts[i].id] = false;
   }
   var shifts = jqXHR.responseJSON;
+  if(shifts.length === 0) {
+    add_notification($('#content'), 'This event does not have any shifts at this time. Check back later or contact your lead!');
+  }
   start = new Date('2100-01-01T01:00:00');
   end = new Date('2000-01-01T01:00:00');
   for(var i = 0; i < shifts.length; i++) {
@@ -251,7 +254,14 @@ function gotShifts(jqXHR) {
     deptHasShifts[shifts[i].departmentID] = true;
   }
   calendar.setOption('validRange.start', myStart);
+  try{
   calendar.render();
+  } catch(error) {
+    console.error(error);
+    if(shifts.length > 0) {
+      location.href = location.origin + location.pathname + "?event=" + shifts[0].eventID;
+    }
+  }
   if(window.innerWidth <= 1024) {
     $('#calendar .fc-center h2').css('font-size', '1.0em');
   }

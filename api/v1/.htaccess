@@ -3,5 +3,11 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
 
-php_value include_path ".:../..:/var/www/common:/usr/share/pear"
-php_value session.cookie_domain ".burningflipside.com"
+<IfModule mod_php5.c>
+  php_value include_path ".:../..:/var/www/common:/usr/share/pear"
+  php_value session.cookie_domain ".burningflipside.com"
+</IfModule>
+<IfModule mod_php7.c>
+  php_value include_path ".:../..:/var/www/common:/usr/share/pear"
+  php_value session.cookie_domain ".burningflipside.com"
+</IfModule>

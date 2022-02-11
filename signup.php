@@ -47,8 +47,8 @@ if(!isset($_GET['shiftID']))
 }
 
 $shiftID = $_GET['shiftID'];
-$dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-$filter = new \Data\Filter('_id eq '.$shiftID);
+$dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+$filter = new \Flipside\Data\Filter('_id eq '.$shiftID);
 $shifts = $dataTable->read($filter);
 if(empty($shifts))
 {
@@ -137,15 +137,15 @@ if($myShift->findOverlaps($page->user->uid, true))
 $deptName = $shift['departmentID'];
 $roleName = $shift['roleID'];
 
-$dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
-$depts = $dataTable->read(new \Data\Filter('departmentID eq '.$shift['departmentID']));
+$dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
+$depts = $dataTable->read(new \Flipside\Data\Filter('departmentID eq '.$shift['departmentID']));
 if(!empty($depts))
 {
     $deptName = $depts[0]['departmentName'];
 }
 
-$dataTable = DataSetFactory::getDataTableByNames('fvs', 'events');
-$events = $dataTable->read(new \Data\Filter('_id eq '.$shift['eventID']));
+$dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
+$events = $dataTable->read(new \Flipside\Data\Filter('_id eq '.$shift['eventID']));
 if(!empty($events))
 {
     if($events[0]['tickets'])
@@ -154,8 +154,8 @@ if(!empty($events))
     }
 }
 
-$dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
-$roles = $dataTable->read(new \Data\Filter('short_name eq '.$shift['roleID']));
+$dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
+$roles = $dataTable->read(new \Flipside\Data\Filter('short_name eq '.$shift['roleID']));
 if(!empty($roles))
 {
     $roleName = $roles[0]['display_name'];
