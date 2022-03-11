@@ -1,6 +1,7 @@
 name: Inclusive Language Check
 on:
   - pull_request
+  - workflow_dispatch
 jobs:
   woke:
     name: woke
