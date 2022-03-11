@@ -18,6 +18,12 @@ function gotCertTypes(jqXHR) {
     return;
   }
   var data = jqXHR.responseJSON;
+  if(!Array.isArray(data))
+  {
+    console.log(data);
+    alert('Got invalid data returned!')
+    return;
+  }
   for(var i = 0; i < data.length; i++) {
     $.ajax({
       url: '../api/v1/participants?$filter=certs.'+data[i].certID+'.status%20eq%20pending&$select=firstName,lastName,email,burnerName,uid,certs.'+data[i].certID,

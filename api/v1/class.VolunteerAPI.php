@@ -35,11 +35,8 @@ class VolunteerAPI extends Flipside\Http\Rest\DataTableAPI
             {
                 return false;
             }
-            else
-            {
-                $filter->appendChild('and');
-                $filter->appendChild($odata->filter);
-            }
+            $filter->appendChild('and');
+            $filter->appendChild($odata->filter);
         }
         return $filter;
     }

@@ -40,18 +40,16 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
             if($this->isLead)
             {
                 $this->is_admin = true;
+                return;
             }
-            else
-            {
-                //Is this user the assistant for a department?
-                $uid = $this->user->uid;
-                $email = $this->user->mail;
-                $filter = new \Flipside\Data\Filter("others eq $uid or others eq $email");
-                $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
-                $depts = $dataTable->read($filter);
-                $this->isLead = !empty($depts);
-                $this->is_admin = true;
-            }
+            //Is this user the assistant for a department?
+            $uid = $this->user->uid;
+            $email = $this->user->mail;
+            $filter = new \Flipside\Data\Filter("others eq $uid or others eq $email");
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
+            $depts = $dataTable->read($filter);
+            $this->isLead = !empty($depts);
+            $this->is_admin = true;
         }
     }
 
