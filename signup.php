@@ -216,11 +216,11 @@ $page->body .= '
   </div>
   <label for="startTime" class="col-sm-2 col-form-label">Start Time:</label>
   <div class="col-sm-10">
-    <input type="datetime-local" name="startTime" id="startTime" class="form-control" readonly="readonly" value="'.$start->format('Y-m-d\Th:i').'">
+    <input type="datetime-local" name="startTime" id="startTime" class="form-control" readonly="readonly" value="'.$start->format('Y-m-d\TH:i').'">
   </div>
   <label for="endTime" class="col-sm-2 col-form-label">End Time:</label>
   <div class="col-sm-10">
-    <input type="datetime-local" name="endTime" id="endTime" class="form-control" readonly="readonly" value="'.$end->format('Y-m-d\Th:i').'">
+    <input type="datetime-local" name="endTime" id="endTime" class="form-control" readonly="readonly" value="'.$end->format('Y-m-d\TH:i').'">
   </div>
   <label for="length" class="col-sm-2 col-form-label">Length:</label>
   <div class="col-sm-10">

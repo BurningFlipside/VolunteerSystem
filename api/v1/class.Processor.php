@@ -229,7 +229,29 @@ trait Processor
         $entry['overlap'] = $shift->findOverlaps($this->user->uid, true);
         if(!$this->shouldShowDepartment($entry['departmentID'], $entry['isAdmin']))
         {
-            return null;
+            //Role's with an email list requirement can override this like AAR ride alongs...
+            $requirements = array();
+            $role = $roles[$entry['roleID']];
+            if(isset($role['requirements']))
+            {
+                $requirements = $role['requirements'];
+            }
+            if(isset($requirements['email_list']))
+            {
+                $emails = explode(',', $requirements['email_list']);
+                if(!$profile->userInEmailList($emails))
+                {
+                    return null;
+                }
+                else
+                {
+                    //Show the shift...
+                }
+            }
+            else
+            {
+                return null;
+            }
         }
         $entry['available'] = true;
         $this->doShiftTimeChecks($shift, $entry);

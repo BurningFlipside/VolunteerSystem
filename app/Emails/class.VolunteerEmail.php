@@ -2,7 +2,7 @@
 namespace Emails;
 require_once('Autoload.php');
 
-class VolunteerEmail extends \Email\Email
+class VolunteerEmail extends \Flipside\Email\Email
 {
     protected $profile;
 

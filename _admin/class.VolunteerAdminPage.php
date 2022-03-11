@@ -80,7 +80,8 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
         $shifts_menu = array(
             'Add/Edit Shifts' => 'shifts.php',
             'Pending Shifts' => 'pending.php',
-            'Early Entry/Late Stay Approval' => 'ee.php'
+            'Early Entry/Late Stay Approval' => 'ee.php',
+            'Copy from prior event' => 'copy_shifts.php'
         );
         $certApprovalCount = 0;
         $certTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');

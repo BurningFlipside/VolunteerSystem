@@ -58,6 +58,10 @@ class ParticipantAPI extends VolunteerAPI
             return false;
         }
         $uid = $this->user->uid;
+        if(!isset($obj['email']))
+        {
+            $obj['email'] = $this->user->mail;
+        }
         $dataTable = $this->getDataTable();
         $filter = $this->getFilterForPrimaryKey($uid);
         $users = $dataTable->read($filter);

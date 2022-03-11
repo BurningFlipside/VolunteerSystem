@@ -60,6 +60,45 @@ class DepartmentAPI extends VolunteerAPI
             }
             if(!$entry['available'] && !$entry['isAdmin'])
             {
+                //Can the user fill any of the roles in the department even if it isn't public and they aren't an admin?
+                $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
+                $filter = new \Flipside\Data\Filter("departmentID eq '".$entry['departmentID']."'");
+                $roles = $dataTable->read($filter);
+                if($roles === false)
+                {
+                    $roles = array();
+                }
+                $count = count($roles);
+                for($i = 0; $i < $count; $i++)
+                {
+                    $requirements = array();
+                    if(isset($roles[$i]['requirements']))
+                    {
+                        $requirements = $roles[$i]['requirements'];
+                    }
+                    if(isset($requirements['email_list']))
+                    {
+                        $emails = explode(",", $requirements['email_list']);
+                        $userEmails = array();
+                        if(is_string($this->user->mail))
+                        {
+                            array_push($userEmails, $this->user->mail);
+                        }
+                        else
+                        {
+                            $userEmails = $this->user->mail;
+                        }
+                        $count2 = count($userEmails);
+                        for($j = 0; $j < $count2; $j++)
+                        {
+                            if(in_array($userEmails[$j], $emails))
+                            {
+                                $entry['available'] = true;
+                                return $entry;
+                            }
+                        }
+                    }
+                }
                 return null;
             }
         }
