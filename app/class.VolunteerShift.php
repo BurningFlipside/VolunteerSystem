@@ -38,7 +38,7 @@ class VolunteerShift extends VolunteerObject
             case 'modTime':
                 if($this->mod === null)
                 {
-                    $this->mod = new \DateInterval('PT'.strval($this->role->down_time).'H');
+                    $this->mod = new \DateInterval('PT'.(string)$this->role->down_time.'H');
                 }
                 return $this->mod;
             case 'startTime':

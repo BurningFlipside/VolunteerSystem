@@ -48,8 +48,8 @@ trait ShiftSchedule
         {
             return 1;
         }
-        print_r($interval);
-        die();
+        //print_r($interval);
+        //die();
     }
 
     public function getStringBetween($string, $start, $end)

@@ -15,7 +15,7 @@ class VolunteerRole extends VolunteerObject
                 {
                     return 0;
                 }
-                return intval($this->dbData['down_time']);
+                return (int)$this->dbData['down_time'];
             default:
                 return parent::__get($propName);
         }

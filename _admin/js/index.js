@@ -44,6 +44,9 @@ function gotDepartments(jqXHR) {
   if(jqXHR.responseJSON !== undefined) {
     $('#deptCount').html(jqXHR.responseJSON['@odata.count']);
     var array = jqXHR.responseJSON.value;
+    if(!Array.isArray(array)) {
+      alert('Got Invalid data returned from API!')
+    }
     array = array.sort((a,b) => {
       return a.departmentName.localeCompare(b.departmentName);
     });

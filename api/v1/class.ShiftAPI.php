@@ -228,7 +228,7 @@ class ShiftAPI extends VolunteerAPI
         $ret = true;
         foreach($data['roles'] as $role=>$count)
         {
-            $count = intval($count);
+            $count = (int)$count;
             for($i = 0; $i < $count; $i++)
             {
                 $shift['roleID'] = $role;
@@ -268,11 +268,11 @@ class ShiftAPI extends VolunteerAPI
         if(isset($entity['earlyLate']) && $entity['earlyLate'] !== '-1')
         {
             $event = new \VolunteerEvent($entity['eventID']);
-            if(!$event->hasVolOnEEList($uid, intval($entity['earlyLate'])))
+            if(!$event->hasVolOnEEList($uid, (int)$entity['earlyLate']))
             {
                 $status = 'pending';
                 $entity['needEEApproval'] = true;
-                $event->addToEEList($uid, intval($entity['earlyLate']));
+                $event->addToEEList($uid, (int)$entity['earlyLate']);
             }
         }
         else if(isset($entity['approvalNeeded']) && $entity['approvalNeeded'])
@@ -348,7 +348,8 @@ class ShiftAPI extends VolunteerAPI
             $ret = $this->doSignup($this->user->uid, 'filled', $entity, $filter, $dataTable);
             return $response->withJSON($ret);
         }
-        print_r($entity); die();
+        //print_r($entity); die();
+        throw new \Exception('Unable to signup! Unhandled case!');
     }
 
     public function assign($request, $response, $args)
@@ -810,7 +811,7 @@ class ShiftAPI extends VolunteerAPI
             $shiftLen = $shiftStartTime->diff($shiftEndTime);
             $dayDiff = new \DateInterval('P'.$startDiff->d.'D');
             $newShiftEndTime = $dstStart->add($dayDiff);
-            $newShiftEndTime = $newShiftEndTime->setTime(intval($shiftStartTime->format('H')), intval($shiftStartTime->format('i')));
+            $newShiftEndTime = $newShiftEndTime->setTime((int)$shiftStartTime->format('H'), (int)$shiftStartTime->format('i'));
             $newShiftStartTime = clone $newShiftEndTime;
             $newShiftEndTime = $newShiftEndTime->add($shiftLen);
             $shifts[$i]['startTime'] = $newShiftStartTime->format('c');

@@ -77,7 +77,7 @@ function newEvent(e) {
       }
     }
     else {
-      obj[key] = e[key];
+      obj[`${key}`] = e[`${key}`];
     }
   }
   $.ajax({

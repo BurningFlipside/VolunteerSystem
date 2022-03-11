@@ -21,7 +21,7 @@ function gotCertTypes(jqXHR) {
   if(!Array.isArray(data))
   {
     console.log(data);
-    alert('Got invalid data returned!')
+    alert('Got invalid data returned!');
     return;
   }
   for(var i = 0; i < data.length; i++) {
