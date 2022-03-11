@@ -8,7 +8,7 @@ trait ShiftSchedule
         static $roles = null;
         if($roles === null)
         {
-            $dataTable = \DataSetFactory::getDataTableByNames('fvs', 'roles');
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
             $tmp = $dataTable->read();
             $roles = array();
             $count = count($tmp);

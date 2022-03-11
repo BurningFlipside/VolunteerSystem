@@ -18,7 +18,7 @@ trait Processor
         static $certCount = 0;
         if($certs === null)
         {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'certifications');
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');
             $certs = $dataTable->read();
             $certCount = count($certs);
         }
@@ -78,8 +78,8 @@ trait Processor
         static $deptCache = array();
         if(!isset($deptCache[$departmentID]))
         {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
-            $filter = new \Data\Filter('departmentID eq '.$departmentID);
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
+            $filter = new \Flipside\Data\Filter('departmentID eq '.$departmentID);
             $depts = $dataTable->read($filter);
             if(empty($depts))
             {
@@ -216,7 +216,7 @@ trait Processor
         {
             $profile = new \VolunteerProfile($this->user->uid);
             $eeAvailable = $profile->isEEAvailable();
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
             $tmp = $dataTable->read();
             foreach($tmp as $role)
             {
@@ -229,7 +229,29 @@ trait Processor
         $entry['overlap'] = $shift->findOverlaps($this->user->uid, true);
         if(!$this->shouldShowDepartment($entry['departmentID'], $entry['isAdmin']))
         {
-            return null;
+            //Role's with an email list requirement can override this like AAR ride alongs...
+            $requirements = array();
+            $role = $roles[$entry['roleID']];
+            if(isset($role['requirements']))
+            {
+                $requirements = $role['requirements'];
+            }
+            if(isset($requirements['email_list']))
+            {
+                $emails = explode(',', $requirements['email_list']);
+                if(!$profile->userInEmailList($emails))
+                {
+                    return null;
+                }
+                else
+                {
+                    //Show the shift...
+                }
+            }
+            else
+            {
+                return null;
+            }
         }
         $entry['available'] = true;
         $this->doShiftTimeChecks($shift, $entry);

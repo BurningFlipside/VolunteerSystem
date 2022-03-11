@@ -1,6 +1,6 @@
 <?php
 
-class VolunteerAPI extends Http\Rest\DataTableAPI
+class VolunteerAPI extends Flipside\Http\Rest\DataTableAPI
 {
     protected $isAdmin = null;
     protected $isLead = null;
@@ -27,7 +27,7 @@ class VolunteerAPI extends Http\Rest\DataTableAPI
 
     protected function addRequiredFilter($key, $id, $odata)
     {
-        $filter = new \Data\Filter("$key eq '$id'");
+        $filter = new \Flipside\Data\Filter("$key eq '$id'");
         if($odata->filter !== false)
         {
             $clause = $odata->filter->getClause($key);

@@ -24,7 +24,18 @@ $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 $page->addJS('js/signup.js');
 $page->addJS('js/dialog.js');
 $page->addWellKnownJS(JS_BOOTBOX);
-$processor = new ProcessorUser($page->user->isInGroupNamed('VolunteerAdmins'));
+$admin = false;
+if($page->user !== null)
+{
+  $admin = $page->user->isInGroupNamed('VolunteerAdmins');
+}
+else
+{
+    $page->body .= 'Not logged in! Please log in to sign up for this shift.';
+    $page->printPage();
+    return;
+}
+$processor = new ProcessorUser($admin);
 
 $page->body = '<div class="row"><h1>Shift Signup</h1></div>';
 
@@ -48,7 +59,13 @@ if(empty($shifts))
 $shift = $shifts[0];
 $myShift = new \VolunteerShift(false, $shift);
 
+try {
 $profile = new \VolunteerProfile($page->user->uid);
+} catch(Exception $e) {
+//User hasn't made a profile yet... Let the wizard take care of them
+$page->printPage();
+return;
+}
 
 if($processor->isAdminForShift($shift, $page->user))
 {
@@ -199,11 +216,11 @@ $page->body .= '
   </div>
   <label for="startTime" class="col-sm-2 col-form-label">Start Time:</label>
   <div class="col-sm-10">
-    <input type="datetime-local" name="startTime" id="startTime" class="form-control" readonly="readonly" value="'.$start->format('Y-m-d\Th:i').'">
+    <input type="datetime-local" name="startTime" id="startTime" class="form-control" readonly="readonly" value="'.$start->format('Y-m-d\TH:i').'">
   </div>
   <label for="endTime" class="col-sm-2 col-form-label">End Time:</label>
   <div class="col-sm-10">
-    <input type="datetime-local" name="endTime" id="endTime" class="form-control" readonly="readonly" value="'.$end->format('Y-m-d\Th:i').'">
+    <input type="datetime-local" name="endTime" id="endTime" class="form-control" readonly="readonly" value="'.$end->format('Y-m-d\TH:i').'">
   </div>
   <label for="length" class="col-sm-2 col-form-label">Length:</label>
   <div class="col-sm-10">

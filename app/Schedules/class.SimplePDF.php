@@ -1,7 +1,7 @@
 <?php
 namespace Schedules;
 
-class SimplePDF extends \PDF\PDF
+class SimplePDF extends \Flipside\PDF\PDF
 {
     use ShiftSchedule;
 

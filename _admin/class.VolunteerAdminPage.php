@@ -1,8 +1,7 @@
 <?php
-require_once('class.FlipSession.php');
-require_once('app/VolunteerAutoload.php');
+require_once('../app/VolunteerAutoload.php');
 require_once('../../class.SecurePage.php');
-class VolunteerAdminPage extends \Http\FlipAdminPage
+class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
 {
     use SecureWebPage;
 
@@ -47,8 +46,8 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
                 //Is this user the assistant for a department?
                 $uid = $this->user->uid;
                 $email = $this->user->mail;
-                $filter = new \Data\Filter("others eq $uid or others eq $email");
-                $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
+                $filter = new \Flipside\Data\Filter("others eq $uid or others eq $email");
+                $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
                 $depts = $dataTable->read($filter);
                 $this->isLead = !empty($depts);
                 $this->is_admin = true;
@@ -81,18 +80,19 @@ class VolunteerAdminPage extends \Http\FlipAdminPage
         $shifts_menu = array(
             'Add/Edit Shifts' => 'shifts.php',
             'Pending Shifts' => 'pending.php',
-            'Early Entry/Late Stay Approval' => 'ee.php'
+            'Early Entry/Late Stay Approval' => 'ee.php',
+            'Copy from prior event' => 'copy_shifts.php'
         );
         $certApprovalCount = 0;
-        $certTable = \DataSetFactory::getDataTableByNames('fvs', 'certifications');
-        $userTable = \DataSetFactory::getDataTableByNames('fvs', 'participants');
+        $certTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');
+        $userTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'participants');
         $certs = $certTable->read();
         if($certs !== false)
         {
             $count = count($certs);
             for($i = 0; $i < $count; $i++)
             {
-                $filter = new \Data\Filter('certs.'.$certs[$i]['certID'].'.status eq pending');
+                $filter = new \Flipside\Data\Filter('certs.'.$certs[$i]['certID'].'.status eq pending');
                 $users = $userTable->read($filter);
                 $certApprovalCount += count($users);
             }

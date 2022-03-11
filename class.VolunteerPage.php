@@ -1,8 +1,6 @@
 <?php
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
-//require_once('class.SecurePage.php');
-//require_once('class.FlipSession.php');
 require_once('app/VolunteerAutoload.php');
 class VolunteerPage extends \Flipside\Secure\SecurePage
 {
@@ -41,7 +39,7 @@ class VolunteerPage extends \Flipside\Secure\SecurePage
 <div id="content">
     <h1>You must <a href="https://profiles.burningflipside.com/login.php?return='.$this->currentURL().'">log in <span class="fa fa-sign-in-alt"></span></a> to access the Burning Flipside Volunteer system!</h1>
 </div>';
-        }
+	}
         parent::printPage();
     }
 

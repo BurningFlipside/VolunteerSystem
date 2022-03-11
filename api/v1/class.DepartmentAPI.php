@@ -60,6 +60,45 @@ class DepartmentAPI extends VolunteerAPI
             }
             if(!$entry['available'] && !$entry['isAdmin'])
             {
+                //Can the user fill any of the roles in the department even if it isn't public and they aren't an admin?
+                $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
+                $filter = new \Flipside\Data\Filter("departmentID eq '".$entry['departmentID']."'");
+                $roles = $dataTable->read($filter);
+                if($roles === false)
+                {
+                    $roles = array();
+                }
+                $count = count($roles);
+                for($i = 0; $i < $count; $i++)
+                {
+                    $requirements = array();
+                    if(isset($roles[$i]['requirements']))
+                    {
+                        $requirements = $roles[$i]['requirements'];
+                    }
+                    if(isset($requirements['email_list']))
+                    {
+                        $emails = explode(",", $requirements['email_list']);
+                        $userEmails = array();
+                        if(is_string($this->user->mail))
+                        {
+                            array_push($userEmails, $this->user->mail);
+                        }
+                        else
+                        {
+                            $userEmails = $this->user->mail;
+                        }
+                        $count2 = count($userEmails);
+                        for($j = 0; $j < $count2; $j++)
+                        {
+                            if(in_array($userEmails[$j], $emails))
+                            {
+                                $entry['available'] = true;
+                                return $entry;
+                            }
+                        }
+                    }
+                }
                 return null;
             }
         }
@@ -73,9 +112,9 @@ class DepartmentAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
-        $odata = $request->getAttribute('odata', new \ODataParams(array()));
-        $filter = new \Data\Filter("departmentID eq '$deptId'");
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
+        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
+        $filter = new \Flipside\Data\Filter("departmentID eq '$deptId'");
         $roles = $dataTable->read($filter, $odata->select, $odata->top,
                                     $odata->skip, $odata->orderby);
         if($roles === false)
@@ -97,8 +136,8 @@ class DepartmentAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $odata = $request->getAttribute('odata', new \ODataParams(array()));
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
         $filter = $this->addRequiredFilter('departmentID', $deptId, $odata);
         if($filter === false)
         {
@@ -120,7 +159,7 @@ class DepartmentAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', $table);
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', $table);
         $obj = $request->getParsedBody();
         if($obj === null)
         {
@@ -159,8 +198,8 @@ class DepartmentAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'roles');
-        $filter = new \Data\Filter("departmentID eq '$deptId' and short_name eq '$roleId'");
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
+        $filter = new \Flipside\Data\Filter("departmentID eq '$deptId' and short_name eq '$roleId'");
         $entry = $dataTable->read($filter);
         if(empty($entry))
         {
@@ -178,15 +217,15 @@ class DepartmentAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'departments');
-        $depts = $dataTable->read(new \Data\Filter('departmentID eq '.$deptId));
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
+        $depts = $dataTable->read(new \Flipside\Data\Filter('departmentID eq '.$deptId));
         if(empty($depts))
         {
             return $response->withStatus(404);
         }
-        $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $eventId = $request->getParam('eventID');
-        $filter = new \Data\Filter('eventID eq '.$eventId.' and departmentID eq '.$deptId);
+        $filter = new \Flipside\Data\Filter('eventID eq '.$eventId.' and departmentID eq '.$deptId);
         $shifts = $dataTable->read($filter);
         if(empty($shifts))
         {

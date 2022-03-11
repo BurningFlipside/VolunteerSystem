@@ -164,8 +164,8 @@ class VolunteerShift extends VolunteerObject
         static $count = 0;
         if($userShifts === null)
         {
-            $dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-            $filter = new \Data\Filter("participant eq '$uid'");
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+            $filter = new \Flipside\Data\Filter("participant eq '$uid'");
             $userShifts = $dataTable->read($filter);
             $count = count($userShifts);
             for($i = 0; $i < $count; $i++)

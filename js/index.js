@@ -200,6 +200,9 @@ function gotShifts(jqXHR) {
     deptHasShifts[depts[i].id] = false;
   }
   var shifts = jqXHR.responseJSON;
+  if(shifts.length === 0) {
+    add_notification($('#content'), 'This event does not have any shifts at this time. Check back later or contact your lead!');
+  }
   start = new Date('2100-01-01T01:00:00');
   end = new Date('2000-01-01T01:00:00');
   for(var i = 0; i < shifts.length; i++) {
@@ -231,7 +234,7 @@ function gotShifts(jqXHR) {
         evnt.borderColor = 'SpringGreen';
       }
     }
-    if(shifts[i].status === 'pending' || shifts[i].status === 'groupPending') {
+    if((shifts[i].status === 'pending' || shifts[i].status === 'groupPending') && shifts[i].whyClass !== 'MINE') {
       evnt.backgroundColor = 'fireBrick';
       evnt.borderColor = 'lightGray';
     }
@@ -251,7 +254,14 @@ function gotShifts(jqXHR) {
     deptHasShifts[shifts[i].departmentID] = true;
   }
   calendar.setOption('validRange.start', myStart);
+  try{
   calendar.render();
+  } catch(error) {
+    console.error(error);
+    if(shifts.length > 0) {
+      location.href = location.origin + location.pathname + "?event=" + shifts[0].eventID;
+    }
+  }
   if(window.innerWidth <= 1024) {
     $('#calendar .fc-center h2').css('font-size', '1.0em');
   }
@@ -303,6 +313,10 @@ function processEvents(events) {
       }
       data.push(option);
     }
+  }
+  if(data.length === 0) {
+    alert('All events are in the past!');
+    return;
   }
   var sel2 = $('#event').select2({data: data});
   sel2.change(eventChanged);
@@ -379,6 +393,10 @@ function gotInitialData(results) {
   var eventResult = results.shift();
   var deptResult = results.shift();
   var obj = {};
+  if(eventResult.status === 'rejected') {
+    //User isn't logged in
+    return;
+  }
   obj.events = processEvents(eventResult.value);
   obj.depts = processDepartments(deptResult.value);
   var sel2 = $('#shiftTypes').select2();

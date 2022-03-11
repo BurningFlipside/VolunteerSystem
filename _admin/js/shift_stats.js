@@ -16,8 +16,18 @@ function gotShifts(jqXHR) {
     return;
   }
   var shifts = jqXHR.responseJSON;
-  tableData['total'].shifts = shifts.length;
+  let inviteOnly = ($('#hideInviteOnly').prop("checked") === true);
+  if(!inviteOnly) {
+    tableData['total'].shifts = shifts.length;
+  }
   for(var i = 0; i < shifts.length; i++) {
+    if(inviteOnly) {
+      if(shifts[i].whyClass === 'INVITE') {
+        continue;
+      } else {
+        tableData['total'].shifts++;
+      }
+    }
     tableData[shifts[i].departmentID].shifts++;
     var start = new Date(shifts[i].startTime);
     var end = new Date(shifts[i].endTime);
@@ -62,6 +72,20 @@ function gotShifts(jqXHR) {
     ]
   });
   table.setData(array);
+}
+
+function hideEmptyShifts() {
+  let hide = ($('#hideEmpty').prop("checked") === true);
+  if(hide) {
+    table.addFilter('shifts', '>', '0');
+  } else {
+    table.removeFilter('shifts', '>', '0');
+  }
+}
+
+function hideInviteOnlyShifts() {
+  let hide = ($('#hideEmpty').prop("checked") === true);
+  eventChanged({target: $('#event')[0]});
 }
 
 function tableToCSV() {
@@ -167,6 +191,8 @@ function initPage() {
   promises.push(new Promise(waitForSelect2));
   Promise.allSettled(promises).then(gotInitialData);
   setTimeout(checkXLSX, 1);
+  $('#hideEmpty').change(hideEmptyShifts);
+  $('#hideInviteOnly').change(hideInviteOnlyShifts);
 }
 
 $(initPage);

@@ -1,7 +1,11 @@
 <?php
-if(file_exists(__DIR__ . '/../vendor/autoload.php'))
+if(file_exists(__DIR__ . '/vendor/autoload.php'))
 {
-    require __DIR__ . '/../vendor/autoload.php';
+        require(__DIR__ . '/vendor/autoload.php');
+}
+else if(file_exists(__DIR__ . '/../../../common/Autoload.php'))
+{
+        require(__DIR__ . '/../../../common/Autoload.php');
 }
 
 function VolunteerAutoload($classname)

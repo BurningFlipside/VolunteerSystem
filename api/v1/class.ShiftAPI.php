@@ -15,6 +15,7 @@ class ShiftAPI extends VolunteerAPI
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
         $app->post('/Actions/DeleteGroup', array($this, 'deleteGroup'));
         $app->post('/Actions/RemoveGroupSignupLink', array($this, 'removeGroupLink'));
+        $app->post('/Actions/EventClone', array($this, 'eventClone'));
         $app->post('/{shift}/Actions/Signup[/]', array($this, 'signup'));
         $app->post('/{shift}/Actions/Abandon[/]', array($this, 'abandon'));
         $app->post('/{shift}/Actions/Approve[/]', array($this, 'approvePending'));
@@ -23,6 +24,7 @@ class ShiftAPI extends VolunteerAPI
         $app->post('/{shift}/Actions/GenerateGroupLink', array($this, 'generateGroupLink'));
         $app->post('/{shift}/Actions/EmptyShift[/]', array($this, 'emptyShift'));
         $app->post('/{shift}/Actions/ForceShiftEmpty[/]', array($this, 'forceEmpty'));
+        $app->post('/{shift}/Actions/Assign[/]', array($this, 'assign'));
     }
 
     protected function canCreate($request)
@@ -43,6 +45,45 @@ class ShiftAPI extends VolunteerAPI
     protected function canDelete($request, $entity)
     {
         return $this->canUpdate($request, $entity);
+    }
+
+    protected function manipulateParameters($request, &$odata)
+    {
+        if($odata->filter === false)
+        {
+            //By default only get shifts for events that are from this point forward
+            $eventDB = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
+            $now = new DateTime();
+            $events = $eventDB->read(array('endTime' => array('$gte'=>$now->format('Y-m-d\TG:i'))));
+            $ids = array();
+            $count = count($events);
+            if($count > 0) {
+                for($i = 0; $i < $count; $i++)
+                {
+                    array_push($ids, (string)$events[$i]['_id']);
+                }
+                $odata->filter = array('eventID'=>array('$in'=>$ids));
+            }
+        }
+        else if($request->getQueryParam('futureOnly'))
+        {
+            //Despite filtering only get future events...
+            $filter = $odata->filter->to_mongo_filter();
+            $eventDB = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
+            $now = new DateTime();
+            $events = $eventDB->read(array('endTime' => array('$gte'=>$now->format('Y-m-d\TG:i'))));
+            $ids = array();
+            $count = count($events);
+            if($count > 0) {
+                for($i = 0; $i < $count; $i++)
+                {
+                    array_push($ids, (string)$events[$i]['_id']);
+                }
+                $filter['eventID'] = array('$in'=>$ids);
+                $odata->filter = $filter;
+            }
+        }
+        return false;
     }
 
     protected function validateCreate(&$obj, $request)
@@ -204,7 +245,7 @@ class ShiftAPI extends VolunteerAPI
     {
         $data = $request->getParsedBody();
         $dataTable = $this->getDataTable();
-        $filter = new \Data\Filter('groupID eq '.$data['groupID']);
+        $filter = new \Flipside\Data\Filter('groupID eq '.$data['groupID']);
         $entities = $dataTable->read($filter);
         if(empty($entities))
         {
@@ -276,7 +317,7 @@ class ShiftAPI extends VolunteerAPI
                 $dept = new \VolunteerDepartment($overlaps[$i]->departmentID);
                 $leads = array_merge($leads, $dept->getLeadEmails());
                 $overlaps[$i]->status = 'pending';
-                $tmp = new \Data\Filter('_id eq '.$overlaps[$i]->{'_id'});
+                $tmp = new \Flipside\Data\Filter('_id eq '.$overlaps[$i]->{'_id'});
                 $res = $dataTable->update($tmp, $overlaps[$i]);
                 if($res === false)
                 {
@@ -290,7 +331,7 @@ class ShiftAPI extends VolunteerAPI
             $profile = new \VolunteerProfile($this->user->uid);
             $email = new \Emails\TwoShiftsAtOnceEmail($profile);
             $email->addLeads($leads);
-            $emailProvider = \EmailProvider::getInstance();
+            $emailProvider = \Flipside\EmailProvider::getInstance();
             if($emailProvider->sendEmail($email) === false)
             {
                 throw new \Exception('Unable to send duplicate email!');
@@ -308,6 +349,73 @@ class ShiftAPI extends VolunteerAPI
             return $response->withJSON($ret);
         }
         print_r($entity); die();
+    }
+
+    public function assign($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $shiftId = $args['shift'];
+        $dataTable = $this->getDataTable();
+        $filter = $this->getFilterForPrimaryKey($shiftId);
+        $entity = $dataTable->read($filter);
+        if(empty($entity))
+        {
+            return $response->withStatus(404);
+        }
+        $entity = $entity[0];
+        $shift = new \VolunteerShift($shiftId, $entity);
+        if(!$this->isVolunteerAdmin($request) && !$this->isUserDepartmentLead($shift->departmentID, $this->user))
+        {
+            return $response->withStatus(401);
+        }
+        if(isset($entity['participant']) && strlen($entity['participant']) > 0)
+        {
+            return $response->withJSON(array('message'=>'Shift is already taken. Can only assign and empty shift!'), 400);
+        }
+        $entity = $this->processShift($entity, $request);
+        $data = $request->getParsedBody();
+        if(!isset($data['email']) || strlen($data['email']) < 2)
+        {
+            return $response->withStatus(400);
+        }
+        $partDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'participants');
+        $partFilter = new \Flipside\Data\Filter("email eq '".$data['email']."'");
+        $parts = $partDataTable->read($partFilter);
+        $count = count($parts);
+        if($count === 0 && (!isset($data['force']) || $data['force'] !== true))
+        {
+            return $response->withJSON(array('message'=>'No participant with that email exists! Are you sure?!', 'canOverride'=>true), 400);
+        }
+        else if($count > 1)
+        {
+            return $response->withJSON(array('message'=>'Found multiple participants with that email address! This should not happen!'), 400);
+        }
+        else if($count === 0 && isset($data['force']) && $data['force'] === true)
+        {
+            $fakePart = array('uid'=> $data['email'],'firstName'=>$data['email'], 'email'=>$data['email']);
+            $parts = array($fakePart);
+        }
+        $part = $parts[0];
+        if(isset($entity['overlap']) && $entity['overlap'] && (!isset($data['force']) || $data['force'] !== true))
+        {
+            return $response->withJSON(array('message'=>'Shift overlaps with another!', 'canOverride'=>true), 409);
+        }
+        if(isset($entity['minShifts']) && $entity['minShifts'] > 0)
+        {
+            $shift->makeCopy($dataTable);
+        }
+        $ret = $this->doSignup($part['uid'], 'filled', $entity, $filter, $dataTable);
+        if($ret === false)
+        {
+            return $response->withJSON($ret);
+        }
+        $email = new \Emails\AssignmentEmail(new \VolunteerProfile($part['uid'], $part), $shift, $this->user);
+        $emailProvider = \Flipside\EmailProvider::getInstance();
+        if($emailProvider->sendEmail($email) === false)
+        {
+            throw new \Exception('Unable to send assignment email!');
+        }
+        return $response->withJSON($ret);
     }
 
     public function abandon($request, $response, $args)
@@ -394,7 +502,7 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $filter = new \Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
         $entities = $dataTable->read($filter);
         $count = count($entities);
         $dept = new \VolunteerDepartment($entity['departmentID']);
@@ -451,7 +559,7 @@ class ShiftAPI extends VolunteerAPI
                 $roles[substr($key, 6)] = $value;
             }
         }
-        $filter = new \Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
         $entities = $dataTable->read($filter);
         $count = count($entities);
         $uuid = $this->genUUID();
@@ -497,7 +605,7 @@ class ShiftAPI extends VolunteerAPI
             {
                 continue;
             }
-            $filter = new \Data\Filter('_id eq '.$entities[$i]['_id']);
+            $filter = new \Flipside\Data\Filter('_id eq '.$entities[$i]['_id']);
             $res = $dataTable->update($filter, $entities[$i]);
             if($res === false)
             {
@@ -520,7 +628,7 @@ class ShiftAPI extends VolunteerAPI
         }
         $groupID = $data['groupID'];
         $dataTable = $this->getDataTable();
-        $filter = new \Data\Filter("groupID eq '$groupID'");
+        $filter = new \Flipside\Data\Filter("groupID eq '$groupID'");
         $entity = $dataTable->read($filter);
         if(empty($entity))
         {
@@ -536,7 +644,7 @@ class ShiftAPI extends VolunteerAPI
                 $entity['status'] = 'unfilled';
             }
             $entity[$i]['groupLinkCreated'] = '';
-            $upFilter = new \Data\Filter('_id eq '.$entity[$i]['_id']);
+            $upFilter = new \Flipside\Data\Filter('_id eq '.$entity[$i]['_id']);
             $tmp = $dataTable->update($upFilter, $entity[$i]);
             if($tmp === false)
             {
@@ -601,6 +709,128 @@ class ShiftAPI extends VolunteerAPI
           unset($entity['needEEApproval']);
         }
         return $response->withJSON($dataTable->update($filter, $entity));
+    }
+
+    function eventClone($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $data = $request->getParsedBody();
+        if(!isset($data['dept']) || !isset($data['dst']) || !isset($data['src']))
+        {
+            return $response->withStatus(400);
+        }
+        if($this->isUserDepartmentLead($data['dept'], $this->user) === false)
+        {
+            return $response->withStatus(401);
+        }
+        //Let's get all the shifts for the source event...
+        $dataTable = $this->getDataTable();
+        $filter = array('eventID'=>$data['src'], 'departmentID'=>$data['dept']);
+        $shifts = $dataTable->read($filter);
+        if(empty($shifts))
+        {
+            return $response->withStatus(404);
+        }
+        $evtDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
+        $events = $evtDataTable->read(new \Flipside\Data\Filter('_id eq '.$data['src']));
+        if(empty($events))
+        {
+            return $response->withStatus(404);
+        }
+        $srcEvent = $events[0];
+        $events = $evtDataTable->read(new \Flipside\Data\Filter('_id eq '.$data['dst']));
+        if(empty($events))
+        {
+            return $response->withStatus(404);
+        }
+        $dstEvent = $events[0];
+        $groupTrans = array();
+        $srcStart = new \DateTimeImmutable($srcEvent['startTime']);
+        $dstStart = new \DateTimeImmutable($dstEvent['startTime']);
+        $count = count($shifts);
+        //Strip out or replace data...
+        for($i = 0; $i < $count; $i++)
+        {
+            unset($shifts[$i]['_id']);
+            if(isset($shifts[$i]['groupID']))
+            {
+                //This needs to change to new unique ID
+                $oldGID = $shifts[$i]['groupID'];
+                if(isset($groupTrans[$oldGID]))
+                {
+                    $shifts[$i]['groupID'] = $groupTrans[$oldGID];
+                }
+                else
+                {
+                    $groupTrans[$oldGID] = $this->genUUID();
+                    $shifts[$i]['groupID'] = $groupTrans[$oldGID];
+                }
+            }
+            $shifts[$i]['eventID'] = $data['dst'];
+            if(isset($shifts[$i]['participant']))
+            {
+                unset($shifts[$i]['participant']);
+            }
+            if(isset($shifts[$i]['status']))
+            {
+                unset($shifts[$i]['status']);
+            }
+            if(isset($shifts[$i]['signupTime']))
+            {
+                unset($shifts[$i]['signupTime']);
+            }
+            if(isset($shifts[$i]['isAdmin']))
+            {
+                unset($shifts[$i]['isAdmin']);
+            }
+            if(isset($shifts[$i]['overlap']))
+            {
+                unset($shifts[$i]['overlap']);
+            }
+            if(isset($shifts[$i]['available']))
+            {
+                unset($shifts[$i]['available']);
+            }
+            if(isset($shifts[$i]['needEEApproval']))
+            {
+                unset($shifts[$i]['needEEApproval']);
+            }
+            if(!isset($shifts[$i]['minShifts']))
+            {
+                $shifts[$i]['minShifts'] = "";
+            }
+            if(!isset($shifts[$i]['approvalNeeded']))
+            {
+                $shifts[$i]['approvalNeeded'] = false;
+            }
+            //Ok this next bit is tricky... What I want to do is keep the time of day and keep the number of days from the beginning of the event...
+            $shiftStartTime = new \DateTime($shifts[$i]['startTime']);
+            $shiftEndTime = new \DateTime($shifts[$i]['endTime']);
+            $startDiff = $srcStart->diff($shiftStartTime);
+            $shiftLen = $shiftStartTime->diff($shiftEndTime);
+            $dayDiff = new \DateInterval('P'.$startDiff->d.'D');
+            $newShiftEndTime = $dstStart->add($dayDiff);
+            $newShiftEndTime = $newShiftEndTime->setTime(intval($shiftStartTime->format('H')), intval($shiftStartTime->format('i')));
+            $newShiftStartTime = clone $newShiftEndTime;
+            $newShiftEndTime = $newShiftEndTime->add($shiftLen);
+            $shifts[$i]['startTime'] = $newShiftStartTime->format('c');
+            $shifts[$i]['endTime'] = $newShiftEndTime->format('c');
+        }
+        $success = 0;
+        $fail = 0;
+        for($i = 0; $i < $count; $i++)
+        {
+            $data = $dataTable->create($shifts[$i]);
+            if($data === false)
+            {
+                $fail++;
+            }
+            else
+            {
+                $success++;
+            }
+        }
+        return $response->withJSON(array('success'=>$success, 'fail'=>$fail));
     }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */

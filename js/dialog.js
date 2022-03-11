@@ -54,7 +54,8 @@ window.flipDialog.dialog = function(options) {
         inputEnt.flatpickr(myOptions);
       }
       else if(input.value) {
-        inputEnt[0].valueAsNumber = new Date(input.value).getTime();
+	let datetime = new Date(input.value);
+        inputEnt.val(dateTimeToString(datetime));
       }
     }
     delete input.type;
@@ -121,7 +122,7 @@ window.flipDialog.dialog = function(options) {
 function dialogButtonClick(e) {
   e.preventDefault();
   e.data = this.data;
-  if(e.data === undefined) {
+  if(e.data === undefined || e.data === false) {
     e.data = {};
   }
   if(e.data === true) {
@@ -163,6 +164,17 @@ function dialogButtonClick(e) {
   }
 }
 
+function dateTimeToString(dt) {
+  let ten = function(i) {
+    return (i < 10 ? '0':'')+i;
+  }
+  let year = dt.getFullYear();
+  let month = ten(dt.getMonth()+1);
+  let day = ten(dt.getDate());
+  let time = dt.toTimeString().slice(0,5);
+  return year+'-'+month+'-'+day+'T'+time;
+}
+
 function finishDialog(dialog, options) {
   if(options.data !== undefined) {
     for(var key in options.data) {
@@ -175,7 +187,12 @@ function finishDialog(dialog, options) {
       if(input.length > 0 && input[0].type === 'checkbox') {
         input[0].checked = options.data[key];
       }
-      input.val(options.data[key]);
+      if(input[0] !== undefined && input[0].type === 'datetime-local') {
+	let datetime = new Date(options.data[key]);
+	input.val(dateTimeToString(datetime));
+      } else {
+        input.val(options.data[key]);
+      }
     }
   }
   dialog.modal('show');

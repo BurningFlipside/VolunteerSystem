@@ -393,7 +393,7 @@ function initPage() {
     url: '../api/v1/participants'
   }));
   promises.push($.ajax({
-    url: '../api/v1/shifts?$filter=needEEApproval eq true'
+    url: '../api/v1/shifts?$filter=needEEApproval eq true&futureOnly=true'
   }));
   Promise.allSettled(promises).then(gotInitialData);
 }

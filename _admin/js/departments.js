@@ -188,13 +188,13 @@ function initPage() {
       });
     },
     columns:[
-      {formatter: delIcon, width:40, align:"center", cellClick: delDepartment},
+      {formatter: delIcon, width:40, hozAlign:"center", cellClick: delDepartment},
       {title:"ID", field:"_id.$id", visible: false},
       {title:"Department ID", field: 'departmentID', formatter:"link", formatterParams:{urlPrefix:'roles.php?dept='}},
       {title:'Name', field: 'departmentName', editor:"input"},
       {title:'Public', field: 'public', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Lead', field: 'lead', editor:'select', editorParams: leadDropDown},
-      {title:'Area', field: 'area', editor:'select', editorParams: areaDropDown, formatter: areaDisplay},
+      {title:'Area', field: 'area', editor:'select', editorParams: areaDropDown, formatter: areaDisplay, sorter: "alphanum"},
       {title:'Other Admins', field: 'others', editor:'input'}
     ],
     cellEdited: dataChanged,

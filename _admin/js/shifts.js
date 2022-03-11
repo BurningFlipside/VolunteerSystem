@@ -685,6 +685,54 @@ function retryEvents() {
   }
 }
 
+function shiftAssigned(jqXHR) {
+  let obj = this;
+  if(jqXHR.status !== 200) {
+    if(jqXHR.responseJSON !== undefined && jqXHR.responseJSON.canOverride) {
+      bootbox.confirm(jqXHR.responseJSON.message, function(result) {
+        if(result) {
+          $.ajax({
+            url: '../api/v1/shifts/'+obj.id+'/Actions/Assign',
+            method: 'POST',
+            complete: shiftAssigned,
+            contentType: 'application/json',
+            data: JSON.stringify({email: obj.email, force: result}),
+            context: obj
+          });
+        }
+      });
+      return;
+    } else if(jqXHR.responseJSON !== undefined) {
+      alert(jqXHR.responseJSON.message);
+      return;
+    } else {
+      console.log(jqXHR);
+      alert('Unable to assign shift!');
+      return;
+    }
+  }
+  location.reload();
+}
+
+function assignShift(e) {
+  let shiftID = e.data['_id']['$oid'];
+  let obj = {id: shiftID};
+  bootbox.prompt("Enter the user's email to assign the shift to", function(result){ 
+    if(result === null || result === '') {
+      return;
+    }
+    obj.email = result;
+    $.ajax({
+      url: '../api/v1/shifts/'+shiftID+'/Actions/Assign',
+      method: 'POST',
+      complete: shiftAssigned,
+      contentType: 'application/json',
+      data: JSON.stringify({email: result}),
+      context: obj
+    }); 
+  });
+}
+
 function gotShiftToEdit(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -721,8 +769,8 @@ function gotShiftToEdit(jqXHR) {
       {label: 'Department', type: 'text', readonly: true, id: 'department', value: getDepartmentName(shift.departmentID)},
       {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
-      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true},
-      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true, value: shift.startTime},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true, value: shift.endTime},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
       {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded'},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
@@ -748,6 +796,8 @@ function gotShiftToEdit(jqXHR) {
     ];
     dialogOptions.inputs.push({label: 'Participant', type: 'text', id: 'participant', value: shift.participant, disabled: true});
     dialogOptions.buttons.push({text: 'Empty Shift', callback: emptyShift});
+  } else {
+    dialogOptions.buttons.push({text: 'Assign Shift', callback: assignShift});
   }
   $.ajax({
     url: '../api/v1/departments/'+shift.departmentID+'/roles',
@@ -787,7 +837,7 @@ function gotGroupToEdit(jqXHR) {
   var roleText = '';
   var roles = {};
   var taken = false;
-  var group = false;
+  var groupLink = false;
   for(var i = 0; i < shifts.length; i++) {
     if(roles[shifts[i].roleID] === undefined) {
       roles[shifts[i].roleID] = 0;
@@ -797,7 +847,7 @@ function gotGroupToEdit(jqXHR) {
       taken = true;
     }
     if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
-      group = true;
+      groupLink = true;
     }
   }
   for(var role in roles) {
@@ -836,16 +886,17 @@ function gotGroupToEdit(jqXHR) {
   dialogOptions.alerts = [];
   if(taken) {
     dialogOptions.alerts.push({type: 'warning', text: 'One or more shift in the set is already filled!'});
-    for(var i = 0; i < shifts.length; i++) {
-      if(shifts[i].status === 'filled') {
-        dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'">'+shifts[i].participant+'</a>'});
-      }
-      else if(shifts[i].status === 'pending') {
-        dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'"><i>Pending:</i> '+shifts[i].participant+'</a>'});
-      }
+  }
+  for(var i = 0; i < shifts.length; i++) {
+    if(shifts[i].status === 'filled') {
+      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'">'+shifts[i].participant+'</a>'});
+    } else if(shifts[i].status === 'pending') {
+      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'"><i>Pending:</i> '+shifts[i].participant+'</a>'});
+    } else {
+      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'"><i>Unfilled</i></a>'});
     }
   }
-  if(group) {
+  if(groupLink) {
     dialogOptions.alerts.push({type: 'info', text: 'A group signup link exists for this group!'});
     for(var i = 0; i < shifts.length; i++) {
       if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
@@ -1101,6 +1152,7 @@ function unboundedChanged(e) {
 
 function efChanged(e) {
   $('.shift').remove();
+  $('.card').show();
   if(e.target.value === '') {
     $.ajax({
       url: '../api/v1/shifts',
@@ -1108,6 +1160,22 @@ function efChanged(e) {
     });
   }
   else {
+    for(let i = 0; i < events.length; i++) {
+      if(events[i]['_id']['$oid'] === e.target.value) {
+	let fvsEvent = events[i];
+        if(fvsEvent.departments.length > 0) {
+	  let cards = $('.card');
+	  for(let j = 0; j < cards.length; j++) {
+            let header = cards[j].querySelector('.card-header');
+            let headerName = header.id.substring(7);
+            if(!fvsEvent.departments.includes(headerName)) {
+              $(cards[j]).hide();
+	    }
+	  }
+	}
+        break;
+      }
+    }
     $.ajax({
       url: '../api/v1/shifts?$filter=eventID eq '+e.target.value,
       complete: gotShifts
@@ -1133,3 +1201,4 @@ function initPage() {
 }
 
 $(initPage);
+/* vim: set tabstop=2 shiftwidth=2 expandtab: */

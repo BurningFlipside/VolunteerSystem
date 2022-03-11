@@ -178,7 +178,7 @@ function initPage() {
       {title:'End Date/Time', field: 'endTime', formatter: dateTimeView},
       {title:'Private', field: 'private', editor: 'tickCross', formatter: 'tickCross'},
       {title:'Volunteer List', field: 'volList', editor: 'input'},
-      {title:'Department List', field: 'departments'},
+      {title:'Department List', field: 'departments', editor: 'input'},
       {title:'Tickets Needed', field: 'tickets', formatter: 'tickCross'},
       {title:'Alias', field: 'alias', editor: 'input'}
     ],

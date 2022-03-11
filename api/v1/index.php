@@ -1,7 +1,6 @@
 <?php
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
-require('Autoload.php');
 require('../../app/VolunteerAutoload.php');
 require_once('class.Processor.php');
 require_once('class.VolunteerAPI.php');
@@ -13,7 +12,7 @@ require_once('class.ParticipantAPI.php');
 require_once('class.CertificatonAPI.php');
 require_once('class.TextAPI.php');
 
-$site = new \Http\WebSite();
+$site = new \Flipside\Http\WebSite();
 $site->registerAPI('/events', new EventAPI());
 $site->registerAPI('/departments', new DepartmentAPI());
 $site->registerAPI('/roles', new RoleAPI());
