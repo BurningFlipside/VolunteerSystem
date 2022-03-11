@@ -971,7 +971,7 @@ function gotShifts(jqXHR) {
     if(pendingCount > 0) {
       badge += '<span class="badge badge-info">Pending <span class="badge badge-light">'+pendingCount+'</span></span>';
     }
-    if((filledCount > 0 || pendingCount > 0) && emptyCount != 0) {
+    if((filledCount > 0 || pendingCount > 0) && emptyCount !== 0) {
       badge += '<span class="badge badge-secondary">Empty <span class="badge badge-light">'+emptyCount+'</span></span>';
     }
     $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+' '+badge+'</a>');

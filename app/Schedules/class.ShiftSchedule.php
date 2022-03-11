@@ -17,11 +17,9 @@ trait ShiftSchedule
                 if(isset($tmp[$i]['display_name']))
                 {
                     $roles[$tmp[$i]['short_name']] = $tmp[$i]['display_name'];
+                    continue;
                 }
-                else
-                {
-                    $roles[$tmp[$i]['short_name']] = $tmp[$i]['short_name'];
-                }
+                $roles[$tmp[$i]['short_name']] = $tmp[$i]['short_name'];
             }
         }
         return $roles[$roleID];

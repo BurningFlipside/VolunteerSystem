@@ -79,14 +79,10 @@ class DepartmentAPI extends VolunteerAPI
                     if(isset($requirements['email_list']))
                     {
                         $emails = explode(",", $requirements['email_list']);
-                        $userEmails = array();
+                        $userEmails = $this->user->mail;
                         if(is_string($this->user->mail))
                         {
-                            array_push($userEmails, $this->user->mail);
-                        }
-                        else
-                        {
-                            $userEmails = $this->user->mail;
+                            $userEmails = array($this->user->mail);
                         }
                         $count2 = count($userEmails);
                         for($j = 0; $j < $count2; $j++)

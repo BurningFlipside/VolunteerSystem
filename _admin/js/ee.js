@@ -319,8 +319,8 @@ function gotInitialData(results) {
           for(var eeType in event.eeLists) {
             var list = event.eeLists[eeType];
             if(list[uid] !== undefined) {
-              if(parseInt(eeType) > bestEE) {
-                bestEE = parseInt(eeType);
+              if(parseInt(eeType, 10) > bestEE) {
+                bestEE = parseInt(eeType, 10);
               }
               row.AAR = list[uid].AAR;
               row.AF = list[uid].AF;
@@ -369,6 +369,8 @@ function initPage() {
     }));
   }
   else {
+    $('#eventFilter').hide();
+    $('[for=eventFilter]').hide();
     promises.push($.ajax({
       url: '../api/v1/events/?filter=_id eq '+eventId,
     }));

@@ -42,7 +42,6 @@ class VolunteerEvent extends VolunteerObject
         {
             $this->dbData['eeLists'][$eeListIndex] = array();
         }
-        $eeList = $this->dbData['eeLists'][$eeListIndex];
         if(!isset($this->dbData['eeLists'][$eeListIndex][$uid]))
         {
             $this->dbData['eeLists'][$eeListIndex][$uid] = array('AAR'=>false, 'AF'=>false, 'Lead'=>false);

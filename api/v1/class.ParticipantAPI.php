@@ -186,18 +186,20 @@ class ParticipantAPI extends VolunteerAPI
             $response = $response->withHeader('Content-Disposition', 'attachment; filename="MyShifts.ics"');
             $body = $response->getBody();
             $body->write($text);
+            return $response;
         }
         else if($format === 'application/pdf')
         {
             $pdf = new \Schedules\SimplePDF('My', $shifts);
             $response = $response->withHeader('Content-Type', 'application/pdf');
             $response->getBody()->write($pdf->toPDFBuffer());
+            return $response;
         }
-        else
+        else if($format === 'json')
         {
-            throw new \Exception('Unknown format '.$format);
+            return $response->withJSON($shifts);
         }
-        return $response;
+        throw new \Exception('Unknown format '.$format);
     }
 
     public function getCerts($request, $response, $args)
