@@ -187,12 +187,12 @@ class EventAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $eeList = $event->eeLists[intval($obj['eeList'])];
+        $eeList = $event->eeLists[(int)$obj['eeList']];
         if(!isset($eeList[$obj['uid']]))
         {
             return $response->withStatus(404);
         }
-        $ret = $event->approveEE($obj['uid'], intval($obj['eeList']), $obj['approvalType']);
+        $ret = $event->approveEE($obj['uid'], (int)$obj['eeList'], $obj['approvalType']);
         return $response->withJson($ret);
     }
 }

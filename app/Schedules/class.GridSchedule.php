@@ -310,8 +310,8 @@ class GridSchedule
         {
             return 1;
         }
-        print_r($interval);
-        die();
+        //print_r($interval);
+        //die();
     }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */
