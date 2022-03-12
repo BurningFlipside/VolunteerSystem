@@ -56,12 +56,9 @@ class GridSchedule
                 {
                     continue;
                 }
-                else
-                {
-                    $style = $cell->getStyle();
-                    $style->getBorders()->getAllBorders()->setBorderStyle(false);
-                    $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_PATTERN_LIGHTGRAY);
-                }
+                $style = $cell->getStyle();
+                $style->getBorders()->getAllBorders()->setBorderStyle(false);
+                $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_PATTERN_LIGHTGRAY);
             }
         }
     }

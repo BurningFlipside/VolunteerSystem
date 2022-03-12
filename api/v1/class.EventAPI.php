@@ -120,6 +120,16 @@ class EventAPI extends VolunteerAPI
         return $response->withJson($ret);
     }
 
+    private function getFilterString($eventId, $obj)
+    {
+        $filterStr = 'eventID eq '.$eventId.' and status eq filled';
+        if(isset($obj['earlyLate']))
+        {
+            return $filterStr.' and earlyLate eq \''.$obj['earlyLate'].'\'';
+        }
+        return $filterStr." and earlyLate ne '-1'";
+    }
+
     public function getEEShiftReportForEvent($request, $response, $args)
     {
         $eventId = $args['event'];
@@ -133,15 +143,7 @@ class EventAPI extends VolunteerAPI
         {
             $obj = json_decode($request->getBody()->getContents(), true);
         }
-        $filterStr = 'eventID eq '.$eventId.' and status eq filled';
-        if(isset($obj['earlyLate']))
-        {
-            $filterStr .= ' and earlyLate eq \''.$obj['earlyLate'].'\'';
-        }
-        else
-        {
-            $filterStr .= " and earlyLate ne '-1'";
-        }
+        $filterStr = getFilterString($eventId, $obj);
         $filter = new \Flipside\Data\Filter($filterStr);
         $shifts = $shiftDataTable->read($filter);
         $ret = array();

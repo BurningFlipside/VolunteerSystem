@@ -114,21 +114,20 @@ trait Processor
             if(isset($dept['lead']) && $this->userIsLeadCached($user) && is_array($user->title) && in_array($dept['lead'], $user->title))
             {
                 $deptCache[$uid] = true;
+                return true;
             }
             else if(!isset($dept['others']))
             {
                 $deptCache[$uid] = false;
+                return false;
             }
-            else
+            $email = $user->mail;
+            $otherAdmins = $dept['others'];
+            if(!is_array($dept['others']))
             {
-                $email = $user->mail;
-                $otherAdmins = $dept['others'];
-                if(!is_array($dept['others']))
-                {
-                    $otherAdmins = explode(',', $dept['others']);
-                }
-                $deptCache[$uid] = in_array($email, $otherAdmins);
+                $otherAdmins = explode(',', $dept['others']);
             }
+            $deptCache[$uid] = in_array($email, $otherAdmins);
         }
         return $deptCache[$uid];
     }

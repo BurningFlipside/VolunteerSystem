@@ -21,11 +21,10 @@ class VolunteerObject
             }
             $dbData = $objs[0];
             $this->id = $id;
+            $this->dbData = $dbData;
+            return;
         }
-        else
-        {
-            $this->id = $dbData[$index];
-        }
+        $this->id = $dbData[$index];
         $this->dbData = $dbData;
     }
 

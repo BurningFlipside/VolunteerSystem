@@ -39,10 +39,7 @@ trait ShiftSchedule
             {
                 return -1;
             }
-            else
-            {
-                return 0;
-            }
+            return 0;
         }
         else if($interval->invert === 1 && ($interval->h || $interval->days))
         {
