@@ -1,9 +1,11 @@
+/*global $, bootbox, Tabulator, getParameterByName, addOptiontoSelect*/
+/* exported groupsAllowedUpdated, newRole, onEmailListUpdated, publiclyVisibleUpdated, roleNameUpdated, showRoleWizard */
 var deptId;
 var table;
 
 function roleNameUpdated() {
   var disp_name = $('#display_name').val();
-  var id = disp_name.replace(/ /g, "_");
+  var id = disp_name.replace(/ /g, '_');
   id = id.replace(/[\/\\]/g, '_');
   var full_id = deptId+'_'+id;
   $('#short_name').val(full_id);
@@ -67,7 +69,7 @@ function valueChanged(value, field, id) {
   var obj = {};
   var current = obj;
   for(var i = 0; i < propParts.length-1; i++) {
-    current = current[propParts[i]] = {};
+    current = current[`${propParts[i]}`] = {};  // eslint-disable-line security/detect-object-injection
   }
   current[propParts[propParts.length-1]] = value;
   var url = '../api/v1/departments/'+deptId+'/roles/'+id;
@@ -99,7 +101,7 @@ function gotDept(jqXHR) {
 
 function newRole(role) {
   delete role.onEmailList;
-  role.short_name = role.short_name.replace(/ /g, "_");
+  role.short_name = role.short_name.replace(/ /g, '_');
   role.short_name = role.short_name.replace(/[\/\\]/g, '_');
   $.ajax({
     url: '../api/v1/departments/'+deptId+'/roles/',
@@ -115,7 +117,7 @@ function showRoleWizard() {
   $('#roleWizard').modal('show');
 }
 
-function groupFormatter(cell, formatterParams, onRendered) {
+function groupFormatter(cell) {
   var value = cell.getValue();
   if(value === undefined) {
     return '';
@@ -126,11 +128,11 @@ function groupFormatter(cell, formatterParams, onRendered) {
   return value;
 }
 
-function groupedWithEditor(cell, onRendered, success, cancel, editorParams) {
+function groupedWithEditor(cell, onRendered, success) {
   var rowData = cell.getRow().getData();
   var departmentID = rowData.departmentID;
   var rows = cell.getTable().getRows();
-  var editor = document.createElement("select");
+  var editor = document.createElement('select');
   var value = cell.getValue();
   var values = [];
   if(value !== undefined) {
@@ -142,14 +144,14 @@ function groupedWithEditor(cell, onRendered, success, cancel, editorParams) {
     }
   }
 
-  editor.setAttribute("multiple", true);
-  for(var i = 0; i < rows.length; i++) {
-    var data = rows[i].getData();
+  editor.setAttribute('multiple', true);
+  for(let row of rows) {
+    var data = row.getData();
     if(data.short_name === rowData.short_name) {
       continue;
     }
     if(data.departmentID === departmentID) {
-      var opt = document.createElement("option");
+      var opt = document.createElement('option');
       opt.value = data.short_name;
       if(values.includes(data.short_name)) {
         opt.selected = true;
@@ -161,12 +163,11 @@ function groupedWithEditor(cell, onRendered, success, cancel, editorParams) {
   function successFunc(){
     var data = $(editor).select2('data');
     var ret = '';
-    for(var i = 0; i < data.length; i++) {
-      ret+=data[i].id;
-      if(i < data.length-1) {
-        ret+=',';
-      }
+    for(let item in data) {
+      ret+=item.id;
+      ret+=',';
     }
+    ret = ret.slice(0, -1);
     success(ret);
   }
   onRendered(function(){
@@ -188,9 +189,9 @@ function gotDeptList(jqXHR) {
     return a.departmentName.localeCompare(b.departmentName);
   });
   var sel = $('#deptFilter');
-  for(var i = 0; i < array.length; i++) {
-    if(array[i].isAdmin) {
-      addOptiontoSelect(sel[0], array[i].departmentID, array[i].departmentName);
+  for(let dept of array) {
+    if(dept.isAdmin) {
+      addOptiontoSelect(sel[0], dept.departmentID, dept.departmentName);
     }
   }
 }
@@ -199,12 +200,12 @@ function deptFilterChanged(e) {
   var value = e.target.value;
   if(value === '*') {
     table.setData('../api/v1/roles');
-    $('#newRoleBtn').attr("disabled", true).attr('title', 'Adding a new role is disabled except on the individual department pages');
+    $('#newRoleBtn').attr('disabled', true).attr('title', 'Adding a new role is disabled except on the individual department pages');
     deptId = null;
   }
   else {
     table.setData('../api/v1/departments/'+value+'/roles');
-    $('#newRoleBtn').removeAttr("disabled").removeAttr('title');
+    $('#newRoleBtn').removeAttr('disabled').removeAttr('title');
     deptId = value;
   }
 }
@@ -215,13 +216,13 @@ function gotRoles(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
-  for(var i = 0; i < array.length; i++) {
-    var newOption = new Option(array[i].display_name, array[i].short_name, false, false);
+  for(let role in array) {
+    let newOption = new Option(role.display_name, role.short_name, false, false);
     $('#grouped_with').append(newOption);
   }
 }
 
-function delIcon(cell, formatterParams, onRendered) {
+function delIcon() {
   return "<i class='fa fa-trash'></i>";
 }
 
@@ -264,7 +265,8 @@ function gotShiftsBeforeDelete(jqXHR) {
           complete: deleteDone
         });
       }
-  }});
+    }
+  });
 }
 
 function delRole(e, cell) {
@@ -278,6 +280,7 @@ function delRole(e, cell) {
 
 function initPage() {
   deptId = getParameterByName('dept');
+  let tableURL = '';
   if(deptId !== null) {
     $.ajax({
       url: '../api/v1/departments/'+deptId,
@@ -293,7 +296,7 @@ function initPage() {
   else {
     $('#deptName').html('All');
     tableURL = '../api/v1/roles';
-    $('#newRoleBtn').attr("disabled", true).attr('title', 'Adding a new role is disabled except on the individual department pages');
+    $('#newRoleBtn').attr('disabled', true).attr('title', 'Adding a new role is disabled except on the individual department pages');
     $.ajax({
       url: '../api/v1/departments',
       complete: gotDeptList
@@ -309,22 +312,22 @@ function initPage() {
 
 function gotCerts(jqXHR) {
   var cols = [
-      {formatter: delIcon, width:40, align:"center", cellClick: delRole},
-      {title:"ID", field:"_id.$id", visible: false},
-      {title:'Short Name', field: 'short_name', visible: false},
-      {title:'Name', field: 'display_name', editor: 'input'},
-      {title:'Description', field: 'description', editor:"textarea", formatter:"html", width: 250},
-      {title:'Public', field: 'publicly_visible', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Groups', field: 'groups_allowed', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Can be grouped with', field: 'grouped_with', editor: groupedWithEditor, formatter: groupFormatter},
-      {title:'Hours between shifts', field: 'down_time', editor: 'number'},
-      {title:'Restricted To Emails', field: 'requirements.email_list', editor:"textarea", formatter:"html", width: 250}
+    {formatter: delIcon, width:40, align: 'center', cellClick: delRole},
+    {title: 'ID', field: '_id.$id', visible: false},
+    {title: 'Short Name', field: 'short_name', visible: false},
+    {title: 'Name', field: 'display_name', editor: 'input'},
+    {title: 'Description', field: 'description', editor: 'textarea', formatter: 'html', width: 250},
+    {title: 'Public', field: 'publicly_visible', editor: 'tickCross', formatter: 'tickCross'},
+    {title: 'Groups', field: 'groups_allowed', editor: 'tickCross', formatter: 'tickCross'},
+    {title: 'Can be grouped with', field: 'grouped_with', editor: groupedWithEditor, formatter: groupFormatter},
+    {title: 'Hours between shifts', field: 'down_time', editor: 'number'},
+    {title: 'Restricted To Emails', field: 'requirements.email_list', editor: 'textarea', formatter: 'html', width: 250}
   ];
   var data = jqXHR.responseJSON;
-  for(var i = 0; i < data.length; i++) {
-    cols.push({title:'Needs '+data[i].name, field: 'requirements.'+data[i].certID, editor: 'tickCross', formatter: 'tickCross'});
+  for(let cert of data) {
+    cols.push({title:'Needs '+cert.name, field: 'requirements.'+cert.certID, editor: 'tickCross', formatter: 'tickCross'});
   }
-  table = new Tabulator("#roles", {
+  table = new Tabulator('#roles', {
     ajaxURL: this,
     ajaxResponse: function(url, params, response) {
       return response.filter(function(element) {

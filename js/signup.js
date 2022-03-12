@@ -1,3 +1,5 @@
+/* global $, bootbox, flipDialog, getParameterByName */
+/* exported abandon, groupSignup, override, revealPage, showAdminSignup, signup */
 function signupDone(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -15,7 +17,7 @@ function signupCreated(jqXHR) {
     return;
   }
   bootbox.alert({
-    message: "Here is your group signup link. Share the link with your friends or campmates to allow them to sign up for the same shift as you.<br/><br/><blockquote>https://secure.burningflipside.com/fvs/groupSignup.php?id="+jqXHR.responseJSON.uuid+"</blockquote>",
+    message: 'Here is your group signup link. Share the link with your friends or campmates to allow them to sign up for the same shift as you.<br/><br/><blockquote>https://secure.burningflipside.com/fvs/groupSignup.php?id='+jqXHR.responseJSON.uuid+'</blockquote>',
     size: 'large'
   });
   console.log(jqXHR);
@@ -55,23 +57,21 @@ function groupSignupInfoObtained(jqXHR) {
   };
   var myPos = {label: 'My position', type: 'select', id: 'myshift', options: []};
   var used = {};
-  for(var i = 0; i < data.shifts.length; i++)
-  {
-    if(used[data.shifts[i]['roleID']] === undefined) {
-      id = data.shifts[i]['_id']['$oid'];
-      myPos.options.push({value: id, text: data.shifts[i]['role'], selected: shiftID === id});
-      used[data.shifts[i]['roleID']] = {name: data.shifts[i]['role'], count: 0};
+  for(let shift in data.shifts) {
+    if(used[shift.roleID] === undefined) {
+      let id = shift['_id']['$oid'];
+      myPos.options.push({value: id, text: shift.role, selected: shiftID === id});
+      used[shift.roleID] = {name: shift.role, count: 0};
       if(shiftID !== id) {
-        used[data.shifts[i]['roleID']].count = 1;
+        used[shift.roleID].count = 1;
       }
-    }
-    else {
-      used[data.shifts[i]['roleID']].count++;
+    } else {
+      used[shift.roleID].count++;
     }
   }
   dialogOptions.inputs.push(myPos);
   for(var role in used) {
-    dialogOptions.inputs.push({label: used[role].name, type: 'number', id: 'roles.'+role, min: 0, max: used[role].count, value: used[role].count});
+    dialogOptions.inputs.push({label: used[`${role}`].name, type: 'number', id: 'roles.'+role, min: 0, max: used[`${role}`].count, value: used[`${role}`].count});
   }
   flipDialog.dialog(dialogOptions);
 }

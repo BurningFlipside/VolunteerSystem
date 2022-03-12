@@ -1,13 +1,14 @@
+/* global $, bootbox*/
 function doneShiftCopy(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
     alert('Shift copy failed!');
     return;
   }
-  let str = "Successfully created "+jqXHR.responseJSON.success+" shifts.";
+  let str = 'Successfully created '+jqXHR.responseJSON.success+' shifts.';
   if(jqXHR.responseJSON.fail > 0)
   {
-    str+=" Failed on "+jqXHR.responseJSON.fail+" shifts";
+    str+=' Failed on '+jqXHR.responseJSON.fail+' shifts';
   }
   bootbox.alert(str);
 }
@@ -68,17 +69,17 @@ function gotEvents(jqXHR) {
   }
   let events = jqXHR.responseJSON;
   let eventsWithDeptShifts = this;
-  for(let i = 0; i < events.length; i++) {
+  for(let event of events) {
     //Source Events must be in the eventsWithDeptShifts list
-    if(eventsWithDeptShifts.includes(events[i]['_id']['$oid'])) {
+    if(eventsWithDeptShifts.includes(event['_id']['$oid'])) {
       $('#src').append($('<option>', {
-        value: events[i]['_id']['$oid'],
-        text: events[i].name
+        value: event['_id']['$oid'],
+        text: event.name
       }));
     } else {
       $('#dst').append($('<option>', {
-        value: events[i]['_id']['$oid'],
-        text: events[i].name
+        value: event['_id']['$oid'],
+        text: event.name
       }));
     }
   }
@@ -93,8 +94,8 @@ function gotShifts(jqXHR) {
   }
   let eventIDs = new Set();
   let shifts = jqXHR.responseJSON;
-  for(let i = 0; i < shifts.length; i++) {
-    eventIDs.add(shifts[i].eventID);
+  for(let shift of shifts) {
+    eventIDs.add(shift.eventID);
   }
   if(eventIDs.size === 0) {
     alert('Department has no past events with shifts to copy from!');
@@ -124,11 +125,11 @@ function gotDepartments(jqXHR) {
     return;
   }
   let depts = jqXHR.responseJSON;
-  for(let i = 0; i < depts.length; i++) {
-    if(depts[i].isAdmin) {
+  for(let dept of depts) {
+    if(dept.isAdmin) {
       $('#department').append($('<option>', {
-        value: depts[i].departmentID,
-        text: depts[i].departmentName
+        value: dept.departmentID,
+        text: dept.departmentName
       }));
     }
   }

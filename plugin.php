@@ -1,7 +1,7 @@
 <?php
-if(is_readable('../SecurePlugin.php'))
+if(is_readable(__DIR__.'/../SecurePlugin.php'))
 {
-    require_once('../SecurePlugin.php');
+    require_once(__DIR__.'/../SecurePlugin.php');
 }
 class FVSPlugin extends \Flipside\Secure\SecurePlugin
 {

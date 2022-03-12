@@ -1,5 +1,6 @@
+/* exported addOptiontoSelect */
 function addOptiontoSelect(select, value, text, selected) {
-  var opt = document.createElement("option");
+  var opt = document.createElement('option');
   opt.value = value;
   if(selected === true) {
     opt.selected = true;

@@ -1,3 +1,4 @@
+/* global $, bootbox, Tabulator*/
 var table;
 var certs = {};
 
@@ -13,24 +14,18 @@ function gotUsersWithPendingCerts(jqXHR) {
 
 function gotCertTypes(jqXHR) {
   if(jqXHR.status !== 200) {
-    alert('Unable to obtain certiciation types!');
+    alert('Unable to obtain certification types!');
     console.log(jqXHR);
     return;
   }
   var data = jqXHR.responseJSON;
-  if(!Array.isArray(data))
-  {
-    console.log(data);
-    alert('Got invalid data returned!');
-    return;
-  }
-  for(var i = 0; i < data.length; i++) {
+  for(let cert of data) {
     $.ajax({
-      url: '../api/v1/participants?$filter=certs.'+data[i].certID+'.status%20eq%20pending&$select=firstName,lastName,email,burnerName,uid,certs.'+data[i].certID,
-      context: data[i].certID,
+      url: '../api/v1/participants?$filter=certs.'+cert.certID+'.status%20eq%20pending&$select=firstName,lastName,email,burnerName,uid,certs.'+cert.certID,
+      context: cert.certID,
       complete: gotUsersWithPendingCerts
     });
-    certs[data[i].certID] = data[i];
+    certs[cert.certID] = cert;
   }
 }
 
@@ -46,8 +41,7 @@ function finishedCertOp(jqXHR) {
 function approveCert(e, cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
-  console.log(data);
-  if(certs[certType].expires) {
+  if(certs[`${certType}`].expires) {
     //TODO Expires dialog...
     alert('TODO');
     return;
@@ -64,7 +58,7 @@ function disapproveCert(e, cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
   bootbox.prompt({ 
-    title: "Why are you rejecting this certification?",
+    title: 'Why are you rejecting this certification?',
     inputType: 'select',
     inputOptions: [
       {text: 'It is not a valid cerification', value: 'invalid'},
@@ -87,7 +81,7 @@ function disapproveCert(e, cell) {
   });
 }
 
-function approveIcon(cell, formatterParams, onRendered) {
+function approveIcon() {
   return '<i class="fas fa-thumbs-up"></i>';
 }
 
@@ -95,22 +89,22 @@ function disapproveIcon() {
   return '<i class="fas fa-thumbs-down"></i>';
 }
 
-function volName(cell, formatterParams, onRendered) {
+function volName(cell) {
   var data = cell.getRow().getData();
   return data.firstName+' "'+data.burnerName+'" '+data.lastName;
 }
 
-function certType(cell, formatterParams, onRendered) {
+function certType(cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
-  return certs[certType].name;
+  return certs[`${certType}`].name;
 }
 
 function certImage(cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
-  var imagedata = data.certs[certType].image;
-  var imagetype = data.certs[certType].imageType;
+  var imagedata = data.certs[`${certType}`].image;
+  var imagetype = data.certs[`${certType}`].imageType;
   if(imagetype === 'application/pdf') {
     return '<object width="300" data="data:'+imagetype+';base64, '+imagedata+'"/>';
   }
@@ -120,8 +114,8 @@ function certImage(cell) {
 function fullImage(e, cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
-  var imagedata = data.certs[certType].image;
-  var imagetype = data.certs[certType].imageType;
+  var imagedata = data.certs[`${certType}`].image;
+  var imagetype = data.certs[`${certType}`].imageType;
   if(imagetype === 'application/pdf') {
     bootbox.alert({size: 'xl', message:'<object data="data:'+imagetype+';base64, '+imagedata+'" style="width: 100%; height: '+screen.height*3/5+'px"/>'});
     return;
@@ -130,12 +124,12 @@ function fullImage(e, cell) {
 }
 
 function initPage() {
-  table = new Tabulator("#certs", {
+  table = new Tabulator('#certs', {
     columns: [
-      {formatter: approveIcon, width:40, align:"center", cellClick: approveCert},
-      {formatter: disapproveIcon, width:40, align:"center", cellClick: disapproveCert},
+      {formatter: approveIcon, width:40, align: 'center', cellClick: approveCert},
+      {formatter: disapproveIcon, width:40, align: 'center', cellClick: disapproveCert},
       {title: 'Volunteer Name', formatter: volName},
-      {title: 'Volunteer Email', field: 'email', formatter:"link", formatterParams:{urlPrefix:"mailto://", target:"_blank"}},
+      {title: 'Volunteer Email', field: 'email', formatter: 'link', formatterParams:{urlPrefix: 'mailto://', target: '_blank'}},
       {title: 'Cert Type', formatter: certType},
       {title: 'Cert Image', formatter: certImage, width: 300, cellClick: fullImage}
     ]

@@ -1,5 +1,5 @@
-var table;
-
+/* global $, bootbox, Tabulator*/
+/* exported newDepartment */
 function editDone(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -22,7 +22,7 @@ function valueChanged(value, field, id) {
   var obj = {};
   var current = obj;
   for(var i = 0; i < propParts.length-1; i++) {
-    current = current[propParts[i]] = {};
+    current = current[`${propParts[i]}`] = {}; // eslint-disable-line security/detect-object-injection
   }
   current[propParts[propParts.length-1]] = value;
   $.ajax({
@@ -39,28 +39,28 @@ function dataChanged(cell) {
   valueChanged(cell.getValue(), cell.getColumn().getField(), cell.getRow().getData()['departmentID']);
 }
 
-function leadDropDown(cell) {
+function leadDropDown() {
   var values = {};
   var cache = window.localStorage.getItem('FlipsideLeadCache');
   if(cache === undefined || !cache || cache === 'undefined') {
     return false;
   }
   var leads = JSON.parse(cache);
-  for(var i = 0; i < leads.length; i++) {
-    values[leads[i].short_name] = leads[i].name;
+  for(let lead of leads) {
+    values[lead.short_name] = lead.name;
   }
   return {values:values};
 }
 
-function areaDropDown(cell) {
+function areaDropDown() {
   var values = {};
   var cache = window.localStorage.getItem('FlipsideAreaCache');
   if(cache === undefined || !cache || cache === 'undefined') {
     return false;
   }
   var areas = JSON.parse(cache);
-  for(var i = 0; i < areas.length; i++) {
-    values[areas[i].short_name] = areas[i].name;
+  for(let area of areas) {
+    values[area.short_name] = area.name;
   }
   return {values:values};
 }
@@ -72,20 +72,20 @@ function areaDisplay(cell) {
     return value;
   }
   var areas = JSON.parse(cache);
-  for(var i = 0; i < areas.length; i++) {
-    if(areas[i].short_name === value) {
-      return areas[i].name;
+  for(let area of areas) {
+    if(area.short_name === value) {
+      return area.name;
     }
   }
   return value;
 }
 
 function saveLeads(jqXHR) {
-   window.localStorage.setItem('FlipsideLeadCache', jqXHR.responseText);
+  window.localStorage.setItem('FlipsideLeadCache', jqXHR.responseText);
 }
 
 function saveAreas(jqXHR) {
-   window.localStorage.setItem('FlipsideAreaCache', jqXHR.responseText);
+  window.localStorage.setItem('FlipsideAreaCache', jqXHR.responseText);
 }
 
 function refreshCache() {
@@ -128,7 +128,7 @@ function deleteDone(jqXHR) {
   location.reload();
 }
 
-function delIcon(cell, formatterParams, onRendered) {
+function delIcon() {
   return "<i class='fa fa-trash'></i>";
 }
 
@@ -162,7 +162,8 @@ function gotRolesBeforeDelete(jqXHR) {
           complete: deleteDone
         });
       }
-  }});
+    }
+  });
 }
 
 function delDepartment(e, cell) {
@@ -180,7 +181,7 @@ function initPage() {
   if(!cache || cache === 'undefined' || !cache2 || cache2 === 'undefined') {
     refreshCache();
   }
-  table = new Tabulator("#depts", {
+  new Tabulator('#depts', {
     ajaxURL: '../api/v1/departments',
     ajaxResponse: function(url, params, response) {
       return response.filter(function(element) {
@@ -188,19 +189,19 @@ function initPage() {
       });
     },
     columns:[
-      {formatter: delIcon, width:40, hozAlign:"center", cellClick: delDepartment},
-      {title:"ID", field:"_id.$id", visible: false},
-      {title:"Department ID", field: 'departmentID', formatter:"link", formatterParams:{urlPrefix:'roles.php?dept='}},
-      {title:'Name', field: 'departmentName', editor:"input"},
-      {title:'Public', field: 'public', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Lead', field: 'lead', editor:'select', editorParams: leadDropDown},
-      {title:'Area', field: 'area', editor:'select', editorParams: areaDropDown, formatter: areaDisplay, sorter: "alphanum"},
-      {title:'Other Admins', field: 'others', editor:'input'}
+      {formatter: delIcon, width:40, hozAlign: 'center', cellClick: delDepartment},
+      {title: 'ID', field: '_id.$id', visible: false},
+      {title: 'Department ID', field: 'departmentID', formatter: 'link', formatterParams:{urlPrefix:'roles.php?dept='}},
+      {title: 'Name', field: 'departmentName', editor: 'input'},
+      {title: 'Public', field: 'public', editor: 'tickCross', formatter: 'tickCross'},
+      {title: 'Lead', field: 'lead', editor:'select', editorParams: leadDropDown},
+      {title: 'Area', field: 'area', editor:'select', editorParams: areaDropDown, formatter: areaDisplay, sorter: 'alphanum'},
+      {title: 'Other Admins', field: 'others', editor:'input'}
     ],
     cellEdited: dataChanged,
     initialSort:[
-      {column:"departmentName", dir:"asc"},
-      {column:"area", dir:"asc"}
+      {column: 'departmentName', dir: 'asc'},
+      {column: 'area', dir: 'asc'}
     ]
   });
 }

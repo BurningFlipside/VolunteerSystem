@@ -1,3 +1,5 @@
+/* global $, bootbox */
+/* exported linkTicket, saveData */
 function gotUser(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
@@ -22,7 +24,7 @@ function gotMyCerts(jqXHR) {
   for(var key in data) {
     var icon = $('#'+key);
     var upload = $('#'+key+'_Upload');
-    switch(data[key].status) {
+    switch(data[`${key}`].status) {
       case 'pending':
         icon.html('<i class="fas fa-exclamation-triangle text-warning" title="Your certification is pending review"></i>');
         break;
@@ -31,7 +33,6 @@ function gotMyCerts(jqXHR) {
         upload.remove();
         break;
     }
-    console.log(data[key]);
   }
 }
 
@@ -48,12 +49,12 @@ function gotCerts(jqXHR) {
   }
   var data = jqXHR.responseJSON;
   var html = $('#certs');
-  for(var i = 0; i < data.length; i++) {
+  for(let cert of data) {
     var title = $('<div class="col-sm-3"/>');
-    var icon = $('<div class="col-sm-3" id="'+data[i].certID+'"><i class="fas fa-times text-danger"></i></div>');
+    var icon = $('<div class="col-sm-3" id="'+cert.certID+'"><i class="fas fa-times text-danger"></i></div>');
     var upload = $('<div class="col-sm-6"></div>');
-    var input = $('<input type="file" class="form-control-file" id="'+data[i].certID+'_Upload" title="Upload an image of your certificate" accept="image/*, application/pdf"/>');
-    title.html(data[i].name);
+    var input = $('<input type="file" class="form-control-file" id="'+cert.certID+'_Upload" title="Upload an image of your certificate" accept="image/*, application/pdf"/>');
+    title.html(cert.name);
     upload.append(input);
     html.append(title);
     html.append(icon);

@@ -1,3 +1,4 @@
+/* global $ */
 function gotShifts(jqXHR) {
   if(jqXHR.status === 401) {
     location.reload();
@@ -5,12 +6,12 @@ function gotShifts(jqXHR) {
   }
   else if(jqXHR.status !== 200) {
     alert('Unable to get shifts!');
-    conosle.log(jqXHR);
+    console.log(jqXHR);
     return;
   }
   var array = jqXHR.responseJSON;
-  for(var i = 0; i < array.length; i++) {
-    console.log(array[i]);
+  for(let shift in array) {
+    console.log(shift);
   }
 }
 

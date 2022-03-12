@@ -1,3 +1,5 @@
+/*global $, bootbox, flipDialog, getParameterByName, browser_supports_input_type, addOptiontoSelect*/
+/* exported addNewGroup, addNewShift, addRoleToShift, editGroup, editShift, newGroup, removeRole */
 var departments = {};
 var events;
 var roles;
@@ -6,10 +8,10 @@ function getRoleName(roleID) {
   if(roles === undefined) {
     return roleID;
   }
-  if(roles[roleID] === undefined) {
+  if(roles[`${roleID}`] === undefined) {
     return roleID;
   }
-  return roles[roleID].display_name;
+  return roles[`${roleID}`].display_name;
 }
 
 function doneCreatingShift(jqXHR) {
@@ -53,7 +55,7 @@ function createCopies(e) {
       dataType: 'json'
     }));
   }
-  Promise.all(promises).then((values) => {
+  Promise.all(promises).then(() => {
     $('#newShift').modal('hide');
     location.reload();
   }).catch(e => {
@@ -72,11 +74,11 @@ function gotDepartmentRoles(jqXHR) {
   var options = this;
   var inputs = options.inputs;
   var array = jqXHR.responseJSON;
-  for(var i = 0; i < inputs.length; i++) {
-    if(inputs[i].id === 'roleID') {
-      inputs[i].options = [];
-      for(var j = 0; j < array.length; j++) {
-        inputs[i].options.push({value: array[j].short_name, text: array[j].display_name});
+  for(let input of inputs) {
+    if(input.id === 'roleID') {
+      input.options = [];
+      for(let role of array) {
+        input.options.push({value: role.short_name, text: role.display_name});
       }
     }
   }
@@ -86,29 +88,31 @@ function gotDepartmentRoles(jqXHR) {
 function gotGroupDepartmentRoles(jqXHR) {
   var mySelect = $('#groupAddRole');
   var array = jqXHR.responseJSON;
-  for(var i = 0; i < array.length; i++) {
-    var newOption = new Option(array[i].display_name, array[i].short_name, false, false);
+  for(let role of array) {
+    var newOption = new Option(role.display_name, role.short_name, false, false);
     mySelect.append(newOption);
   }
 }
 
 function addNewShift(elem) {
-  var href = elem.getAttribute("href");
+  var href = elem.getAttribute('href');
   href = href.substring(1);
   var eventOptions = [];
-  for(var i = 0; i < events.length; i++) {
-    var eventOption = {value: events[i]['_id']['$oid'], text: events[i].name};
+  let min = '2000-01-01T01:00:00-05:00';
+  let max = '2100-01-01T01:00:00-05:00';
+  for(let event of events) {
+    let eventOption = {value: event['_id']['$oid'], text: event.name};
     eventOptions.push(eventOption);
-    if(i === 0) {
-      min = events[i].startTime;
-      max = events[i].endTime;
+    if(min !== '2000-01-01T01:00:00-05:00') {
+      min = event.startTime;
+      max = event.endTime;
     }
   }
   var dialogOptions = {
     title: 'New Shift',
     inputs: [
       {type: 'hidden', id: 'departmentID', value: href},
-      {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[href].departmentName},
+      {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[`${href}`].departmentName},
       {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
       {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: min, max: max, onChange: setMinEndTime, required: true},
@@ -168,13 +172,13 @@ function newGroup(data) {
 }
 
 function addNewGroup(elem) {
-  var href = elem.getAttribute("href");
+  var href = elem.getAttribute('href');
   href = href.substring(1);
   $('#groupDepartmentID').val(href);
-  $('#groupDepartmentName').val(departments[href].departmentName);
+  $('#groupDepartmentName').val(departments[`${href}`].departmentName);
   var mySelect = $('#groupEvent')[0];
-  for(var i = 0; i < events.length; i++) {
-    addOptiontoSelect(mySelect, events[i]['_id']['$oid'], events[i].name);
+  for(let event of events) {
+    addOptiontoSelect(mySelect, event['_id']['$oid'], event.name);
   }
   if(!browser_supports_input_type('datetime-local')) {
     $('[type="datetime-local"]').flatpickr({enableTime: true});
@@ -189,25 +193,26 @@ function addNewGroup(elem) {
 
 function groupEventChanged(elem) {
   var eventID = elem.value;
-  for(var i = 0; i < events.length; i++) {
-    if(events[i]['_id']['$oid'] === eventID) {
-      myevent = events[i];
+  let myEvent = {};
+  for(let event of events) {
+    if(event['_id']['$oid'] === eventID) {
+      myEvent = event;
       break;
     }
   }
   if($('#groupStartTime')[0]._flatpickr !== undefined) {
     var start = $('#groupStartTime')[0]._flatpickr;
     var end = $('#groupEndTime')[0]._flatpickr;
-    start.set('minDate', myevent.startTime);
-    start.set('maxDate', myevent.endTime);
-    end.set('minDate', myevent.startTime);
-    end.set('maxDate', myevent.endTime);
+    start.set('minDate', myEvent.startTime);
+    start.set('maxDate', myEvent.endTime);
+    end.set('minDate', myEvent.startTime);
+    end.set('maxDate', myEvent.endTime);
     return;
   }
-  $('#groupStartTime').attr('min', myevent.startTime);
-  $('#groupStartTime').attr('max', myevent.endTime);
-  $('#groupEndTime').attr('min', myevent.startTime);
-  $('#groupEndTime').attr('max', myevent.endTime);
+  $('#groupStartTime').attr('min', myEvent.startTime);
+  $('#groupStartTime').attr('max', myEvent.endTime);
+  $('#groupEndTime').attr('min', myEvent.startTime);
+  $('#groupEndTime').attr('max', myEvent.endTime);
 }
 
 function shiftDeleted(jqXHR) {
@@ -220,9 +225,9 @@ function shiftDeleted(jqXHR) {
 }
 
 function deleteShift(e) {
-  var msg = "Are you sure you want to delete this shift?";
+  var msg = 'Are you sure you want to delete this shift?';
   if(e.data.shifts !== undefined) {
-    msg = "Are you sure you want to delete all "+e.data.shifts.length+" shifts in this set?";
+    msg = 'Are you sure you want to delete all '+e.data.shifts.length+' shifts in this set?';
   }
   bootbox.confirm({
     message: msg,
@@ -331,14 +336,6 @@ function filterSinglesAndGroups(element) {
   }
 }
 
-function keepGroupsOnly(element) {
-  return (element.groupID !== undefined);
-}
-
-function removeElementsNotInOtherArray(element) {
-  return !this.includes(element);
-}
-
 function getGroupName(group) {
   if(group[0].name !== undefined && group[0].name !== '') {
     return group[0].name;
@@ -365,17 +362,16 @@ function gotShiftstoReplaceGroupIDs(jqXHR) {
   }
   var array = jqXHR.responseJSON;
   var promises = [];
-  for(var i = 0; i < array.length; i++) {
-    var data = array[i];
+  for(let data of array) {
     data.groupID = this;
     promises.push($.ajax({
-      url: '../api/v1/shifts/'+array[i]['_id']['$oid'],
+      url: '../api/v1/shifts/'+data['_id']['$oid'],
       method: 'PATCH',
       contentType: 'application/json',
       data: JSON.stringify(data)
     }));
   }
-  Promise.all(promises).then((values) => {
+  Promise.all(promises).then(() => {
     location.reload();
   }).catch(e => {
     console.log(e);
@@ -453,12 +449,12 @@ function gotShiftsToGroup(jqXHR) {
     return;
   }
   var array = jqXHR.responseJSON;
-  var array = array.filter(removeOwnEvent, this);
+  array = array.filter(removeOwnEvent, this);
   var groups =  {};
   var singles = array.filter(filterSinglesAndGroups, groups);
   var groupCount = Object.keys(groups).length;
   if(groupCount === 0 && singles.length === 0) {
-    bootbox.alert("No shifts for this department have the same start and end times as the indicated shift!");
+    bootbox.alert('No shifts for this department have the same start and end times as the indicated shift!');
     return;
   }
   var groupOptions = {label: 'Existing Set', type: 'radio', id: 'group', value: 'group', onChange: groupTypeChange};
@@ -471,7 +467,7 @@ function gotShiftsToGroup(jqXHR) {
     groupOptions.checked = true;
     groupSelect.options = [];
     for(var groupID in groups) {
-      var groupName = getGroupName(groups[groupID]);
+      var groupName = getGroupName(groups[`${groupID}`]);
       groupSelect.options.push({value: groupID, text: groupName});
     }
   }
@@ -489,16 +485,16 @@ function gotShiftsToGroup(jqXHR) {
       singleSelect.disabled = true;
     }
     singleSelect.options = [];
-    for(var i = 0; i < singles.length; i++) {
-      if(singles[i].name !== undefined && singles[i].name.length > 0) {
-        shiftName = singles[i].name+': '+getRoleName(singles[i].roleID);
+    for(let single of singles) {
+      let shiftName = '';
+      if(single.name !== undefined && single.name.length > 0) {
+        shiftName = single.name+': '+getRoleName(single.roleID);
+      } else {
+        let start = new Date(single.startTime);
+        let end = new Date(single.endTime);
+        shiftName = getRoleName(single.roleID)+': '+start+' to '+end;
       }
-      else {
-        var start = new Date(singles[i].startTime);
-        var end = new Date(singles[i].endTime);
-        shiftName = getRoleName(singles[i].roleID)+': '+start+' to '+end;
-      }
-      singleSelect.options.push({value: singles[i]['_id']['$oid'], text: shiftName});
+      singleSelect.options.push({value: single['_id']['$oid'], text: shiftName});
     }
   }
   if(this.shifts !== undefined) {
@@ -541,50 +537,47 @@ function saveShift(e) {
 }
 
 function isEquivalent(a, b) {
-    // Create arrays of property names
-    var aProps = Object.getOwnPropertyNames(a);
-    var bProps = Object.getOwnPropertyNames(b);
-    
-    // If number of properties is different,
+  // Create arrays of property names
+  var aProps = Object.getOwnPropertyNames(a);
+  var bProps = Object.getOwnPropertyNames(b);
+  
+  // If number of properties is different,
+  // objects are not equivalent
+  if (aProps.length != bProps.length) {
+    return false;
+  }
+
+  for(let propName of aProps) {
+    // If values of same property are not equal,
     // objects are not equivalent
-    if (aProps.length != bProps.length) {
+    if (a[`${propName}`] !== b[`${propName}`]) {
       return false;
     }
-
-    for (var i = 0; i < aProps.length; i++) {
-      var propName = aProps[i];
-    
-      // If values of same property are not equal,
-      // objects are not equivalent
-      if (a[propName] !== b[propName]) {
-        return false;
-      }
-    }
-    
-    // If we made it this far, objects
-    // are considered equivalent
-    return true;
+  }
+  // If we made it this far, objects
+  // are considered equivalent
+  return true;
 }
 
 function saveGroup(e) {
   var shifts = e.data.shifts;
   var roles = {};
-  for(var i = 0; i < shifts.length; i++) {
-    shifts[i].department = e.data.department;
-    shifts[i].departmentID = e.data.departmentID;
-    shifts[i].earlyLate = e.data.earlyLate;
-    shifts[i].enabled = e.data.enabled;
-    shifts[i].approvalNeeded = e.data.approvalNeeded;
-    shifts[i].endTime = e.data.endTime;
-    shifts[i].name = e.data.name;
-    shifts[i].startTime = e.data.startTime;
-    shifts[i].eventID = e.data.eventID;
-    shifts[i].unbounded = e.data.unbounded;
-    shifts[i].minShifts = e.data.minShifts;
-    if(roles[shifts[i].roleID] === undefined) {
-      roles[shifts[i].roleID] = 0;
+  for(let shift of shifts) {
+    shift.department = e.data.department;
+    shift.departmentID = e.data.departmentID;
+    shift.earlyLate = e.data.earlyLate;
+    shift.enabled = e.data.enabled;
+    shift.approvalNeeded = e.data.approvalNeeded;
+    shift.endTime = e.data.endTime;
+    shift.name = e.data.name;
+    shift.startTime = e.data.startTime;
+    shift.eventID = e.data.eventID;
+    shift.unbounded = e.data.unbounded;
+    shift.minShifts = e.data.minShifts;
+    if(roles[shift.roleID] === undefined) {
+      roles[shift.roleID] = 0;
     }
-    roles[shifts[i].roleID]++;
+    roles[shift.roleID]++;
   }
   delete e.data.department;
   delete e.data.departmentID;
@@ -599,64 +592,61 @@ function saveGroup(e) {
   delete e.data.shifts;
   delete e.data.unbounded;
   delete e.data.minShifts;
-  for(var role in e.data) {
-    e.data[role] = e.data[role]*1;
+  for(let role in e.data) {
+    e.data[`${role}`] = e.data[`${role}`]*1;
   }
   if(!isEquivalent(e.data, roles)) {
     //TODO Create more copies of the role...
-    for(var role in roles) {
-      e.data[role] = e.data[role] - roles[role];
-      if(e.data[role] === 0) {
-        delete e.data[role];
+    for(let role in roles) {
+      e.data[`${role}`] = e.data[`${role}`] - roles[`${role}`];
+      if(e.data[`${role}`] === 0) {
+        delete e.data[`${role}`];
       }
-      if(e.data[role] > 0) {
-        while(e.data[role] > 0) {
+      if(e.data[`${role}`] > 0) {
+        while(e.data[`${role}`] > 0) {
           var newShift = Object.assign({}, shifts[0]);
           newShift.roleID = role;
           shifts.push(newShift);
-          e.data[role]--;
+          e.data[`${role}`]--;
         }
-      }
-      else{
-        while(e.data[role] < 0) {
-          for(var i = 0; i < shifts.length; i++) {
-            if(shifts[i].roleID === role) {
-              shifts[i].DELETE = true;
-              e.data[role]++;
+      } else {
+        while(e.data[`${role}`] < 0) {
+          for(let shift of shifts) {
+            if(shift.roleID === role) {
+              shift.DELETE = true;
+              e.data[`${role}`]++;
               break;
             }
           }
         }
-      }
+      } 
     }
   }
   var promises = [];
-  for(var i = 0; i < shifts.length; i++) {
-    if(shifts[i]['_id'] !== undefined && shifts[i].DELETE !== true) {
+  for(let shift of shifts) {
+    if(shift['_id'] !== undefined && shift.DELETE !== true) {
       promises.push($.ajax({
-        url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
+        url: '../api/v1/shifts/'+shift['_id']['$oid'],
         method: 'PATCH',
         contentType: 'application/json',
-        data: JSON.stringify(shifts[i])
+        data: JSON.stringify(shift)
       }));
-    }
-    else if(shifts[i].DELETE === true) {
+    } else if(shift.DELETE === true) {
       promises.push($.ajax({
-        url: '../api/v1/shifts/'+shifts[i]['_id']['$oid'],
+        url: '../api/v1/shifts/'+shift['_id']['$oid'],
         method: 'DELETE',
         contentType: 'application/json'
       }));
-    }
-    else {
+    } else {
       promises.push($.ajax({
         url: '../api/v1/shifts/',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify(shifts[i])
+        data: JSON.stringify(shift)
       }));
     }
-  }
-  Promise.all(promises).then((values) => {
+  } 
+  Promise.all(promises).then(() => {
     location.reload();
   }).catch(e => {
     console.log(e);
@@ -666,8 +656,8 @@ function saveGroup(e) {
 }
 
 function getDepartmentName(departmentID) {
-  if(departments[departmentID] !== undefined) {
-    return departments[departmentID].departmentName
+  if(departments[`${departmentID}`] !== undefined) {
+    return departments[`${departmentID}`].departmentName;
   }
   else {
     return departmentID;
@@ -680,8 +670,8 @@ function retryEvents() {
     return;
   }
   var eventdd = $('#eventID');
-  for(var i = 0; i < events.length; i++) {
-    eventdd.append($('<option value="'+events[i]['_id']['$oid']+'">'+events[i].name+'</option>'));
+  for(let event of events) {
+    eventdd.append($('<option value="'+event['_id']['$oid']+'">'+event.name+'</option>'));
   }
 }
 
@@ -741,18 +731,17 @@ function gotShiftToEdit(jqXHR) {
   }
   var shift = jqXHR.responseJSON;
   var eventOptions = [];
+  let myEvent = {};
   if(events === undefined) {
     setTimeout(retryEvents, 100);
-    myevent = {};
-    myevent.startTime = new Date();
-    myevent.endTime = new Date(8640000000000000);
-  }
-  else {
-    for(var i = 0; i < events.length; i++) {
-      var eventOption = {value: events[i]['_id']['$oid'], text: events[i].name};
-      if(shift.eventID === events[i]['_id']['$oid']) {
+    myEvent.startTime = new Date();
+    myEvent.endTime = new Date(8640000000000000);
+  } else {
+    for(let event of events) {
+      let eventOption = {value: event['_id']['$oid'], text: event.name};
+      if(shift.eventID === event['_id']['$oid']) {
         eventOption.selected = true;
-        myevent = events[i];
+        myEvent = event;
       }
       eventOptions.push(eventOption);
     }
@@ -769,8 +758,8 @@ function gotShiftToEdit(jqXHR) {
       {label: 'Department', type: 'text', readonly: true, id: 'department', value: getDepartmentName(shift.departmentID)},
       {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes},
       {label: 'Role', type: 'select', id: 'roleID'},
-      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true, value: shift.startTime},
-      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true, value: shift.endTime},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myEvent.startTime, max: myEvent.endTime, onChange: setMinEndTime, required: true, value: shift.startTime},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myEvent.startTime, max: myEvent.endTime, required: true, value: shift.endTime},
       {label: 'Enabled', type: 'checkbox', id: 'enabled'},
       {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded'},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
@@ -825,11 +814,12 @@ function gotGroupToEdit(jqXHR) {
   }
   var shifts = jqXHR.responseJSON;
   var eventOptions = [];
-  for(var i = 0; i < events.length; i++) {
-    var eventOption = {value: events[i]['_id']['$oid'], text: events[i].name};
-    if(shifts[0].eventID === events[i]['_id']['$oid']) {
+  let myEvent = {};
+  for(let event of events) {
+    let eventOption = {value: event['_id']['$oid'], text: event.name};
+    if(shifts[0].eventID === event['_id']['$oid']) {
       eventOption.selected = true;
-      myevent = events[i];
+      myEvent = event;
     }
     eventOptions.push(eventOption);
   }
@@ -838,20 +828,20 @@ function gotGroupToEdit(jqXHR) {
   var roles = {};
   var taken = false;
   var groupLink = false;
-  for(var i = 0; i < shifts.length; i++) {
-    if(roles[shifts[i].roleID] === undefined) {
-      roles[shifts[i].roleID] = 0;
+  for(let shift of shifts) {
+    if(roles[shift.roleID] === undefined) {
+      roles[shift.roleID] = 0;
     }
-    roles[shifts[i].roleID]++;
-    if(shifts[i].status === 'filled' || shifts[i].status === 'pending') {
+    roles[shift.roleID]++;
+    if(shift.status === 'filled' || shift.status === 'pending') {
       taken = true;
     }
-    if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
+    if(shift.signupLink !== undefined && shift.signupLink !== '') {
       groupLink = true;
     }
   }
   for(var role in roles) {
-    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[role]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+getRoleName(role)+'</span></div></div>';
+    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[`${role}`]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+getRoleName(role)+'</span></div></div>';
   }
   var dialogOptions = {
     title: 'Edit Shift Set',
@@ -862,8 +852,8 @@ function gotGroupToEdit(jqXHR) {
       {label: 'Department', type: 'text', readonly: true, id: 'department', value: departments[shifts[0].departmentID].departmentName},
       {label: 'Event', type: 'select', id: 'eventID', options: eventOptions, onChange: setBoundaryTimes, value: shifts[0].eventID},
       {label: 'Roles', type: 'html', text: roleText},
-      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myevent.startTime, max: myevent.endTime, onChange: setMinEndTime, required: true, value: shifts[0].startTime},
-      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myevent.startTime, max: myevent.endTime, required: true, value: shifts[0].endTime},
+      {label: 'Start Time', type: 'datetime-local', id: 'startTime', min: myEvent.startTime, max: myEvent.endTime, onChange: setMinEndTime, required: true, value: shifts[0].startTime},
+      {label: 'End Time', type: 'datetime-local', id: 'endTime', min: myEvent.startTime, max: myEvent.endTime, required: true, value: shifts[0].endTime},
       {label: 'Enabled', type: 'checkbox', id: 'enabled', checked: shifts[0].enabled},
       {label: 'Requires Approval', type: 'checkbox', id: 'approvalNeeded', checked: shifts[0].approvalNeeded},
       {label: 'Unbounded', type: 'checkbox', id: 'unbounded', onChange: unboundedChanged},
@@ -887,20 +877,22 @@ function gotGroupToEdit(jqXHR) {
   if(taken) {
     dialogOptions.alerts.push({type: 'warning', text: 'One or more shift in the set is already filled!'});
   }
-  for(var i = 0; i < shifts.length; i++) {
-    if(shifts[i].status === 'filled') {
-      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'">'+shifts[i].participant+'</a>'});
-    } else if(shifts[i].status === 'pending') {
-      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'"><i>Pending:</i> '+shifts[i].participant+'</a>'});
+  let i = 0;
+  for(let shift of shifts) {
+    if(shift.status === 'filled') {
+      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shift.roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shift['_id']['$oid']+'">'+shift.participant+'</a>'});
+    } else if(shift.status === 'pending') {
+      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shift.roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shift['_id']['$oid']+'"><i>Pending:</i> '+shift.participant+'</a>'});
     } else {
-      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shifts[i].roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shifts[i]['_id']['$oid']+'"><i>Unfilled</i></a>'});
+      dialogOptions.inputs.push({label: 'Shift '+i+' ('+getRoleName(shift.roleID)+')', type: 'html', id: 'participant-'+i, text: '<a href="shifts.php?shiftID='+shift['_id']['$oid']+'"><i>Unfilled</i></a>'});
     }
+    i++;
   }
   if(groupLink) {
     dialogOptions.alerts.push({type: 'info', text: 'A group signup link exists for this group!'});
-    for(var i = 0; i < shifts.length; i++) {
-      if(shifts[i].signupLink !== undefined && shifts[i].signupLink !== '') {
-        dialogOptions.inputs.push({label: 'Group Signup Link', type: 'html', id: 'signupLink', text: '<a href="https://secure.burningflipside.com/fvs/groupSignup.php?id='+shifts[i].signupLink+'">https://secure.burningflipside.com/fvs/groupSignup.php?id='+shifts[i].signupLink+'</a>'});
+    for(let shift of shifts) {
+      if(shift.signupLink !== undefined && shift.signupLink !== '') {
+        dialogOptions.inputs.push({label: 'Group Signup Link', type: 'html', id: 'signupLink', text: '<a href="https://secure.burningflipside.com/fvs/groupSignup.php?id='+shift.signupLink+'">https://secure.burningflipside.com/fvs/groupSignup.php?id='+shift.signupLink+'</a>'});
         break;
       }
     }
@@ -910,7 +902,7 @@ function gotGroupToEdit(jqXHR) {
 }
 
 function editShift(elem) {
-  var href = elem.getAttribute("href");
+  var href = elem.getAttribute('href');
   href = href.substring(1);
   $.ajax({
     url: '../api/v1/shifts/'+href,
@@ -920,7 +912,7 @@ function editShift(elem) {
 }
 
 function editGroup(elem) {
-  var href = elem.getAttribute("href");
+  var href = elem.getAttribute('href');
   href = href.substring(1);
   $.ajax({
     url: '../api/v1/shifts?$filter=groupID eq '+href,
@@ -948,19 +940,17 @@ function gotShifts(jqXHR) {
   });
   var singles = array.filter(filterSinglesAndGroups, groups);
   for(var groupID in groups) {
-    var group = groups[groupID];
+    var group = groups[`${groupID}`];
     var groupName = getGroupName(group);
     var filledCount = 0;
     var pendingCount = 0;
     var emptyCount = 0;
-    for(var i = 0; i < group.length; i++) {
-      if(group[i].status === 'filled') {
+    for(let groupShift of group) {
+      if(groupShift.status === 'filled') {
         filledCount++;
-      }
-      else if(group[i].status === 'pending') {
+      } else if(groupShift.status === 'pending') {
         pendingCount++;
-      }
-      else {
+      } else {
         emptyCount++;
       }
     }
@@ -977,23 +967,22 @@ function gotShifts(jqXHR) {
     $('#'+group[0].departmentID+'List').append('<a href="#'+groupID+'" class="list-group-item list-group-item-action shift" onclick="return editGroup(this);"><i class="fas fa-object-group"></i> '+groupName+' '+badge+'</a>');
   }
   singles.sort(sortEvents);
-  for(var i = 0; i < singles.length; i++) {
-    if(singles[i].name !== undefined && singles[i].name.length > 0) {
-      shiftName = singles[i].name+': '+getRoleName(singles[i].roleID);
+  for(let single of singles) {
+    let shiftName = '';
+    if(single.name !== undefined && single.name.length > 0) {
+      shiftName = single.name+': '+getRoleName(single.roleID);
+    } else {
+      let start = new Date(single.startTime);
+      let end = new Date(single.endTime);
+      shiftName = getRoleName(single.roleID)+': '+start+' to '+end;
     }
-    else {
-      var start = new Date(singles[i].startTime);
-      var end = new Date(singles[i].endTime);
-      shiftName = getRoleName(singles[i].roleID)+': '+start+' to '+end;
-    }
-    var badge = '';
-    if(singles[i].status === 'filled') {
+    let badge = '';
+    if(single.status === 'filled') {
       badge = '<span class="badge badge-warning">Filled</span>';
-    }
-    else if(singles[i].status === 'pending') {
+    } else if(single.status === 'pending') {
       badge = '<span class="badge badge-info">Pending</span>';
     }
-    $('#'+singles[i].departmentID+'List').append('<a href="#'+singles[i]['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+' '+badge+'</a>');
+    $('#'+single.departmentID+'List').append('<a href="#'+single['_id']['$oid']+'" class="list-group-item list-group-item-action shift" onclick="return editShift(this);">'+shiftName+' '+badge+'</a>');
   }
   if(getParameterByName('hideEmpty') !== null) {
     $('.card:not(:has(.shift))').hide();
@@ -1003,7 +992,7 @@ function gotShifts(jqXHR) {
 function processEvents(events) {
   if(getParameterByName('showOld') === null) {
     events = events.filter(function(evt) {
-      return evt.why !== "Event is in the past";
+      return evt.why !== 'Event is in the past';
     });
   }
   events.sort(function(a, b){
@@ -1012,8 +1001,8 @@ function processEvents(events) {
     return aDate.getTime() - bDate.getTime();
   });
   var ef = $('#eventFilter');
-  for(var i = 0; i < events.length; i++) {
-    var option = $('<option value="'+events[i]['_id']['$oid']+'">'+events[i].name+'</option>');
+  for(let event of events) {
+    var option = $('<option value="'+event['_id']['$oid']+'">'+event.name+'</option>');
     ef.append(option);
   }
   var faveEvent = localStorage.getItem('adminEvent');
@@ -1032,10 +1021,10 @@ function processDepartments(array) {
   });
   var count = 0;
   var accordian = $('#accordion');
-  for(var i = 0; i < array.length; i++) {
+  for(let dept of array) {
     count++;
-    departments[array[i].departmentID] = array[i];
-    accordian.append('<div class="card"><div class="card-header" id="heading'+array[i].departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+array[i].departmentID+'" aria-expanded="true" aria-controls="collapse'+array[i].departmentID+'">'+array[i].departmentName+'</button></h2></div><div id="collapse'+array[i].departmentID+'" class="collapse show" aria-labelledby="heading'+array[i].departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+array[i].departmentID+'List"><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+array[i].departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
+    departments[dept.departmentID] = dept;
+    accordian.append('<div class="card"><div class="card-header" id="heading'+dept.departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+dept.departmentID+'" aria-expanded="true" aria-controls="collapse'+dept.departmentID+'">'+dept.departmentName+'</button></h2></div><div id="collapse'+dept.departmentID+'" class="collapse show" aria-labelledby="heading'+dept.departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+dept.departmentID+'List"><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
   }
   var eventID = getParameterByName('event');
   if(eventID === null) {
@@ -1075,8 +1064,8 @@ function processDepartments(array) {
 
 function processRoles(roleData) {
   roles = {};
-  for(let i = 0; i < roleData.length; i++) {
-    roles[roleData[i].short_name] = roleData[i];
+  for(let role in roleData) {
+    roles[role.short_name] = role;
   }
   return roles;
 }
@@ -1111,28 +1100,29 @@ function setMinEndTime(e) {
 
 function setBoundaryTimes(e) {
   var id = e.target.value;
-  for(var i = 0; i < events.length; i++) {
-    if(events[i]['_id']['$oid'] === id) {
-      myevent = events[i];
+  let myEvent = {};
+  for(let event of events) {
+    if(event['_id']['$oid'] === id) {
+      myEvent = event;
       break;
     }
   }
-  $('#startTime').attr('min', myevent.startTime);
-  $('#startTime').attr('max', myevent.endTime);
-  $('#endTime').attr('min', myevent.startTime);
-  $('#endTime').attr('max', myevent.endTime);
-  if(document.querySelector("#startTime")._flatpickr !== undefined) {
-    fp = document.querySelector("#startTime")._flatpickr;
-    fp.set('minDate', myevent.startTime);
-    fp.set('maxDate', myevent.endTime);
+  $('#startTime').attr('min', myEvent.startTime);
+  $('#startTime').attr('max', myEvent.endTime);
+  $('#endTime').attr('min', myEvent.startTime);
+  $('#endTime').attr('max', myEvent.endTime);
+  if(document.querySelector('#startTime')._flatpickr !== undefined) {
+    let fp = document.querySelector('#startTime')._flatpickr;
+    fp.set('minDate', myEvent.startTime);
+    fp.set('maxDate', myEvent.endTime);
     fp.clear();
     fp.changeMonth(-12);
     fp.changeMonth(12);
     fp.jumpToDate();
     fp.redraw();
-    fp = document.querySelector("#endTime")._flatpickr;
-    fp.set('minDate', myevent.startTime);
-    fp.set('maxDate', myevent.endTime);
+    fp = document.querySelector('#endTime')._flatpickr;
+    fp.set('minDate', myEvent.startTime);
+    fp.set('maxDate', myEvent.endTime);
     fp.clear();
     fp.changeMonth(-12);
     fp.changeMonth(12);
@@ -1158,21 +1148,19 @@ function efChanged(e) {
       url: '../api/v1/shifts',
       complete: gotShifts
     });
-  }
-  else {
-    for(let i = 0; i < events.length; i++) {
-      if(events[i]['_id']['$oid'] === e.target.value) {
-	let fvsEvent = events[i];
+  } else {
+    for(let fvsEvent of events) {
+      if(fvsEvent['_id']['$oid'] === e.target.value) {
         if(fvsEvent.departments.length > 0) {
-	  let cards = $('.card');
-	  for(let j = 0; j < cards.length; j++) {
-            let header = cards[j].querySelector('.card-header');
+          let cards = $('.card');
+          for(let card of cards) {
+            let header = card.querySelector('.card-header');
             let headerName = header.id.substring(7);
             if(!fvsEvent.departments.includes(headerName)) {
-              $(cards[j]).hide();
-	    }
-	  }
-	}
+              $(card).hide();
+            }
+          }
+        }
         break;
       }
     }

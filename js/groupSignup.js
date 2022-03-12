@@ -1,3 +1,5 @@
+/* global $*/
+/* exported signUp */
 function signupDone(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);

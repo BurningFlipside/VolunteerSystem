@@ -1,3 +1,4 @@
+/*global $*/
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
@@ -6,13 +7,12 @@ function gotShifts(jqXHR) {
   table.empty();
   var data = jqXHR.responseJSON;
   var participants = {};
-  for(var i = 0; i < data.length; i++) {
-    if(data[i].participant !== undefined && data[i].participant !== '') {
-      if(participants[data[i].participant] === undefined) {
-        participants[data[i].participant] = 1;
-      }
-      else {
-        participants[data[i].participant]++;
+  for(let shift of data) {
+    if(shift.participant !== undefined && shift.participant !== '') {
+      if(participants[shift.participant] === undefined) {
+        participants[shift.participant] = 1;
+      } else {
+        participants[shift.participant]++;
       }
     }
   }
@@ -22,8 +22,8 @@ function gotShifts(jqXHR) {
     max = 9999;
   }
   for(var uid in participants) {
-    if(participants[uid] >= min && participants[uid] <= max) {
-      table.append('<tr><td>'+uid+'</td><td>'+participants[uid]+'</td></tr>');
+    if(participants[`${uid}`] >= min && participants[`${uid}`] <= max) {
+      table.append('<tr><td>'+uid+'</td><td>'+participants[`${uid}`]+'</td></tr>');
     }
   }
 }
@@ -33,12 +33,12 @@ function getShifts() {
   var filter = '';
   if(selectedRoles.length > 0) {
     filter = '?$filter=';
-    for(var i = 0; i < selectedRoles.length; i++) {
-      filter+='roleID eq '+selectedRoles[i].id;
-      if(i < selectedRoles.length-1) {
-        filter+=' or ';
-      }
+    for(let role of selectedRoles) {
+      filter+='roleID eq '+role.id;
+      filter+=' or ';
     }
+    //Remove last or...
+    filter = filter.slice(0, -4);
   }
   $.ajax({
     url: '../api/v1/events/'+$('#event').val()+'/shifts'+filter,
@@ -46,15 +46,15 @@ function getShifts() {
   });
 }
 
-function minShiftsChanged(e) {
+function minShiftsChanged() {
   getShifts();
 }
 
-function maxShiftsChanged(e) {
+function maxShiftsChanged() {
   getShifts();
 }
 
-function rolesChanged(e) {
+function rolesChanged() {
   getShifts();
 }
 
@@ -64,8 +64,8 @@ function gotRoles(jqXHR) {
   }
   var data = jqXHR.responseJSON;
   $('#roles').empty();
-  for(var i = 0; i < data.length; i++) {
-    var newOption = new Option(data[i].display_name, data[i].short_name, true, true);
+  for(let role of data) {
+    var newOption = new Option(role.display_name, role.short_name, true, true);
     $('#roles').append(newOption);
   }
   $('#roles').trigger('change');
@@ -79,7 +79,7 @@ function departmentSelected(e) {
   });
 }
 
-function eventSelected(e) {
+function eventSelected() {
   getShifts();
 }
 
@@ -92,8 +92,8 @@ function initPage() {
         data.sort((a,b) => {
           return a.name.localeCompare(b.name);
         });
-        for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i]['_id']['$oid'], text: data[i].name});
+        for(let event of data) {
+          res.push({id: event['_id']['$oid'], text: event.name});
         }
         return {results: res};
       }
@@ -107,9 +107,9 @@ function initPage() {
         data.sort((a,b) => {
           return a.departmentName.localeCompare(b.departmentName);
         });
-        for(var i = 0; i < data.length; i++) {
-          if(data[i].isAdmin) {
-            res.push({id: data[i].departmentID, text: data[i].departmentName});
+        for(let dept of data) {
+          if(dept.isAdmin) {
+            res.push({id: dept.departmentID, text: dept.departmentName});
           }
         }
         return {results: res};

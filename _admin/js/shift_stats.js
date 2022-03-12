@@ -1,3 +1,5 @@
+/*global $, Tabulator*/
+/* exported tableToCSV, tableToXLSX*/
 var tableData = {};
 var table;
 
@@ -16,66 +18,65 @@ function gotShifts(jqXHR) {
     return;
   }
   var shifts = jqXHR.responseJSON;
-  let inviteOnly = ($('#hideInviteOnly').prop("checked") === true);
+  let inviteOnly = ($('#hideInviteOnly').prop('checked') === true);
   if(!inviteOnly) {
     tableData['total'].shifts = shifts.length;
   }
-  for(var i = 0; i < shifts.length; i++) {
+  for(let shift of shifts) {
     if(inviteOnly) {
-      if(shifts[i].whyClass === 'INVITE') {
+      if(shift.whyClass === 'INVITE') {
         continue;
       } else {
         tableData['total'].shifts++;
       }
     }
-    tableData[shifts[i].departmentID].shifts++;
-    var start = new Date(shifts[i].startTime);
-    var end = new Date(shifts[i].endTime);
+    tableData[shift.departmentID].shifts++;
+    var start = new Date(shift.startTime);
+    var end = new Date(shift.endTime);
     var milliseconds = end - start;
     var minutes = milliseconds/(1000*60);
     var hours = (minutes*1.0)/60;
     tableData['total'].hours += hours;
-    tableData[shifts[i].departmentID].hours += hours;
-    if(shifts[i].status && shifts[i].status === 'filled') {
+    tableData[shift.departmentID].hours += hours;
+    if(shift.status && shift.status === 'filled') {
       tableData['total'].filled++;
-      tableData[shifts[i].departmentID].filled++;
+      tableData[shift.departmentID].filled++;
       tableData['total'].filledHours += hours;
-      tableData[shifts[i].departmentID].filledHours += hours;
-    }
-    else {
+      tableData[shift.departmentID].filledHours += hours;
+    } else {
       tableData['total'].unfilled++;
-      tableData[shifts[i].departmentID].unfilled++;
+      tableData[shift.departmentID].unfilled++;
       tableData['total'].unfilledHours += hours;
-      tableData[shifts[i].departmentID].unfilledHours += hours;
+      tableData[shift.departmentID].unfilledHours += hours;
     }
   }
   var array = [];
   for(var key in tableData) {
-    let tmp = tableData[key];
+    let tmp = tableData[`${key}`];
     tmp.hours = timeToString(tmp.hours);
     tmp.filledHours = timeToString(tmp.filledHours);
     tmp.unfilledHours = timeToString(tmp.unfilledHours);
     array.push(tmp);
   }
-  table = new Tabulator("#shift_stats", {
+  table = new Tabulator('#shift_stats', {
     columns: [
       {title:'Name', field: 'name'},
-      {title:'Shift Count', field: 'shifts', sorter:"number"},
-      {title:'Total Hours', field: 'hours', sorter:"number"},
-      {title:'Filled Shift Count', field: 'filled', sorter:"number"},
-      {title:'Filled Shift Hours', field: 'filledHours', sorter:"number"},
-      {title:'Unfilled Shift Count', field: 'unfilled', sorter:"number"},
-      {title:'Unfilled Shift Hours', field: 'unfilledHours', sorter:"number"}
+      {title:'Shift Count', field: 'shifts', sorter: 'number'},
+      {title:'Total Hours', field: 'hours', sorter: 'number'},
+      {title:'Filled Shift Count', field: 'filled', sorter: 'number'},
+      {title:'Filled Shift Hours', field: 'filledHours', sorter: 'number'},
+      {title:'Unfilled Shift Count', field: 'unfilled', sorter: 'number'},
+      {title:'Unfilled Shift Hours', field: 'unfilledHours', sorter: 'number'}
     ],
     initialSort:[
-      {column:"hours", dir:"desc"}
+      {column: 'hours', dir: 'desc'}
     ]
   });
   table.setData(array);
 }
 
 function hideEmptyShifts() {
-  let hide = ($('#hideEmpty').prop("checked") === true);
+  let hide = ($('#hideEmpty').prop('checked') === true);
   if(hide) {
     table.addFilter('shifts', '>', '0');
   } else {
@@ -84,14 +85,13 @@ function hideEmptyShifts() {
 }
 
 function hideInviteOnlyShifts() {
-  let hide = ($('#hideEmpty').prop("checked") === true);
   eventChanged({target: $('#event')[0]});
 }
 
 function tableToCSV() {
   let csv = ['Name, Shift Count, Total Hours, Filled Shift Count, Filled Shift Hours, Unfilled Shift Count, Unfilled Shift Hours'];
   for(var dept in tableData) {
-    csv.push(dept+', '+tableData[dept].shifts+', '+tableData[dept].hours+', '+tableData[dept].filled+', '+tableData[dept].filledHours+', '+tableData[dept].unfilled+', '+tableData[dept].unfilledHours);
+    csv.push(dept+', '+tableData[`${dept}`].shifts+', '+tableData[`${dept}`].hours+', '+tableData[`${dept}`].filled+', '+tableData[`${dept}`].filledHours+', '+tableData[`${dept}`].unfilled+', '+tableData[`${dept}`].unfilledHours);
   }
   csv = csv.join('\n');
   let csvFile = new Blob([csv], {type: 'text/csv'});
@@ -105,17 +105,17 @@ function tableToCSV() {
 }
 
 function tableToXLSX() {
-  table.download("xlsx", "shift_stats.xlsx", {sheetName: $('#event option:selected')[0].text});
+  table.download('xlsx', 'shift_stats.xlsx', {sheetName: $('#event option:selected')[0].text});
 }
 
 function eventChanged(e) {
   for(var dept in tableData) {
-    tableData[dept].shifts = 0;
-    tableData[dept].hours = 0;
-    tableData[dept].unfilled = 0;
-    tableData[dept].unfilledHours = 0;
-    tableData[dept].filled = 0;
-    tableData[dept].filledHours = 0;
+    tableData[`${dept}`].shifts = 0;
+    tableData[`${dept}`].hours = 0;
+    tableData[`${dept}`].unfilled = 0;
+    tableData[`${dept}`].unfilledHours = 0;
+    tableData[`${dept}`].filled = 0;
+    tableData[`${dept}`].filledHours = 0;
   }
   $.ajax({
     url: '../api/v1/events/'+e.target.value+'/shifts',
@@ -125,9 +125,9 @@ function eventChanged(e) {
 
 function processEvents(events) {
   var data = [];
-  for(var i = 0; i < events.length; i++) {
-    if(events[i]['available']) {
-      data.push({id: events[i]['_id']['$oid'], text: events[i]['name']});
+  for(let event of events) {
+    if(event['available']) {
+      data.push({id: event['_id']['$oid'], text: event['name']});
     }
   }
   var sel2 = $('#event').select2({data: data});
@@ -138,8 +138,8 @@ function processDepartments(depts) {
   tableData = {
     'total': {name: 'Total', shifts: 0, hours: 0, unfilled: 0, unfilledHours: 0, filled: 0, filledHours: 0}
   };
-  for(var i = 0; i < depts.length; i++) {
-    tableData[depts[i]['departmentID']] = {name: depts[i]['departmentName'], shifts: 0, hours: 0, unfilled: 0, unfilledHours: 0, filled: 0, filledHours: 0};
+  for(let dept of depts) {
+    tableData[dept['departmentID']] = {name: dept['departmentName'], shifts: 0, hours: 0, unfilled: 0, unfilledHours: 0, filled: 0, filledHours: 0};
   }
 }
 

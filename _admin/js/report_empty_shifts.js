@@ -1,3 +1,5 @@
+/*global $*/
+/* exported generateCSV, generateXLSX*/
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
@@ -7,32 +9,32 @@ function gotShifts(jqXHR) {
   var nameObj = tbody.data('names');
   var depts = $('#depts').val();
   tbody.empty();
-  for(var i = 0; i < data.length; i++) {
-    if(!depts.includes(data[i].departmentID)) {
+  for(let shift of data) {
+    if(!depts.includes(shift.departmentID)) {
       continue;
     }
-    let dept = data[i].departmentID;
-    let role = data[i].roleID;
-    let startDate = new Date(data[i].startTime);
-    let endDate = new Date(data[i].endTime);
+    let dept = shift.departmentID;
+    let role = shift.roleID;
+    let startDate = new Date(shift.startTime);
+    let endDate = new Date(shift.endTime);
     let date = startDate.toDateString();
     if(nameObj !== null) {
-      if(nameObj.depts[data[i].departmentID] !== undefined) {
-        dept = nameObj.depts[data[i].departmentID].departmentName;
+      if(nameObj.depts[shift.departmentID] !== undefined) {
+        dept = nameObj.depts[shift.departmentID].departmentName;
       }
-      if(nameObj.roles[data[i].roleID] !== undefined) {
-        role = nameObj.roles[data[i].roleID].display_name;
+      if(nameObj.roles[shift.roleID] !== undefined) {
+        role = nameObj.roles[shift.roleID].display_name;
       }
     }
     if(startDate.getDate() !== endDate.getDate()) {
       date = startDate.toDateString()+' - '+endDate.toDateString();
     }
-    tbody.append('<tr class="dept-'+data[i].departmentID+'"><td>'+dept+'</td><td>'+role+'</td><td>'+date+'</td><td>'+startDate.toLocaleTimeString()+'</td><td>'+endDate.toLocaleTimeString()+'</td></tr>');
+    tbody.append('<tr class="dept-'+shift.departmentID+'"><td>'+dept+'</td><td>'+role+'</td><td>'+date+'</td><td>'+startDate.toLocaleTimeString()+'</td><td>'+endDate.toLocaleTimeString()+'</td></tr>');
   }
 }
 
 function getShifts() {
-  var extra = "";
+  var extra = '';
   var start = $('#startTime').val();
   if(start !== '') {
     extra = ' and startTime eq '+start;
@@ -55,8 +57,8 @@ function gotEvent(jqXHR) {
 function deptChanged(e) {
   var depts = $(e.target).val();
   $('[class|=dept]').hide();
-  for(let i = 0; i < depts.length; i++) {
-    $('.dept-'+depts[i]).show();
+  for(let dept of depts) {
+    $('.dept-'+dept).show();
   }
 }
 
@@ -64,16 +66,16 @@ function processDepartments(depts) {
   let deptObj = {};
   let groups = {};
   let data = [];
-  for(let i = 0; i < depts.length; i++) {
-    deptObj[depts[i].departmentID] = depts[i];
-    if(groups[depts[i]['area']] === undefined) {
-      groups[depts[i]['area']] = [];
+  for(let dept of depts) {
+    deptObj[dept.departmentID] = dept;
+    if(groups[dept['area']] === undefined) {
+      groups[dept['area']] = [];
     }
-    var tmp = {id: depts[i]['departmentID'], text: depts[i]['departmentName'], selected: true};
-    groups[depts[i]['area']].push(tmp);
+    let tmp = {id: dept['departmentID'], text: dept['departmentName'], selected: true};
+    groups[dept['area']].push(tmp);
   }
   for(var group in groups) {
-    data.push({text: group, children: groups[group]});
+    data.push({text: group, children: groups[`${group}`]});
   }
   $('#depts').select2({data: data});
   $('#depts').change(deptChanged);
@@ -82,8 +84,8 @@ function processDepartments(depts) {
 
 function processRoles(roles) {
   let roleObj = {};
-  for(let i = 0; i < roles.length; i++) {
-    roleObj[roles[i].short_name] = roles[i];
+  for(let role in roles) {
+    roleObj[role.short_name] = role;
   }
   return roleObj;
 }
@@ -97,14 +99,14 @@ function gotInitialData(results) {
   $('#shiftTable tbody').data('names', obj);
 }
 
-function eventChanged(e) {
+function eventChanged() {
   $.ajax({
     url: '../api/v1/events/'+$('#event').val(),
     complete: gotEvent
   });
 }
 
-function startTimeChanged(e) {
+function startTimeChanged() {
   if($('#event').val() !== null) {
     getShifts();
   }
@@ -115,7 +117,7 @@ function getReport(format) {
     alert('Select an event first!');
     return;
   }
-  var extra = "";
+  var extra = '';
   var start = $('#startTime').val();
   if(start !== '') {
     extra = ' and startTime eq '+start;
@@ -148,8 +150,8 @@ function initPage() {
         data.sort((a,b) => {
           return a.name.localeCompare(b.name);
         });
-        for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i]['_id']['$oid'], text: data[i].name});
+        for(let event of data) {
+          res.push({id: event['_id']['$oid'], text: event.name});
         }
         return {results: res};
       }
