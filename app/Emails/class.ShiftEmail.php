@@ -67,20 +67,17 @@ class ShiftEmail extends VolunteerEmail
             $text = strtr($this->text, $vars);
             return $text;
         }
-        else
+        $rawText = $this->text;
+        $index = strpos($rawText, "<script");
+        if($index !== false)
         {
-            $rawText = $this->text;
-            $index = strpos($rawText, "<script");
-            if($index !== false)
+            $end = strpos($rawText, "</script>");
+            if($index === 0)
             {
-                $end = strpos($rawText, "</script>");
-                if($index === 0)
-                {
-                    $rawText = substr($rawText, $end + 9);
-                }
+                $rawText = substr($rawText, $end + 9);
             }
-            return strtr(strip_tags($rawText), $vars);
         }
+        return strtr(strip_tags($rawText), $vars);
     }
 
     public function getHTMLBody()

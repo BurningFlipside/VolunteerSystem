@@ -201,10 +201,7 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withJson($myRet);
         }
-        else
-        {
-            return $response->withJson(array('res'=>$myRet, 'errors'=>$errors));
-        }
+        return $response->withJson(array('res'=>$myRet, 'errors'=>$errors));
     }
 
     public function newGroup($request, $response)

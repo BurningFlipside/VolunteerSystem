@@ -12,12 +12,9 @@ class SimplePDF extends \Flipside\PDF\PDF
     public function __construct($department, $shifts)
     {
         parent::__construct();
-        if(is_string($department))
-        {
-            $this->deptName = $department;
-            $this->department = false;
-        }
-        else
+		$this->deptName = $department;
+        $this->department = false;
+        if(!is_string($department))
         {
             $this->department = $department;
             $this->deptName = $this->department['departmentName'];
