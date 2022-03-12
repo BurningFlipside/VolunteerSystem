@@ -1,3 +1,4 @@
+/*global $*/
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
@@ -6,13 +7,13 @@ function gotShifts(jqXHR) {
   var tbody = $('#shiftTable tbody');
   var participants = this;
   tbody.empty();
-  for(var i = 0; i < data.length; i++) {
-    if(data[i].participant !== undefined && participants[data[i].participant] !== undefined) {
-      participants[data[i].participant].shiftCount++;
+  for(let shift of data) {
+    if(shift.participant !== undefined && participants[shift.participant] !== undefined) {
+      participants[shift.participant].shiftCount++;
     }
   }
   for(var uid in participants) {
-    var part = participants[uid];
+    let part = participants[`${uid}`];
     if(part.shiftCount > 0) {
       continue;
     }
@@ -22,7 +23,7 @@ function gotShifts(jqXHR) {
         certs+=cert+' ';
       }
     }
-    tbody.append('<tr><td>'+uid+'</td><td>'+certs+'</td></tr>');
+    tbody.append('<tr><td>'+uid+'</td><td>'+part.email+'</td><td>'+certs+'</td></tr>');
   }
 }
 
@@ -32,9 +33,9 @@ function gotVols(jqXHR) {
   }
   var data = jqXHR.responseJSON;
   var participants = {};
-  for(var i = 0; i < data.length; i++) {
-    data[i].shiftCount = 0;
-    participants[data[i].uid] = data[i];
+  for(let vol of data) {
+    vol.shiftCount = 0;
+    participants[vol.uid] = vol;
   }
   var event = $('#event').val();
   if(event !== null) {
@@ -60,21 +61,13 @@ function getVols() {
       url: '../api/v1/participants',
       complete: gotVols
     });
-  }
-  else {
+  } else {
     var filter = '';
-    for(var i = 0; i < certs.length; i++) {
-      if(certs[i] === 'none') {
-        certs.splice(i, 1);
-        break;
-      }
+    for(let cert of certs) {
+      filter += 'certs.'+cert+'.status%20eq%20current';
+      filter += ' or ';
     }
-    for(var i = 0; i < certs.length; i++) {
-      filter += 'certs.'+certs[i]+'.status%20eq%20current';
-      if(i < certs.length - 1) {
-        filter += ' or '
-      }
-    }
+    filter = filter.slice(0, -4);
     $.ajax({
       url: '../api/v1/participants?$filter='+filter,
       complete: gotVols
@@ -82,11 +75,11 @@ function getVols() {
   }
 }
 
-function eventChanged(e) {
+function eventChanged() {
   getVols();
 }
 
-function certChanged(e) {
+function certChanged() {
   getVols();
 }
 
@@ -98,8 +91,8 @@ function gotCerts(jqXHR) {
   data.sort((a,b) => {
     return a.name.localeCompare(b.name);
   });
-  for(var i = 0; i < data.length; i++) {
-    var opt = new Option(data[i].name, data[i].certID, true, true);
+  for(let cert of data) {
+    let opt = new Option(cert.name, cert.certID, true, true);
     $('#certs').append(opt);
   }
   $('#certs').trigger('change');
@@ -114,8 +107,8 @@ function initPage() {
         data.sort((a,b) => {
           return a.name.localeCompare(b.name);
         });
-        for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i]['_id']['$oid'], text: data[i].name});
+        for(let event of data) {
+          res.push({id: event['_id']['$oid'], text: event.name});
         }
         return {results: res};
       }

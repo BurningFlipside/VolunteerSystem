@@ -1,3 +1,4 @@
+/* global $, browser_supports_input_type */
 window.flipDialog = {};
 window.flipDialog.dialog = function(options) {
   var dialog = $('<div class="modal fade show" aria-modal="true"><div class="modal-dialog modal-lg"><div class="modal-content"></div></div></div>');
@@ -5,12 +6,11 @@ window.flipDialog.dialog = function(options) {
   dialog.find('.modal-content').append('<div class="modal-body"><div class-"containter-fluid"><div class="row"></div></div></div>');
   var body = dialog.find('.modal-content .row');
   if(options.alerts !== undefined) {
-    for(var i = 0; i < options.alerts.length; i++) {
-      body.append('<div class="col-sm-12 alert alert-'+options.alerts[i].type+'" role="alert">'+options.alerts[i].text+'</div>');
+    for(let alert of options.alerts) {
+      body.append('<div class="col-sm-12 alert alert-'+alert.type+'" role="alert">'+alert.text+'</div>');
     }
   }
-  for(var i = 0; i < options.inputs.length; i++) {
-    var input = options.inputs[i];
+  for(let input of options.inputs) {
     var div = body;
     if(input.label !== undefined) {
       var label = $('<label for="'+input.id+'" class="col-sm-2 col-form-label">'+input.label+':</label>');
@@ -29,9 +29,9 @@ window.flipDialog.dialog = function(options) {
     if(input.type === 'select') {
       inputEnt = $('<select>');
       if(input.options !== undefined) {
-        for(var j = 0; j < input.options.length; j++) {
-          var option = $('<option value="'+input.options[j].value+'">'+input.options[j].text+'</option>');
-          if(input.options[j].selected) {
+        for(let inOption of input.options) {
+          let option = $('<option value="'+inOption.value+'">'+inOption.text+'</option>');
+          if(inOption.selected) {
             option.attr('selected', true);
           }
           inputEnt.append(option);
@@ -54,7 +54,7 @@ window.flipDialog.dialog = function(options) {
         inputEnt.flatpickr(myOptions);
       }
       else if(input.value) {
-	let datetime = new Date(input.value);
+        let datetime = new Date(input.value);
         inputEnt.val(dateTimeToString(datetime));
       }
     }
@@ -68,7 +68,7 @@ window.flipDialog.dialog = function(options) {
     }
     inputEnt.attr('class', 'form-control');
     for(var attr in input) {
-      inputEnt.attr(attr, input[attr]);
+      inputEnt.attr(attr, input[`${attr}`]);
     }
     div.append(inputEnt);
     if(div !== body) {
@@ -81,8 +81,8 @@ window.flipDialog.dialog = function(options) {
   if(options.buttons === undefined) {
     options.buttons = [];
   }
-  for(var i = 0; i < options.buttons.length; i++) {
-    var button = options.buttons[i];
+  let btnId = 0;
+  for(let button of options.buttons) {
     var clickContext = {
       data: options.data,
       callback: button.callback,
@@ -96,23 +96,23 @@ window.flipDialog.dialog = function(options) {
       inputGroup.append(inputElem);
       var appendElem = $('<div class="input-group-append">');
       inputGroup.append(appendElem);
-      var buttonElem = $('<button class="btn btn-outline-secondary" type="button" id="modalButton'+i+'">'+button.text+'</button>');
+      let buttonElem = $('<button class="btn btn-outline-secondary" type="button" id="modalButton'+btnId+'">'+button.text+'</button>');
+      btnId++;
       buttonElem.click(bound);
       appendElem.append(buttonElem);
       footer.append(inputGroup);
-    }
-    else {
+    } else {
       var disabled = '';
       if(button.disabled === true) {
         disabled = 'disabled="true"';
       }
-      var buttonElem = $('<button type="button" class="btn btn-primary col-sm-2" '+disabled+'>'+button.text+'</button>');
+      let buttonElem = $('<button type="button" class="btn btn-primary col-sm-2" '+disabled+'>'+button.text+'</button>');
       buttonElem.click(bound);
       footer.append(buttonElem);
     }
   }
   dialog.find('.modal-content').append(footer);
-  dialog.one('hidden.bs.modal', function(e){
+  dialog.one('hidden.bs.modal', function(){
     dialog.remove();
   });
   $('body').append(dialog);
@@ -130,33 +130,31 @@ function dialogButtonClick(e) {
   }
   var group = $(e.target).parents('.input-group');
   if(group.length > 0) {
-    var inputs = group.find('input');
+    let inputs = group.find('input');
     var name = inputs[0].id;
-    e.data[name] = inputs[0].value;
+    e.data[`${name}`] = inputs[0].value;
   }
   //Update data with the latest
-  var inputs = this.dialog.find('.modal-body input');
-  for(var i = 0; i < inputs.length; i++) {
-    if(inputs[i].reportValidity() === false) {
+  let inputs = this.dialog.find('.modal-body input');
+  for(let input of inputs) {
+    if(input.reportValidity() === false) {
       return;
     }
-    var name = inputs[i].name;
-    if(inputs[i].type === 'radio') {
-      if(inputs[i].checked) {
-        e.data[name] = inputs[i].value;
+    let name = input.name;
+    if(input.type === 'radio') {
+      if(input.checked) {
+        e.data[`${name}`] = input.value;
       }
-    }
-    else if(inputs[i].type === 'checkbox') {
-      e.data[name] = inputs[i].checked;
-    }
-    else {
-      e.data[name] = inputs[i].value;
+    } else if(input.type === 'checkbox') {
+      e.data[`${name}`] = input.checked;
+    } else {
+      e.data[`${name}`] = input.value;
     }
   }
   inputs = this.dialog.find('.modal-body select');
-  for(var i = 0; i < inputs.length; i++) {
-    var name = inputs[i].name;
-    e.data[name] = inputs[i].value;
+  for(let input of inputs) {
+    let name = input.name;
+    e.data[`${name}`] = input.value;
   }
   this.callback(e);
   if(this.close !== false) {
@@ -167,7 +165,7 @@ function dialogButtonClick(e) {
 function dateTimeToString(dt) {
   let ten = function(i) {
     return (i < 10 ? '0':'')+i;
-  }
+  };
   let year = dt.getFullYear();
   let month = ten(dt.getMonth()+1);
   let day = ten(dt.getDate());
@@ -185,13 +183,13 @@ function finishDialog(dialog, options) {
         continue;
       }
       if(input.length > 0 && input[0].type === 'checkbox') {
-        input[0].checked = options.data[key];
+        input[0].checked = options.data[`${key}`];
       }
       if(input[0] !== undefined && input[0].type === 'datetime-local') {
-	let datetime = new Date(options.data[key]);
-	input.val(dateTimeToString(datetime));
+        let datetime = new Date(options.data[`${key}`]);
+        input.val(dateTimeToString(datetime));
       } else {
-        input.val(options.data[key]);
+        input.val(options.data[`${key}`]);
       }
     }
   }

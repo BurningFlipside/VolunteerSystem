@@ -1,3 +1,4 @@
+/*global $, Tabulator, getParameterByName, addOptiontoSelect*/
 var deptId;
 var table;
 
@@ -12,10 +13,10 @@ function processDeptList(array) {
   });
   let obj = {};
   var sel = $('#deptFilter');
-  for(var i = 0; i < array.length; i++) {
-    if(array[i].isAdmin) {
-      addOptiontoSelect(sel[0], array[i].departmentID, array[i].departmentName);
-      obj[array[i].departmentID] = array[i];
+  for(let dept of array) {
+    if(dept.isAdmin) {
+      addOptiontoSelect(sel[0], dept.departmentID, dept.departmentName);
+      obj[dept.departmentID] = dept;
     }
   }
   return obj;
@@ -23,8 +24,8 @@ function processDeptList(array) {
 
 function processRoles(roles) {
   let obj = {};
-  for(var i = 0; i < roles.length; i++) {
-    obj[roles[i].short_name] = roles[i];
+  for(let role of roles) {
+    obj[role.short_name] = role;
   }
   return obj;
 }
@@ -32,6 +33,7 @@ function processRoles(roles) {
 function gotInitialData(results) {
   var deptResult = results.shift();
   var roleResult = results.shift();
+  let tableURL = results.shift().value;
   var obj = {};
   if(Array.isArray(deptResult.value)) {
     obj.depts = processDeptList(deptResult.value);
@@ -40,18 +42,18 @@ function gotInitialData(results) {
     obj.dept = processDept(deptResult.value);
   }
   obj.roles = processRoles(roleResult.value);
-  table = new Tabulator("#pendingShifts", {
+  table = new Tabulator('#pendingShifts', {
     ajaxURL: tableURL,
     columns:[
-      {formatter: upIcon, width:40, align:"center", cellClick: approve},
-      {formatter: downIcon, width:40, align:"center", cellClick: disapprove},
-      {title:"ID", field:"_id.$oid", visible: false},
-      {title:'Department', field: 'departmentID', formatter: deptName, formatterParams: obj},
-      {title:'Role', field: 'roleID', formatter: roleName, formatterParams: obj.roles},
-      {title:'Name', field: 'name'},
-      {title:'Start Date/Time', field: 'startTime', formatter: dateTimeView},
-      {title:'End Date/Time', field: 'endTime', formatter: dateTimeView},
-      {title:'Volunteer', field: 'participant'}
+      {formatter: upIcon, width:40, align: 'center', cellClick: approve},
+      {formatter: downIcon, width:40, align: 'center', cellClick: disapprove},
+      {title: 'ID', field: '_id.$oid', visible: false},
+      {title: 'Department', field: 'departmentID', formatter: deptName, formatterParams: obj},
+      {title: 'Role', field: 'roleID', formatter: roleName, formatterParams: obj.roles},
+      {title: 'Name', field: 'name'},
+      {title: 'Start Date/Time', field: 'startTime', formatter: dateTimeView},
+      {title: 'End Date/Time', field: 'endTime', formatter: dateTimeView},
+      {title: 'Volunteer', field: 'participant'}
     ]
   });
 }
@@ -68,26 +70,26 @@ function deptFilterChanged(e) {
   }
 }
 
-function upIcon(cell, formatterParams, onRendered) {
+function upIcon() {
   return "<i class='fa fa-thumbs-up'></i>";
 }
 
-function downIcon(cell, formatterParams, onRendered) {
+function downIcon() {
   return "<i class='fa fa-thumbs-down'></i>";
 }
 
-function dateTimeView(cell, formatterParams, onRendered) {
+function dateTimeView(cell) {
   var d = new Date(cell.getValue());
   return d.toString();
 }
 
-function deptName(cell, formatterParams, onRendered) {
+function deptName(cell, formatterParams) {
   let val = cell.getValue();
   if(formatterParams.dept !== undefined) {
     return formatterParams.dept.departmentName;
   }
   if(formatterParams.depts !== undefined) {
-    let dept = formatterParams.depts[val];
+    let dept = formatterParams.depts[`${val}`];
     if(dept !== undefined) {
       return dept.departmentName;
     }
@@ -95,10 +97,10 @@ function deptName(cell, formatterParams, onRendered) {
   return val;
 }
 
-function roleName(cell, formatterParams, onRendered) {
+function roleName(cell, formatterParams) {
   let val = cell.getValue();
-  if(formatterParams[val] !== undefined) {
-    return formatterParams[val].display_name;
+  if(formatterParams[`${val}`] !== undefined) {
+    return formatterParams[`${val}`].display_name;
   }
   return val;
 }
@@ -143,6 +145,7 @@ function disapprove(e, cell) {
 function initPage() {
   deptId = getParameterByName('dept');
   let promises = [];
+  let tableURL = '';
   if(deptId !== null) {
     promises.push($.ajax({
       url: '../api/v1/departments/'+deptId

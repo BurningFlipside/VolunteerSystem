@@ -1,45 +1,40 @@
+/* global $, bootbox, Tabulator, getParameterByName*/
+/* exported approve, dispprove*/
 var table;
 
 function eventChanged(e) {
   var eventID = e.target.value;
   table.setFilter(function(data) {
-    let ret = false;
-    for(let i = 0; i < data.shifts.length; i++) {
-      if(data.shifts[i].eventID === eventID) {
-        ret = true;
-        break;
+    for(let shift of data.shifts) {
+      if(shift.eventID === eventID) {
+        return true;
       }
     }
-    return ret;
+    return false;
   });
 }
 
 function deptChanged(e) {
   var deptID = e.target.value;
   table.setFilter(function(data) {
-    let ret = false;
-    for(let i = 0; i < data.shifts.length; i++) {
-      if(data.shifts[i].departmentID === deptID) {
-        ret = true;
-        break;
+    for(let shift of data.shifts) {
+      if(shift.departmentID == deptID) {
+        return true;
       }
     }
-    return ret;
+    return false;
   });
 }
 
 function processEvents(data) {
-  var events = {};
-  var eventSelect = $('#eventFilter');
-  for(var i = 0; i < data.length; i++) {
-    if(data[i].why === 'Event is in the past') {
+  let events = {};
+  let eventSelect = $('#eventFilter');
+  for(let event of data) {
+    if(event.why === 'Event is in the past' || event.eeLists === undefined) {
       continue;
     }
-    if(data[i].eeLists === undefined) {
-      continue;
-    }
-    events[data[i]['_id']['$oid']] = data[i];
-    eventSelect.append($('<option/>', {value: data[i]['_id']['$oid'], text: data[i].name}));
+    events[event['_id']['$oid']] = event;
+    eventSelect.append($('<option/>', {value: event['_id']['$oid'], text: event.name}));
   }
   let ids = Object.keys(events);
   if(ids.length === 1) {
@@ -56,9 +51,9 @@ function processDepts(data) {
   data.sort(function(a, b) {
     return a.departmentName.localeCompare(b.departmentName);
   });
-  for(var i = 0; i < data.length; i++) {
-    depts[data[i].departmentID] = data[i];
-    deptSelect.append($('<option/>', {value: data[i].departmentID, text: data[i].departmentName}));
+  for(let dept of data) {
+    depts[dept.departmentID] = dept;
+    deptSelect.append($('<option/>', {value: dept.departmentID, text: dept.departmentName}));
   }
   deptSelect.data('depts', depts);
   deptSelect.change(deptChanged);
@@ -67,21 +62,21 @@ function processDepts(data) {
 
 function processParticipants(data) {
   var vols = {};
-  for(var i = 0; i < data.length; i++) {
-    vols[data[i].uid] = data[i];
+  for(let user of data) {
+    vols[user.uid] = user;
   }
   return vols;
 }
 
 function processRoles(data) {
   var obj = {};
-  for(var i = 0; i < data.length; i++) {
-    obj[data[i].short_name] = data[i];
+  for(let role of data) {
+    obj[role.short_name] = role;
   }
   return obj;
 }
 
-function shiftLinkDisplay(cell) {
+function shiftLinkDisplay() {
   return '<i class="far fa-window-maximize"></i>';
 }
 
@@ -90,21 +85,21 @@ function showShifts(e, cell) {
   var backend = $('body').data('backend');
   var msg = '<table class="table"><thead><tr><th>Department</th><th>Role</th><th>Start Time</th><th>End Time</th></tr></thead><tbody>';
   var eventFilter = $('#eventFilter').val();
-  for(var i = 0; i < data.shifts.length; i++) {
-    let name = data.shifts[i].department;
+  for(let shift of data.shifts) {
+    let name = shift.department;
     if(name === undefined) {
-      name = data.shifts[i].departmentID;
-      if(backend.depts[data.shifts[i].departmentID] !== undefined) {
-        name = backend.depts[data.shifts[i].departmentID].departmentName;
+      name = shift.departmentID;
+      if(backend.depts[shift.departmentID] !== undefined) {
+        name = backend.depts[shift.departmentID].departmentName;
       }
     }
-    let roleName = data.shifts[i].roleID;
-    if(backend.roles[roleName] !== undefined) {
-      roleName = backend.roles[roleName].display_name;
+    let roleName = shift.roleID;
+    if(backend.roles[`${roleName}`] !== undefined) {
+      roleName = backend.roles[`${roleName}`].display_name;
     }
-    let start = new Date(data.shifts[i].startTime);
-    let end = new Date(data.shifts[i].endTime);
-    if(eventFilter === '*' || eventFilter === data.shifts[i].eventID) {
+    let start = new Date(shift.startTime);
+    let end = new Date(shift.endTime);
+    if(eventFilter === '*' || eventFilter === shift.eventID) {
       msg += '<tr><td>'+name+'</td><td>'+roleName+'</td><td>'+start+'</td><td>'+end+'</td></tr>';
     }
   }
@@ -135,7 +130,7 @@ function gotTicketStatusForConfirm(jqXHR) {
   let data = this;
   if(jqXHR.status !== 200) {
     bootbox.confirm({
-      message: "There was an error obtaining the current ticket status! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?",
+      message: 'There was an error obtaining the current ticket status! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?',
       buttons: {
         confirm: {
           label: 'Yes'
@@ -153,7 +148,7 @@ function gotTicketStatusForConfirm(jqXHR) {
   }
   else if(jqXHR.responseJSON.ticket !== true) {
     bootbox.confirm({
-      message: "We could not find a ticket for this user! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?",
+      message: 'We could not find a ticket for this user! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?',
       buttons: {
         confirm: {
           label: 'Yes'
@@ -294,37 +289,37 @@ function gotInitialData(results) {
   obj.depts = processDepts(deptResult.value);
   obj.vols = processParticipants(participantResults.value);
   obj.roles = processRoles(roleResult.value);
-  for(var i = 0; i < shiftResults.value.length; i++) {
-    if(shiftResults.value[i].participant === '') {
+  for(let shift of shiftResults.value) {
+    if(shift.participant === '') {
       continue;
     }
-    if(obj.vols[shiftResults.value[i].participant] === undefined) {
-      alert('Could not locate volunteer '+shiftResults.value[i].participant);
+    if(obj.vols[shift.participant] === undefined) {
+      alert('Could not locate volunteer '+shift.participant);
       continue;
     }
-    if(obj.vols[shiftResults.value[i].participant].shifts === undefined) {
-      obj.vols[shiftResults.value[i].participant].shifts = [];
+    if(obj.vols[shift.participant].shifts === undefined) {
+      obj.vols[shift.participant].shifts = [];
     }
-    obj.vols[shiftResults.value[i].participant].shifts.push(shiftResults.value[i]);
+    obj.vols[shift.participant].shifts.push(shift);
   }
   var rows = [];
   for(var uid in obj.vols) {
-    var vol = obj.vols[uid];
+    var vol = obj.vols[`${uid}`];
     if(vol.shifts !== undefined) {
       var row = {id: uid, name: vol.firstName+' "'+vol.burnerName+'" '+vol.lastName, eeType: '', shifts: vol.shifts};
       var bestEE = -1;
       for(var id in obj.events) {
-        var event = obj.events[id];
+        var event = obj.events[`${id}`];
         if(event.eeLists !== undefined) {
           for(var eeType in event.eeLists) {
-            var list = event.eeLists[eeType];
-            if(list[uid] !== undefined) {
+            var list = event.eeLists[`${eeType}`];
+            if(list[`${uid}`] !== undefined) {
               if(parseInt(eeType, 10) > bestEE) {
                 bestEE = parseInt(eeType, 10);
               }
-              row.AAR = list[uid].AAR;
-              row.AF = list[uid].AF;
-              row.Lead = list[uid].Lead;
+              row.AAR = list[`${uid}`].AAR;
+              row.AF = list[`${uid}`].AF;
+              row.Lead = list[`${uid}`].Lead;
             }
           }
         }

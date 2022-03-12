@@ -1,3 +1,5 @@
+/*global $*/
+/* exported generateCSV*/
 function eeValueToString(ee) {
   switch(ee) {
     case '-2':
@@ -18,10 +20,9 @@ function gotReport(jqXHR) {
   var data = jqXHR.responseJSON;
   var tbody = $('#eeTable tbody');
   tbody.empty();
-  console.log(data);
-  for(var i = 0; i < data.length; i++) {
-    let eeTxt = eeValueToString(data[i].earlyLate);
-    tbody.append('<tr><td>'+data[i].name+'</td><td>'+data[i].email+'</td><td>'+data[i].dept+'</td><td>'+data[i].role+'</td><td>'+eeTxt+'</td><td><i>Pending</i></td></tr>');
+  for(let vol in data) {
+    let eeTxt = eeValueToString(vol.earlyLate);
+    tbody.append('<tr><td>'+vol.name+'</td><td>'+vol.email+'</td><td>'+vol.dept+'</td><td>'+vol.role+'</td><td>'+eeTxt+'</td><td><i>Pending</i></td></tr>');
   }
 }
 
@@ -45,18 +46,18 @@ function gotEvent(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
   }
-  var data = jqXHR.responseJSON;
+  //var data = jqXHR.responseJSON;
   getShifts();
 }
 
-function eventChanged(e) {
+function eventChanged() {
   $.ajax({
     url: '../api/v1/events/'+$('#event').val(),
     complete: gotEvent
   });
 }
 
-function eeChanged(e) {
+function eeChanged() {
   if($('#event').val() !== null) {
     getShifts();
   }
@@ -78,8 +79,8 @@ function initPage() {
         data.sort((a,b) => {
           return a.name.localeCompare(b.name);
         });
-        for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i]['_id']['$oid'], text: data[i].name});
+        for(let event of data) {
+          res.push({id: event['_id']['$oid'], text: event.name});
         }
         return {results: res};
       }

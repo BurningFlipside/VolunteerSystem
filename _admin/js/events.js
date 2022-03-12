@@ -1,5 +1,5 @@
-var table;
-
+/* global $, bootbox, Tabulator, browser_supports_input_type */
+/* exported newEvent, privateEventChange, showEventWizard */
 function editDone(jqXHR) {
   if(jqXHR.status !== 200) {
     alert('Unable to edit value!');
@@ -21,7 +21,7 @@ function valueChanged(value, field, id) {
   var obj = {};
   var current = obj;
   for(var i = 0; i < propParts.length-1; i++) {
-    current = current[propParts[i]] = {};
+    current = current[`${propParts[i]}`] = {}; // eslint-disable-line security/detect-object-injection
   }
   current[propParts[propParts.length-1]] = value;
   $.ajax({
@@ -57,8 +57,8 @@ function gotDepartments(jqXHR) {
   }
   var array = jqXHR.responseJSON;
   var deptList = $('#deptList');
-  for(var i = 0; i < array.length; i++) {
-    deptList.append('<div class="col-sm-2"><input class="form-control" type="checkbox" name="dept_'+array[i].departmentID+'" id="dept_'+array[i].departmentID+'"></div><div class="col-sm-10">'+array[i].departmentName+'</div>');
+  for(let dept in array) {
+    deptList.append('<div class="col-sm-2"><input class="form-control" type="checkbox" name="dept_'+dept.departmentID+'" id="dept_'+dept.departmentID+'"></div><div class="col-sm-10">'+dept.departmentName+'</div>');
   }
 }
 
@@ -67,13 +67,13 @@ function newEvent(e) {
   obj.departments = [];
   for(var key in e) {
     if(key.startsWith('dept_')) {
-      if(e[key] === true) {
+      if(e[`${key}`] === true) {
         obj.departments.push(key.substring(5));
       }
     }
     else if(key === 'volList') {
       if(e.private === true) {
-        obj.volList = e[key].split('\n');
+        obj.volList = e[`${key}`].split('\n');
       }
     }
     else {
@@ -97,15 +97,15 @@ function showEventWizard() {
   $('#eventWizard').modal('show');
 }
 
-function delIcon(cell, formatterParams, onRendered) {
+function delIcon() {
   return "<i class='fa fa-trash'></i>";
 }
 
-function editIcon(cell, formatterParams, onRendered) {
+function editIcon() {
   return "<i class='fa fa-pencil-alt'></i>";
 }
 
-function dateTimeView(cell, formatterParams, onRendered) {
+function dateTimeView(cell) {
   var d = new Date(cell.getValue());
   return d.toString();
 }
@@ -145,7 +145,8 @@ function getShiftsBeforeDelete(jqXHR) {
             complete: deleteDone
           });
         }
-    }});
+      }
+    });
   }
   else {
     bootbox.alert('This event has one or more shifts. All shifts must be deleted first!');
@@ -167,20 +168,20 @@ function editEvent(e, cell) {
 }
 
 function initPage() {
-  table = new Tabulator("#events", {
+  new Tabulator('#events', {
     ajaxURL: '../api/v1/events',
     columns:[
-      {formatter: delIcon, width:40, align:"center", cellClick: delEvent},
-      {formatter: editIcon, width:40, align:"center", cellClick: editEvent},
-      {title:"ID", field:"_id.$oid", visible: false},
-      {title:'Name', field: 'name', editor:"input"},
-      {title:'Start Date/Time', field: 'startTime', formatter: dateTimeView},
-      {title:'End Date/Time', field: 'endTime', formatter: dateTimeView},
-      {title:'Private', field: 'private', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Volunteer List', field: 'volList', editor: 'input'},
-      {title:'Department List', field: 'departments', editor: 'input'},
-      {title:'Tickets Needed', field: 'tickets', formatter: 'tickCross'},
-      {title:'Alias', field: 'alias', editor: 'input'}
+      {formatter: delIcon, width:40, align: 'center', cellClick: delEvent},
+      {formatter: editIcon, width:40, align: 'center', cellClick: editEvent},
+      {title: 'ID', field: '_id.$oid', visible: false},
+      {title: 'Name', field: 'name', editor: 'input'},
+      {title: 'Start Date/Time', field: 'startTime', formatter: dateTimeView},
+      {title: 'End Date/Time', field: 'endTime', formatter: dateTimeView},
+      {title: 'Private', field: 'private', editor: 'tickCross', formatter: 'tickCross'},
+      {title: 'Volunteer List', field: 'volList', editor: 'input'},
+      {title: 'Department List', field: 'departments', editor: 'input'},
+      {title: 'Tickets Needed', field: 'tickets', formatter: 'tickCross'},
+      {title: 'Alias', field: 'alias', editor: 'input'}
     ],
     cellEdited: dataChanged
   });

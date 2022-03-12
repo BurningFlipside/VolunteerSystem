@@ -1,3 +1,5 @@
+/*global $, Chart, addOptiontoSelect*/
+/* exported favoriteEvent */
 Chart.pluginService.register({
   beforeDraw: function (chart) {
     if (chart.config.options.elements.center) {
@@ -10,9 +12,9 @@ Chart.pluginService.register({
       var txt = centerConfig.text;
       var color = centerConfig.color || '#000';
       var sidePadding = centerConfig.sidePadding || 20;
-      var sidePaddingCalculated = (sidePadding/100) * (chart.innerRadius * 2)
+      var sidePaddingCalculated = (sidePadding/100) * (chart.innerRadius * 2);
       //Start with a base font of 30px
-      ctx.font = "30px " + fontStyle;
+      ctx.font = '30px ' + fontStyle;
 
       //Get the width of the string and also the width of the element minus 10 to give it 5px side padding
       var stringWidth = ctx.measureText(txt).width;
@@ -31,7 +33,7 @@ Chart.pluginService.register({
       ctx.textBaseline = 'middle';
       var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
       var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
-      ctx.font = fontSizeToUse+"px " + fontStyle;
+      ctx.font = fontSizeToUse+'px ' + fontStyle;
       ctx.fillStyle = color;
 
       //Draw text in center
@@ -44,9 +46,6 @@ function gotDepartments(jqXHR) {
   if(jqXHR.responseJSON !== undefined) {
     $('#deptCount').html(jqXHR.responseJSON['@odata.count']);
     var array = jqXHR.responseJSON.value;
-    if(!Array.isArray(array)) {
-      alert('Got Invalid data returned from API!')
-    }
     array = array.sort((a,b) => {
       return a.departmentName.localeCompare(b.departmentName);
     });
@@ -54,10 +53,10 @@ function gotDepartments(jqXHR) {
     var departments = $('#departments');
     departments.change(showDepartmentDetails);
     var deptCount = 0;
-    for(var i = 0; i < array.length; i++) {
-      if(array[i].isAdmin) {
-        $('#deptName').html(array[i].departmentName);
-        addOptiontoSelect(departments[0], array[i].departmentID, array[i].departmentName);
+    for(let dept of array) {
+      if(dept.isAdmin) {
+        $('#deptName').html(dept.departmentName);
+        addOptiontoSelect(departments[0], dept.departmentID, dept.departmentName);
         deptCount++;
       }
     }
@@ -80,8 +79,8 @@ function gotRoles(jqXHR) {
   if(jqXHR.responseJSON !== undefined) {
     var roles = jqXHR.responseJSON;
     var count = 0;
-    for(var i = 0; i < roles.length; i++) {
-      if(roles[i].isAdmin) {
+    for(let role of roles) {
+      if(role.isAdmin) {
         count++;
       }
     }
@@ -106,23 +105,23 @@ function makeShiftTimeLine(shifts) {
   let canvas = document.getElementById('shiftsFilledTimeLine');
   let ctx = canvas.getContext('2d');
   let dates = {};
-  for(let i = 0; i < shifts.length; i++) {
-    if(shifts[i].signupTime === undefined || shifts[i].signupTime === '') {
+  for(let shift of shifts) {
+    if(shift.signupTime === undefined || shift.signupTime === '') {
       continue;
     }
-    let datetime = new Date(shifts[i].signupTime);
+    let datetime = new Date(shift.signupTime);
     let year = datetime.getFullYear();
     let month = datetime.getMonth();
     let day = datetime.getDate();
     let id = year+'-'+month+'-'+day;
-    if(dates[id] === undefined) {
-      dates[id] = {filled: 0, pending: 0};
+    if(dates[`${id}`] === undefined) {
+      dates[`${id}`] = {filled: 0, pending: 0};
     }
-    if(shifts[i].status === 'filled') {
-      dates[id].filled++;
+    if(shift.status === 'filled') {
+      dates[`${id}`].filled++;
     }
-    else if(shifts[i].status === 'pending') {
-      dates[id].pending++;
+    else if(shift.status === 'pending') {
+      dates[`${id}`].pending++;
     }
   }
   let dateIds = Object.keys(dates);
@@ -131,25 +130,23 @@ function makeShiftTimeLine(shifts) {
   let lastPending = 0;
   let filled = [];
   let pending = [];
-  for(let i = 0; i < dateIds.length; i++)
-  {
-    let id = dateIds[i];
-    dates[id].filled += lastFilled;
-    lastFilled = dates[id].filled;
-    filled.push(dates[id].filled);
-    dates[id].pending += lastPending;
-    lastPending = dates[id].pending;
-    pending.push(dates[id].pending);
+  for(let id of dateIds) {
+    dates[`${id}`].filled += lastFilled;
+    lastFilled = dates[`${id}`].filled;
+    filled.push(dates[`${id}`].filled);
+    dates[`${id}`].pending += lastPending;
+    lastPending = dates[`${id}`].pending;
+    pending.push(dates[`${id}`].pending);
   }
   let data = {
     datasets: [{
       label: 'Filled',
-      backgroundColor: "#66c2a5",
+      backgroundColor: '#66c2a5',
       data: filled
     },
     {
       label: 'Pending',
-      backgroundColor: "#f46d43",
+      backgroundColor: '#f46d43',
       data: pending
     }],
     labels: dateIds
@@ -192,12 +189,11 @@ function gotShifts(jqXHR) {
       var filled = 0;
       var pending = 0;
       var unfilled = data.length;
-      for(var i = 0; i < data.length; i++) {
-        if(data[i].status && data[i].status === 'filled') {
+      for(let shift of data) {
+        if(shift.status && shift.status === 'filled') {
           filled++;
           unfilled--;
-        }
-        else if(data[i].status && data[i].status === 'pending') {
+        } else if(shift.status && shift.status === 'pending') {
           pending++;
           unfilled--;
         }
@@ -215,16 +211,16 @@ function gotShifts(jqXHR) {
         },
         onClick: chartClick
       };
-      var data = {
+      let chartData = {
         datasets: [{
           data: [unfilled, filled, pending],
-          backgroundColor: ["#d53e4f", "#66c2a5", "#f46d43"]
+          backgroundColor: ['#d53e4f', '#66c2a5', '#f46d43']
         }],
         labels: ['Unfilled', 'Filled', 'Pending']
       };
       chart = new Chart(ctx, {
         type: 'doughnut',
-        data: data,
+        data: chartData,
         options: options
       });
     }
@@ -273,11 +269,11 @@ function gotEvents(jqXHR) {
     });
     var events = $('#events');
     events.change(showEventDetails);
-    for(var i = 0; i < resp.value.length; i++) {
-      if(resp.value[i].why === "Event is in the past") {
+    for(let event of resp.value) {
+      if(event.why === 'Event is in the past') {
         continue;
       }
-      events.append('<option value="'+resp.value[i]['_id']['$oid']+'">'+resp.value[i].name+'</option>');
+      events.append('<option value="'+event['_id']['$oid']+'">'+event.name+'</option>');
     }
     let eventID = localStorage.getItem('adminEvent');
     if(eventID !== null) {

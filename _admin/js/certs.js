@@ -1,5 +1,5 @@
-var table;
-
+/* global $, bootbox, Tabulator*/
+/* exported newCert*/
 function editDone(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -22,9 +22,10 @@ function valueChanged(value, field, id) {
   var obj = {};
   var current = obj;
   for(var i = 0; i < propParts.length-1; i++) {
-    current = current[propParts[i]] = {};
+    current = current[`${propParts[i]}`] = {}; // eslint-disable-line security/detect-object-injection
   }
   current[propParts[propParts.length-1]] = value;
+  console.log(obj);
   $.ajax({
     url: '../api/v1/certs/'+id,
     method: 'PATCH',
@@ -66,7 +67,7 @@ function deleteDone(jqXHR) {
   location.reload();
 }
 
-function delIcon(cell, formatterParams, onRendered) {
+function delIcon() {
   return "<i class='fa fa-trash'></i>";
 }
 
@@ -100,7 +101,8 @@ function gotRolesBeforeDelete(jqXHR) {
           complete: deleteDone
         });
       }
-  }});
+    }
+  });
 }
 
 function delCert(e, cell) {
@@ -121,21 +123,21 @@ function validDisplay(cell) {
 }
 
 function initPage() {
-  table = new Tabulator("#certs", {
+  new Tabulator('#certs', {
     ajaxURL: '../api/v1/certs',
     columns:[
-      {formatter: delIcon, width:40, align:"center", cellClick: delCert},
-      {title:"ID", field:"_id.$id", visible: false},
-      {title:"Cert ID", field: 'certID'},
-      {title:'Name', field: 'name', editor:"input"},
-      {title:'Expires', field: 'expires', editor: 'tickCross', formatter: 'tickCross'},
-      {title:'Validated By', field: 'validatedBy', editor:'select', editorParams: {values: ['lead', 'admin']}},
-      {title:'Valid For', field: 'validFor', editor: 'number', editorParams: {min: 0}, formatter: validDisplay},
-      {title:'Link', field: 'link', editor:'input'}
+      {formatter: delIcon, width:40, align: 'center', cellClick: delCert},
+      {title: 'ID', field: '_id.$id', visible: false},
+      {title: 'Cert ID', field: 'certID'},
+      {title: 'Name', field: 'name', editor: 'input'},
+      {title: 'Expires', field: 'expires', editor: 'tickCross', formatter: 'tickCross'},
+      {title: 'Validated By', field: 'validatedBy', editor:'select', editorParams: {values: ['lead', 'admin']}},
+      {title: 'Valid For', field: 'validFor', editor: 'number', editorParams: {min: 0}, formatter: validDisplay},
+      {title: 'Link', field: 'link', editor: 'input'}
     ],
     cellEdited: dataChanged,
     initialSort:[
-      {column:"name", dir:"asc"}
+      {column: 'name', dir: 'asc'}
     ]
   });
 }

@@ -1,3 +1,5 @@
+/* global $, FullCalendar, add_notification, getParameterByName */
+/* exported unhideFilters */
 var calendar;
 var start;
 var end;
@@ -20,14 +22,14 @@ function getDeptName(deptID) {
   return option[0].text;
 }
 
-function getTimeStr(date) {
-  var date = new Date(date);
+function getTimeStr(dateStr) {
+  let date = new Date(dateStr);
   return date.toLocaleDateString('en-US')+' '+date.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
 }
 
 function getRoleName(roleID) {
-  if(roles[roleID] !== undefined) {
-    return roles[roleID].display_name;
+  if(roles[`${roleID}`] !== undefined) {
+    return roles[`${roleID}`].display_name;
   }
   return roleID;
 }
@@ -128,30 +130,27 @@ function filterEvents() {
   var shifts = $('#shiftTypes').select2('data');
   var validShifts = [];
   validDepts = [];
-  for(var i = 0; i < depts.length; i++) {
-    validDepts.push(depts[i].id);
+  for(let dept of depts) {
+    validDepts.push(dept.id);
   }
-  for(var i = 0; i < shifts.length; i++) {
-    validShifts.push(shifts[i].id);
+  for(let shift of shifts) {
+    validShifts.push(shift.id);
   }
   var events = allEvents;
   var newStart = new Date('2100-01-01T01:00:00');
   calendar.renderingPauseDepth = true;
-  for(var i = 0; i < events.length; i++) {
-    var valid = eventShouldBeShown(events[i].extendedProps, validDepts, validShifts);
-    if(!valid && !events[i].classNames.includes('d-none')) {
-      events[i].setProp('classNames', 'd-none');
-    }
-    else if(events[i].classNames.includes('d-none') && valid) {
-      var myStart = events[i].start;
+  for(let event of events) {
+    let valid = eventShouldBeShown(event.extendedProps, validDepts, validShifts);
+    if(!valid && !event.classNames.includes('d-none')) {
+      event.setProp('classNames', 'd-none');
+    } else if(event.classNames.includes('d-none') && valid) {
+      let myStart = event.start;
       if(myStart < newStart) {
         newStart = myStart;
       }
-      events[i].setProp('classNames', '');
-    }
-    else if(valid) {
-      var myStart = events[i].start;
-      var myEnd = events[i].end;
+      event.setProp('classNames', '');
+    } else if(valid) {
+      let myStart = event.start;
       if(myStart < newStart) {
         newStart = myStart;
       }
@@ -167,11 +166,11 @@ function filterEvents() {
   }
 }
 
-function deptChanged(e) {
+function deptChanged() {
   filterEvents();
 }
 
-function shiftChanged(e) {
+function shiftChanged() {
   filterEvents();
 }
 
@@ -186,8 +185,8 @@ function gotShifts(jqXHR) {
   }
   allEvents = [];
   var events = calendar.getEvents();
-  for(var i = 0; i < events.length; i++) {
-    events[i].remove();
+  for(let event of events) {
+    event.remove();
   }
   if($('#departments').data('select2') === null) {
     var boundRetry = retryShifts.bind(jqXHR);
@@ -196,8 +195,8 @@ function gotShifts(jqXHR) {
   }
   var depts = $('#departments').select2('data');
   var deptHasShifts = {};
-  for(var i = 0; i < depts.length; i++) {
-    deptHasShifts[depts[i].id] = false;
+  for(let dept of depts) {
+    deptHasShifts[dept.id] = false;
   }
   var shifts = jqXHR.responseJSON;
   if(shifts.length === 0) {
@@ -205,68 +204,65 @@ function gotShifts(jqXHR) {
   }
   start = new Date('2100-01-01T01:00:00');
   end = new Date('2000-01-01T01:00:00');
-  for(var i = 0; i < shifts.length; i++) {
-    var myStart = new Date(shifts[i]['startTime']);
-    var myEnd = new Date(shifts[i]['endTime']);
+  for(let shift of shifts) {
+    let myStart = new Date(shift.startTime);
+    let myEnd = new Date(shift.endTime);
     if(myStart < start) {
       start = myStart;
     }
     if(myEnd > end) {
       end = myEnd;
     }
-    var evnt = {
-      id: shifts[i]['_id']['$oid'],
+    let evnt = {
+      id: shift['_id']['$oid'],
       start: myStart,
       end: myEnd
     };
-    if(shifts[i]['groupID']) {
-      //evnt.groupId = shifts[i]['groupID'];
-    }
-    if(shifts[i].overlap) {
+    if(shift.overlap) {
       evnt.backgroundColor = 'gold';
       evnt.borderColor = 'gold';
     }
-    if(!shifts[i].available) {
+    if(!shift.available) {
       evnt.backgroundColor = 'lightGray';
       evnt.borderColor = 'lightGray';
-      if(shifts[i].whyClass === 'MINE') {
+      if(shift.whyClass === 'MINE') {
         evnt.backgroundColor = 'SpringGreen';
         evnt.borderColor = 'SpringGreen';
       }
     }
-    if((shifts[i].status === 'pending' || shifts[i].status === 'groupPending') && shifts[i].whyClass !== 'MINE') {
+    if((shift.status === 'pending' || shift.status === 'groupPending') && shift.whyClass !== 'MINE') {
       evnt.backgroundColor = 'fireBrick';
       evnt.borderColor = 'lightGray';
     }
-    if(shifts[i].status === 'filled' && shifts[i].whyClass !== 'MINE') {
+    if(shift.status === 'filled' && shift.whyClass !== 'MINE') {
       evnt.backgroundColor = 'fireBrick';
       evnt.borderColor = 'fireBrick';
     }
-    if(shifts[i].name === '') {
-      shifts[i].name = getRoleName(shifts[i].roleID);
+    if(shift.name === '') {
+      shift.name = getRoleName(shift.roleID);
     }
-    evnt.title = shifts[i].name;
-    evnt.url = 'signup.php?shiftID='+evnt.id,
-    evnt.extendedProps = shifts[i];
-    var calEvent = calendar.addEvent(evnt);
-    calEvent.setResources([shifts[i].roleID]);
+    evnt.title = shift.name;
+    evnt.url = 'signup.php?shiftID='+evnt.id;
+    evnt.extendedProps = shift;
+    let calEvent = calendar.addEvent(evnt);
+    calEvent.setResources([shift.roleID]);
     allEvents.push(calEvent);
-    deptHasShifts[shifts[i].departmentID] = true;
+    deptHasShifts[shift.departmentID] = true;
   }
-  calendar.setOption('validRange.start', myStart);
+  calendar.setOption('validRange.start', start);
   try{
-  calendar.render();
+    calendar.render();
   } catch(error) {
     console.error(error);
     if(shifts.length > 0) {
-      location.href = location.origin + location.pathname + "?event=" + shifts[0].eventID;
+      location.href = location.origin + location.pathname + '?event=' + shifts[0].eventID;
     }
   }
   if(window.innerWidth <= 1024) {
     $('#calendar .fc-center h2').css('font-size', '1.0em');
   }
   for(var dept in deptHasShifts) {
-    if(deptHasShifts[dept] === false) {
+    if(deptHasShifts[`${dept}`] === false) {
       $('#departments').find("option[value='"+dept+"']").remove();
     }
   }
@@ -289,7 +285,7 @@ function eventChanged(e) {
   var eventID = e.target.value;
   if(allEvents.length > 0) {
     //Calendar doesn't reinit well... reload the page
-    location.href = location.origin + location.pathname + "?event=" + eventID + extra;
+    location.href = location.origin + location.pathname + '?event=' + eventID + extra;
   }
   $.ajax({
     url: 'api/v1/events/'+eventID+'/shifts',
@@ -305,10 +301,10 @@ function processEvents(events) {
     var bDate = new Date(b.startTime);
     return aDate.getTime() - bDate.getTime();
   });
-  for(var i = 0; i < events.length; i++) {
-    if(events[i]['available']) {
-      var option = {id: events[i]['_id']['$oid'], text: events[i]['name']};
-      if(id !== null && (id === events[i]['_id']['$oid'] || id === events[i]['alias'])) {
+  for(let event of events) {
+    if(event.available) {
+      let option = {id: event['_id']['$oid'], text: event.name};
+      if(id !== null && (id === event['_id']['$oid'] || id === event.alias)) {
         option.selected = true;
       }
       data.push(option);
@@ -326,26 +322,25 @@ function processEvents(events) {
 function processDepartments(depts) {
   var id = getParameterByName('department');
   var groups = {};
-  for(var i = 0; i < depts.length; i++) {
-    if(!depts[i]['available']) {
+  for(let dept of depts) {
+    if(!dept.available) {
       continue;
     }
-    if(groups[depts[i]['area']] === undefined) {
-      groups[depts[i]['area']] = [];
+    if(groups[dept.area] === undefined) {
+      groups[dept.area] = [];
     }
-    var tmp = {id: depts[i]['departmentID'], text: depts[i]['departmentName'], selected: true};
+    let tmp = {id: dept.departmentID, text: dept.departmentName, selected: true};
     if(id !== null && id !== tmp.id) {
       tmp.selected = false;
+    } else {
+      validDepts.push(dept.departmentID);
     }
-    else {
-      validDepts.push(depts[i]['departmentID']);
-    }
-    groups[depts[i]['area']].push(tmp);
+    groups[dept.area].push(tmp);
   }
   var data = [];
   for(var group in groups) {
     //TODO Get Area's real name...
-    data.push({text: group, children: groups[group]});
+    data.push({text: group, children: groups[`${group}`]});
   }
   $('#departments').select2({data: data});
   $.ajax({
@@ -360,8 +355,7 @@ function gotRoles(jqXHR) {
   }
   var array = jqXHR.responseJSON;
   var deptsForResources = {};
-  for(var i = 0; i < array.length; i++) {
-    var role = array[i];
+  for(let role of array) {
     roles[role.short_name] = role;
     if(deptsForResources[role.departmentID] === undefined) {
       var deptName = getDeptName(role.departmentID);
@@ -373,7 +367,7 @@ function gotRoles(jqXHR) {
     deptsForResources[role.departmentID].children.push({id: role.short_name, title: role.display_name});
   }
   for(var key in deptsForResources) {
-    calendar.addResource(deptsForResources[key], false);
+    calendar.addResource(deptsForResources[`${key}`], false);
   }
 }
 
@@ -506,7 +500,7 @@ function initPage() {
 }
 
 $(() => {
-  $('body').on('fvs:ready', function(e) {
+  $('body').on('fvs:ready', function() {
     initPage();
   });
 });

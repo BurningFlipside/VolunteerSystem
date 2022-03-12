@@ -25,7 +25,7 @@ $page->body .= '
 <div class="row">
   <table class="table" id="shiftTable">
     <thead>
-      <tr><th>Username</th><th>Certifications</th></tr>
+      <tr><th>Username</th><th>Email</th><th>Certifications</th></tr>
     </thead>
     <tbody></tbody>
   </table>

@@ -1,3 +1,4 @@
+/*global $, bootbox*/
 function generatePDF(e) {
   var type = e.target.id;
   console.log(type);
@@ -23,8 +24,8 @@ function initPage() {
         data.sort((a,b) => {
           return a.name.localeCompare(b.name);
         });
-        for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i]['_id']['$oid'], text: data[i].name});
+        for(let event of data) {
+          res.push({id: event['_id']['$oid'], text: event.name});
         }
         return {results: res};
       }
@@ -38,9 +39,9 @@ function initPage() {
         data.sort((a,b) => {
           return a.departmentName.localeCompare(b.departmentName);
         });
-        for(var i = 0; i < data.length; i++) {
-          if(data[i].isAdmin) {
-            res.push({id: data[i].departmentID, text: data[i].departmentName});
+        for(let dept of data) {
+          if(dept.isAdmin) {
+            res.push({id: dept.departmentID, text: dept.departmentName});
           }
         }
         return {results: res};

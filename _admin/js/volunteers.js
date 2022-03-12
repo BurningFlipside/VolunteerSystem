@@ -1,3 +1,4 @@
+/*global $, Tabulator*/
 function editDone(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -11,7 +12,7 @@ function valueChanged(value, field, id) {
   var obj = {};
   var current = obj;
   for(var i = 0; i < propParts.length-1; i++) {
-    current = current[propParts[i]] = {};
+    current = current[`${propParts[i]}`] = {}; // eslint-disable-line security/detect-object-injection
   }
   current[propParts[propParts.length-1]] = value;
   $.ajax({
@@ -30,33 +31,33 @@ function dataChanged(cell) {
 
 function initPage() {
   var tShirts = {
-        "WS": "Women's Small",
-        "WM": "Women's Medium",
-        "MS": "Men's Small",
-        "WL": "Women's Large",
-        "MM": "Men's Medium",
-        "WXL": "Women's Extra Large",
-        "WXXL": "Women's Extra Extra Large",
-        "ML": "Men's Large",
-        "WXXXL": "Women's Extra Extra Extra Large",
-        "MXL": "Men's Extra Large",
-        "MXXL": "Men's Extra Extra Large",
-        "MXXXL": "Men's Extra Extra Extra Large",
+    'WS': "Women's Small",
+    'WM': "Women's Medium",
+    'MS': "Men's Small",
+    'WL': "Women's Large",
+    'MM': "Men's Medium",
+    'WXL': "Women's Extra Large",
+    'WXXL': "Women's Extra Extra Large",
+    'ML': "Men's Large",
+    'WXXXL': "Women's Extra Extra Extra Large",
+    'MXL': "Men's Extra Large",
+    'MXXL': "Men's Extra Extra Large",
+    'MXXXL': "Men's Extra Extra Extra Large",
   };
-  table = new Tabulator("#vols", {
+  new Tabulator('#vols', {
     ajaxURL: '../api/v1/participants',
     columns:[
-      {title:"User ID", field:"uid", visible: true},
-      {title:"Email", field: 'email', formatter:"link", formatterParams:{urlPrefix:'mailto:'}},
+      {title:'User ID', field: 'uid', visible: true},
+      {title:'Email', field: 'email', formatter: 'link', formatterParams:{urlPrefix:'mailto:'}},
       {title:'First Name', field: 'firstName'},
       {title:'Last Name', field: 'lastName'},
       {title:'Burner Name', field: 'burnerName'},
-      {title:'T-Shirt Size', field: 'shirtSize', editor:'select', formatter: 'lookup', editorParams: {values: tShirts}, formatterParams: tShirts},
+      {title:'T-Shirt Size', field: 'shirtSize', editor: 'select', formatter: 'lookup', editorParams: {values: tShirts}, formatterParams: tShirts},
       {title:'Critical Volunteer', field: 'critVol', editor: 'tickCross', formatter: 'tickCross'}      
     ],
     cellEdited: dataChanged,
     initialSort:[
-      {column:"uid", dir:"asc"}
+      {column: 'uid', dir: 'asc'}
     ]
   });
 }

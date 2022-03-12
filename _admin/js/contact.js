@@ -1,3 +1,4 @@
+/* global $*/
 function gotParticipant(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
@@ -41,12 +42,11 @@ function gotShifts(jqXHR) {
   }
   var textarea = $('#emails');
   textarea.val('');
-  console.log(data);
   let participants = {};
-  for(var i = 0; i < data.length; i++) {
-    if(data[i].participant !== undefined && participants[data[i].participant] === undefined) {
-      participants[data[i].participant] = $.ajax({
-        url: '../api/v1/participants/'+data[i].participant,
+  for(let shift of data) {
+    if(shift.participant !== undefined && participants[shift.participant] === undefined) {
+      participants[shift.participant] = $.ajax({
+        url: '../api/v1/participants/'+shift.participant,
         complete: gotParticipant
       });
     }
@@ -86,7 +86,7 @@ function gotEvent(jqXHR) {
   getShifts();
 }
 
-function eventChanged(e) {
+function eventChanged() {
   $.ajax({
     url: '../api/v1/events/'+$('#event').val(),
     complete: gotEvent
@@ -94,8 +94,8 @@ function eventChanged(e) {
 }
 
 function deptChanged(e) {
-  $("#role").select2("destroy");
-  $("#role").select2({
+  $('#role').select2('destroy');
+  $('#role').select2({
     ajax: {
       url: '../api/v1/departments/'+e.target.value+'/roles',
       processResults: function(data) {
@@ -103,8 +103,8 @@ function deptChanged(e) {
         data.sort((a,b) => {
           return a.display_name.localeCompare(b.display_name);
         });
-        for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i].short_name, text: data[i].display_name});
+        for(let role of data) {
+          res.push({id: role.short_name, text: role.display_name});
         }
         return {results: res};
       } 
@@ -113,11 +113,11 @@ function deptChanged(e) {
   getShifts();
 }
 
-function roleChanged(e) {
+function roleChanged() {
   getShifts();
 }
 
-function startTimeChanged(e) {
+function startTimeChanged() {
   if($('#event').val() !== null) {
     getShifts();
   }
@@ -132,8 +132,8 @@ function initPage() {
         data.sort((a,b) => {
           return a.name.localeCompare(b.name);
         });
-        for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i]['_id']['$oid'], text: data[i].name});
+        for(let event of data) {
+          res.push({id: event['_id']['$oid'], text: event.name});
         }
         return {results: res};
       }
@@ -147,9 +147,9 @@ function initPage() {
         data.sort((a,b) => {
           return a.departmentName.localeCompare(b.departmentName);
         });
-        for(var i = 0; i < data.length; i++) {
-          if(data[i].isAdmin) {
-            res.push({id: data[i].departmentID, text: data[i].departmentName});
+        for(let dept of data) {
+          if(dept.isAdmin) {
+            res.push({id: dept.departmentID, text: dept.departmentName});
           }
         }
         return {results: res};

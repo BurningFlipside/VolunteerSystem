@@ -1,3 +1,5 @@
+/* global $ */
+/* exported privacyShown, saveProfile */
 function showProfileWizard() {
   $('#profileWizard').modal('show');
 }
@@ -14,7 +16,7 @@ function createdProfile(jqXHR) {
 function saveProfile(profile) {
   for(var key in profile) {
     if(key.includes('DisplayName')) {
-      delete profile[key];
+      delete profile[`${key}`];
     }
   }
   //convert from profile standard to fvs
@@ -64,8 +66,8 @@ function privacyShown(page) {
     selects.find('[value=burnerLast]').attr('disabled', true);
   }
   selects.find('option:not([disabled]):first').attr('selected', true);
-  for(var i = 0; i < selects.length; i++) {
-    updateDisplayName(selects[i]);
+  for(let select of selects) {
+    updateDisplayName(select);
   }
 }
 

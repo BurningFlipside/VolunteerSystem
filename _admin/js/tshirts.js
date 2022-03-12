@@ -1,3 +1,4 @@
+/*global $*/
 function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
@@ -5,16 +6,14 @@ function gotShifts(jqXHR) {
   var data = jqXHR.responseJSON;
   var participants = {};
   var unfilled = 0;
-  for(var i = 0; i < data.length; i++) {
-    if(data[i].participant !== undefined) {
-      if(participants[data[i].participant] === undefined) {
-        participants[data[i].participant] = 1;
+  for(let shift of data) {
+    if(shift.participant !== undefined && shift.participant !== '') {
+      if(participants[shift.participant] === undefined) {
+        participants[shift.participant] = 1;
+      } else {
+        participants[shift.participant]++;
       }
-      else {
-        participants[data[i].participant]++;
-      }
-    }
-    else {
+    } else {
       unfilled++;
     }
   }
@@ -34,14 +33,14 @@ function gotShifts(jqXHR) {
     'MXXXL': 0
   };
   for(var participant in participants) {
-    if(participants[participant] >= $('#minShifts').val()) {
+    if(participants[`${participant}`] >= $('#minShifts').val()) {
       promises.push($.ajax({url: '../api/v1/participants/'+participant}));
     }
   }
   unfilled = unfilled / $('#minShifts').val();
   Promise.all(promises).then((data) => {
-    for(var i = 0; i < data.length; i++) {
-      sizes[data[i].shirtSize]++;
+    for(let participant of data) {
+      sizes[participant.shirtSize]++;
     }
     $('#filledWS').html(sizes.WS);
     $('#filledWM').html(sizes.WM);
@@ -89,15 +88,15 @@ function minShiftsChanged(e) {
   rolesChanged(e);
 }
 
-function rolesChanged(e) {
+function rolesChanged() {
   var selectedRoles = $('#roles').select2('data');
   var filter = '$filter=';
-  for(var i = 0; i < selectedRoles.length; i++) {
-    filter+='roleID eq '+selectedRoles[i].id;
-    if(i < selectedRoles.length-1) {
-      filter+=' or ';
-    }
+  for(let role of selectedRoles) {
+    filter+='roleID eq '+role.id;
+    filter+=' or ';
   }
+  //Remove last or...
+  filter = filter.slice(0, -4);
   $.ajax({
     url: '../api/v1/events/'+$('#event').val()+'/shifts?'+filter,
     complete: gotShifts
@@ -109,8 +108,8 @@ function gotRoles(jqXHR) {
     return;
   }
   var data = jqXHR.responseJSON;
-  for(var i = 0; i < data.length; i++) {
-    var newOption = new Option(data[i].display_name, data[i].short_name, true, true);
+  for(let role of data) {
+    var newOption = new Option(role.display_name, role.short_name, true, true);
     $('#roles').append(newOption);
   }
   $('#roles').trigger('change');
@@ -133,8 +132,8 @@ function initPage() {
         data.sort((a,b) => {
           return a.name.localeCompare(b.name);
         });
-        for(var i = 0; i < data.length; i++) {
-          res.push({id: data[i]['_id']['$oid'], text: data[i].name});
+        for(let event of data) {
+          res.push({id: event['_id']['$oid'], text: event.name});
         }
         return {results: res};
       }
@@ -148,9 +147,9 @@ function initPage() {
         data.sort((a,b) => {
           return a.departmentName.localeCompare(b.departmentName);
         });
-        for(var i = 0; i < data.length; i++) {
-          if(data[i].isAdmin) {
-            res.push({id: data[i].departmentID, text: data[i].departmentName});
+        for(let dept of data) {
+          if(dept.isAdmin) {
+            res.push({id: dept.departmentID, text: dept.departmentName});
           }
         }
         return {results: res};

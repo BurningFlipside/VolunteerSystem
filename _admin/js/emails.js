@@ -1,8 +1,9 @@
+/* global $, getParameterByName*/
+/* exported save */
 function saveDone(jqXHR) {
   if(jqXHR.status === 200) {
     location.reload();
-  }
-  else {
+  } else {
     alert('Unable to save data!');
     console.log(jqXHR);
   }
