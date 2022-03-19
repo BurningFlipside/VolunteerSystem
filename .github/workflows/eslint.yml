@@ -23,14 +23,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install eslint
-      run: |
-        npm install --no-save eslint \
-        npm install -g eslint
+      run: npm install --no-save eslint
+    - name: Install eslint globally
+      run: npm install -g eslint
     - name: Install eslint-security plugin
       run: npm install --no-save eslint-plugin-security
-    - name: List debug files
-      run: ls -al ./node_modules/
-    - name: List debug files 2
-      run: ls -al ./node_modules/.bin
     - name: Run ESLint
       run: eslint . --ext .js,.jsx,.ts,.tsx
