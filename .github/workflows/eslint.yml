@@ -26,5 +26,9 @@ jobs:
       run: npm install --no-save eslint
     - name: Install eslint-security plugin
       run: npm install --no-save eslint-plugin-security
+    - name: List debug files
+      run: ls -al ./node_modules/
+    - name: List debug files 2
+      run: ls -al ./node_modules/.bin
     - name: Run ESLint
       run: ./node_modules/.bin/eslint . --ext .js,.jsx,.ts,.tsx
