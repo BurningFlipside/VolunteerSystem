@@ -10,6 +10,7 @@ class ShiftAPI extends VolunteerAPI
 
     public function setup($app)
     {
+        $app->get('/PendingShifts', array($this, 'getPendingShifts'));
         parent::setup($app);
         $app->post('/Actions/CreateGroup', array($this, 'createGroup'));
         $app->post('/Actions/NewGroup', array($this, 'newGroup'));
@@ -47,38 +48,38 @@ class ShiftAPI extends VolunteerAPI
         return $this->canUpdate($request, $entity);
     }
 
+    protected function getFutureEventIDList()
+    {
+        $eventDB = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
+        $now = new DateTime();
+        $events = $eventDB->read(array('endTime' => array('$gte'=>$now->format('Y-m-d\TG:i'))));
+        $ids = array();
+        $count = count($events);
+        if($count > 0) {
+            for($i = 0; $i < $count; $i++)
+            {
+                array_push($ids, (string)$events[$i]['_id']);
+            }
+        }
+        return $ids;
+    }
+
     protected function manipulateParameters($request, &$odata)
     {
         if($odata->filter === false)
         {
             //By default only get shifts for events that are from this point forward
-            $eventDB = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
-            $now = new DateTime();
-            $events = $eventDB->read(array('endTime' => array('$gte'=>$now->format('Y-m-d\TG:i'))));
-            $ids = array();
-            $count = count($events);
-            if($count > 0) {
-                for($i = 0; $i < $count; $i++)
-                {
-                    array_push($ids, (string)$events[$i]['_id']);
-                }
+            $ids = $this->getFutureEventIDList();
+            if(!empty($ids)) {
                 $odata->filter = array('eventID'=>array('$in'=>$ids));
             }
         }
         else if($request->getQueryParam('futureOnly'))
         {
             //Despite filtering only get future events...
-            $filter = $odata->filter->to_mongo_filter();
-            $eventDB = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
-            $now = new DateTime();
-            $events = $eventDB->read(array('endTime' => array('$gte'=>$now->format('Y-m-d\TG:i'))));
-            $ids = array();
-            $count = count($events);
-            if($count > 0) {
-                for($i = 0; $i < $count; $i++)
-                {
-                    array_push($ids, (string)$events[$i]['_id']);
-                }
+            $ids = $this->getFutureEventIDList();
+            if(!empty($ids)) {
+                $filter = $odata->filter->to_mongo_filter();
                 $filter['eventID'] = array('$in'=>$ids);
                 $odata->filter = $filter;
             }
@@ -158,6 +159,48 @@ class ShiftAPI extends VolunteerAPI
             // 48 bits for "node"
             mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
+    }
+
+    public function getPendingShifts($request, $response)
+    {
+        $dept = $request->getQueryParam('dept');
+        if($dept === null && $this->isVolunteerAdmin($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        if($this->isVolunteerAdmin($request) === false && $this->isUserDepartmentLead($dept, $this->user))
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = $this->getDataTable();
+        $ids = $this->getFutureEventIDList();
+        $filter = array('status'=>'pending', 'eventID'=>array('$in'=>$ids));
+        if($dept !== null)
+        {
+            $filter['departmentID'] = $dept;
+        }
+        $shifts = $dataTable->read($filter);
+        $pendingShifts = array();
+        $count = count($shifts);
+        for($i = 0; $i < $count; $i++)
+        {
+            $shift = $shifts[$i];
+            if(!isset($shift['needEEApproval']) || $shift['needEEApproval'] === false)
+            {
+                //Easy this shift needs approval...
+                array_push($pendingShifts, $shift);
+                continue;
+            }
+            //This shift needs EE approval, but might be an overlap or something
+            $objShift = new \VolunteerShift((string)$shift['_id'], $shift);
+            if($objShift->findOverlaps($objShift->participant, true))
+            {
+                //User has an overlap despite being EE... show this hear too...
+                array_push($pendingShifts, $shift);
+                continue;
+            }
+        }
+        return $response->withJson($pendingShifts);
     }
 
     public function createGroup($request, $response)
@@ -613,7 +656,7 @@ class ShiftAPI extends VolunteerAPI
         return $response->withJSON(array('uuid' => $uuid));
     }
 
-    public function removeGroupLink($request, $response, $args)
+    public function removeGroupLink($request, $response)
     {
         if(!$this->canCreate($request))
         {
@@ -709,7 +752,7 @@ class ShiftAPI extends VolunteerAPI
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 
-    function eventClone($request, $response, $args)
+    function eventClone($request, $response)
     {
         $this->validateLoggedIn($request);
         $data = $request->getParsedBody();
@@ -717,7 +760,7 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(400);
         }
-        if($this->isUserDepartmentLead($data['dept'], $this->user) === false)
+        if($this->isVolunteerAdmin($request) === false && $this->isUserDepartmentLead($data['dept'], $this->user) === false)
         {
             return $response->withStatus(401);
         }

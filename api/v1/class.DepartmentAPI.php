@@ -33,11 +33,21 @@ class DepartmentAPI extends VolunteerAPI
         return $this->isUserDepartmentLead($deptId, $this->user);
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canUpdate($request, $entity)
     {
+        if(isset($entity['departmentID']))
+        {
+            return $this->canEditDept($request, $entity['departmentID']); 
+        }
         return $this->canEditDept($request, false);
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canDelete($request, $entity)
     {
         if($this->isVolunteerAdmin($request))

@@ -8,8 +8,7 @@ function gotParticipant(jqXHR) {
   var current = textarea.val();
   if(current === '') {
     textarea.val(data.email);
-  }
-  else {
+  } else {
     textarea.val(current+', '+data.email);
   }
 }
@@ -46,7 +45,7 @@ function gotShifts(jqXHR) {
   for(let shift of data) {
     if(shift.participant !== undefined && participants[shift.participant] === undefined) {
       participants[shift.participant] = $.ajax({
-        url: '../api/v1/participants/'+shift.participant,
+        url: '../api/v1/participants/'+encodeURIComponent(shift.participant),
         complete: gotParticipant
       });
     }

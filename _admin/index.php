@@ -49,6 +49,7 @@ $page->content['body'] = '
         <canvas id="shiftsFilledTimeLine" class="d-block w-100"></canvas>
       </div>
     </div>
+    <!--
     <a class="carousel-control-prev" href="#chartRotate" role="button" data-slide="prev">
       <i class="fas fa-arrow-left" style="color: black;"></i>
       <span class="sr-only">Previous</span>
@@ -56,7 +57,7 @@ $page->content['body'] = '
     <a class="carousel-control-next" href="#chartRotate" role="button" data-slide="next">
       <i class="fas fa-arrow-right" style="color: black;"></i>
       <span class="sr-only">Next</span>
-    </a>
+    </a>-->
   </div>
 </div>
 ';

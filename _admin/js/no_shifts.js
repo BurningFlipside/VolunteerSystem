@@ -44,8 +44,7 @@ function gotVols(jqXHR) {
       complete: gotShifts,
       context: participants
     });
-  }
-  else {
+  } else {
     $.ajax({
       url: '../api/v1/shifts',
       complete: gotShifts,

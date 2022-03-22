@@ -32,15 +32,17 @@ function gotShifts(jqXHR) {
     'MXXL': 0,
     'MXXXL': 0
   };
-  for(var participant in participants) {
+  for(let participant in participants) {
     if(participants[`${participant}`] >= $('#minShifts').val()) {
-      promises.push($.ajax({url: '../api/v1/participants/'+participant}));
+      promises.push($.ajax({url: '../api/v1/participants/'+encodeURIComponent(participant)}));
     }
   }
   unfilled = unfilled / $('#minShifts').val();
-  Promise.all(promises).then((data) => {
-    for(let participant of data) {
-      sizes[participant.shirtSize]++;
+  Promise.allSettled(promises).then((resData) => {
+    for(let participant of resData) {
+      if(participant.status === 'fulfilled') {
+        sizes[participant.value.shirtSize]++;
+      }
     }
     $('#filledWS').html(sizes.WS);
     $('#filledWM').html(sizes.WM);

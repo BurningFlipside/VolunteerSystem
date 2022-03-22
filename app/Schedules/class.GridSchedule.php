@@ -188,6 +188,9 @@ class GridSchedule
         }
         $i = 0;
         $rows = array();
+        /**
+         * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+         */
         foreach($roles as $role=>$hour)
         {
             $sheat->setCellValueByColumnAndRow(1, 4 + $i, $this->getRoleNameFromID($role));

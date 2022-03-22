@@ -73,4 +73,37 @@ class VolunteerProfile extends VolunteerObject
         }
         return false;
     }
+
+    public function getTicketStatus()
+    {
+        $settingsTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Variables');
+        $settings = $settingsTable->read(new \Flipside\Data\Filter('name eq \'year\''));
+        $year = $settings[0]['value'];
+        $ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+        if(isset($this->dbData['ticketCode']))
+        {
+            $code = $this->dbData['ticketCode'];
+            $tickets = $ticketTable->read(new \Flipside\Data\Filter("contains(hash,$code) and year eq $year"));
+        }
+        else
+        {
+            $email = $this->dbData['email'];
+            $tickets = $ticketTable->read(new \Flipside\Data\Filter("email eq '$email' and year eq $year"));
+        }
+        if(empty($tickets))
+        {
+            $requestTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
+            $requests = $requestTable->read(new \Flipside\Data\Filter("mail eq '$email' and year eq $year"));
+            if(empty($requests))
+            {
+                return array('ticket' => false, 'request' => false);
+            }
+            if($requests[0]['status'] === '1')
+            {
+                return array('ticket' => false, 'request' => true, 'requestRecieved' => true);
+            }
+            return array('ticket' => false, 'request' => true);
+        }
+        return array('ticket' => true);
+    }
 }

@@ -1,11 +1,11 @@
-/*global reload, image_not_found*/
+/*global reload, imageNotFound*/
 // Container for a volunteer position
-function VolunteerPosition(nam, desc, image, email, long_description){
+function VolunteerPosition(nam, desc, image, email, longDescription){
   this.name = nam;
   this.description = desc;
   this.imageURL = image;
   this.email = email;
-  this.long_description = long_description;
+  this.longDescription = longDescription;
 }
 
 VolunteerPosition.prototype.createNode = function(){
@@ -22,14 +22,14 @@ VolunteerPosition.prototype.createNode = function(){
     image.id = 'volunteer_image';
     image.className = 'img-responsive';
     image.src = this.imageURL;
-    image.onerror=image_not_found;
+    image.onerror = imageNotFound;
     div.appendChild(image);
   } else {
     let image = document.createElement('img');
     image.src = 'images/lostimage.png';
     image.id = 'volunteer_image';
     image.className = 'img-responsive';
-    image.style.width= '470px';
+    image.style.width = '470px';
     div.appendChild(image);
   }
   div.appendChild(description);
@@ -48,7 +48,7 @@ VolunteerPosition.prototype.createNode = function(){
   mainDiv.appendChild(emailDiv);
   var descriptionDiv = document.createElement('div');
   descriptionDiv.id = 'position_description';
-  descriptionDiv.innerHTML = this.long_description;
+  descriptionDiv.innerHTML = this.longDescription;
   mainDiv.appendChild(descriptionDiv);
   var resetDiv = document.createElement('div');
   resetDiv.id = 'reset_page_div';

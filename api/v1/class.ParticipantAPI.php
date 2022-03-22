@@ -153,7 +153,7 @@ class ParticipantAPI extends VolunteerAPI
         return $response->withJson($ret);
     }
 
-    public function getMyShifts($request, $response, $args)
+    public function getMyShifts($request, $response)
     {
         $this->validateLoggedIn($request);
         $uid = $this->user->uid;

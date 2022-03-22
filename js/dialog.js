@@ -38,8 +38,7 @@ window.flipDialog.dialog = function(options) {
         }
         delete input.options;
       }
-    }
-    else {
+    } else {
       inputEnt.attr('type', input.type);
     }
     if(input.type === 'datetime-local') {
@@ -52,8 +51,7 @@ window.flipDialog.dialog = function(options) {
           myOptions.maxDate = new Date(input.max);
         }
         inputEnt.flatpickr(myOptions);
-      }
-      else if(input.value) {
+      } else if(input.value) {
         let datetime = new Date(input.value);
         inputEnt.val(dateTimeToString(datetime));
       }
@@ -131,7 +129,7 @@ function dialogButtonClick(e) {
   var group = $(e.target).parents('.input-group');
   if(group.length > 0) {
     let inputs = group.find('input');
-    var name = inputs[0].id;
+    let name = inputs[0].id;
     e.data[`${name}`] = inputs[0].value;
   }
   //Update data with the latest

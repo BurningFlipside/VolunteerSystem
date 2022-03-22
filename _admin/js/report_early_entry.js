@@ -20,17 +20,21 @@ function gotReport(jqXHR) {
   var data = jqXHR.responseJSON;
   var tbody = $('#eeTable tbody');
   tbody.empty();
-  for(let vol in data) {
+  for(let vol of data) {
     let eeTxt = eeValueToString(vol.earlyLate);
-    tbody.append('<tr><td>'+vol.name+'</td><td>'+vol.email+'</td><td>'+vol.dept+'</td><td>'+vol.role+'</td><td>'+eeTxt+'</td><td><i>Pending</i></td></tr>');
+    tbody.append('<tr><td>'+vol.name+'</td><td>'+vol.email+'</td><td>'+vol.dept+'</td><td>'+vol.role+'</td><td>'+eeTxt+'</td><td>'+vol.ticket+'</td></tr>');
   }
 }
 
 function getShifts() {
   let obj = {};
-  var ee = $('#earlyLate').val();
+  let ee = $('#earlyLate').val();
   if(ee !== '*') {
     obj.earlyLate = ee;
+  }
+  let includePending = $('#showPending')[0].checked;
+  if(includePending === true) {
+    obj.includePending = includePending;
   }
   $.ajax({
     url: '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport',
@@ -63,9 +67,19 @@ function eeChanged() {
   }
 }
 
+function pendingChanged() {
+  if($('#event').val() !== null) {
+    getShifts();
+  }
+}
+
 function generateCSV() {
   if($('#event').val() === null) {
     alert('Select an event first!');
+  }
+  if($('#showPending')[0].checked) {
+    window.location = '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport?includePending=true&$format=csv';
+    return;
   }
   window.location = '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport?$format=csv';
 }
@@ -88,6 +102,7 @@ function initPage() {
   });
   $('#event').change(eventChanged);
   $('#earlyLate').change(eeChanged);
+  $('#showPending').change(pendingChanged);
 }
 
 $(initPage);

@@ -72,9 +72,12 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
             'T-Shirts' => 'tshirts.php',
             'Participant Shifts' => 'vol_shifts.php',
             'Volunteers without Shifts' => 'no_shifts.php',
-            'Empty Shifts' => 'report_empty_shifts.php',
-            'Early Entry' => 'report_early_entry.php'
+            'Empty Shifts' => 'report_empty_shifts.php'
         );
+        if($this->isLead === false)
+        {
+            $charts_menu['Early Entry'] = 'report_early_entry.php';
+        }
         $shifts_menu = array(
             'Add/Edit Shifts' => 'shifts.php',
             'Pending Shifts' => 'pending.php',

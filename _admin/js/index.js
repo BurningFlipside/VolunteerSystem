@@ -95,8 +95,7 @@ function chartClick(e) {
   var deptId = $('#departments').val();
   if(deptId === '*') {
     location.href = 'shifts.php?event='+eventId+'&filled='+index+'&hideEmpty=true';
-  }
-  else {
+  } else {
     location.href = 'shifts.php?event='+eventId+'&department='+deptId+'&filled='+index+'&hideEmpty=true';
   }
 }
@@ -119,8 +118,7 @@ function makeShiftTimeLine(shifts) {
     }
     if(shift.status === 'filled') {
       dates[`${id}`].filled++;
-    }
-    else if(shift.status === 'pending') {
+    } else if(shift.status === 'pending') {
       dates[`${id}`].pending++;
     }
   }
@@ -179,13 +177,11 @@ function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     ctx.fillText('Unable to obtain shift data', 10, 50);
     console.log(jqXHR);
-  }
-  else {
+  } else {
     var data = jqXHR.responseJSON;
     if(data.length === 0) {
       ctx.fillText('Event has no shifts!', 10, 50);
-    }
-    else {
+    } else {
       var filled = 0;
       var pending = 0;
       var unfilled = data.length;
@@ -239,8 +235,7 @@ function showEventDetails(e) {
   }
   if(favorite === eventID) {
     $('#eventStar').removeClass('far').addClass('fas');
-  }
-  else {
+  } else {
     $('#eventStar').removeClass('fas').addClass('far');
   }
 }
@@ -270,7 +265,7 @@ function gotEvents(jqXHR) {
     var events = $('#events');
     events.change(showEventDetails);
     for(let event of resp.value) {
-      if(event.why === 'Event is in the past') {
+      if(event.why === 'Event is in the past' || event.why === 'Event is private and you are not invited') {
         continue;
       }
       events.append('<option value="'+event['_id']['$oid']+'">'+event.name+'</option>');

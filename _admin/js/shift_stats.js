@@ -18,6 +18,7 @@ function gotShifts(jqXHR) {
     return;
   }
   var shifts = jqXHR.responseJSON;
+  console.log(shifts);
   let inviteOnly = ($('#hideInviteOnly').prop('checked') === true);
   if(!inviteOnly) {
     tableData['total'].shifts = shifts.length;
@@ -36,6 +37,9 @@ function gotShifts(jqXHR) {
     var milliseconds = end - start;
     var minutes = milliseconds/(1000*60);
     var hours = (minutes*1.0)/60;
+    if(hours < 0) {
+      console.log(shift);
+    }
     tableData['total'].hours += hours;
     tableData[shift.departmentID].hours += hours;
     if(shift.status && shift.status === 'filled') {
@@ -109,7 +113,7 @@ function tableToXLSX() {
 }
 
 function eventChanged(e) {
-  for(var dept in tableData) {
+  for(let dept in tableData) {
     tableData[`${dept}`].shifts = 0;
     tableData[`${dept}`].hours = 0;
     tableData[`${dept}`].unfilled = 0;
@@ -124,14 +128,21 @@ function eventChanged(e) {
 }
 
 function processEvents(events) {
+  let filter = $('#showOld')[0].checked;
   var data = [];
   for(let event of events) {
-    if(event['available']) {
+    if(!filter && event['available']) {
+      data.push({id: event['_id']['$oid'], text: event['name']});
+    } else if(filter) {
       data.push({id: event['_id']['$oid'], text: event['name']});
     }
   }
-  var sel2 = $('#event').select2({data: data});
-  sel2.change(eventChanged);
+  if(!$('#event').hasClass("select2-hidden-accessible")) {
+    var sel2 = $('#event').select2({data: data});
+    sel2.change(eventChanged);
+  } else {
+    $('#event').select2({data: data});
+  }
 }
 
 function processDepartments(depts) {
@@ -180,6 +191,19 @@ function checkXLSX() {
   $('.page-header').append('<button type="button" class="btn btn-link" onclick="tableToXLSX();"><i class="fas fa-file-excel"></i></button>');
 }
 
+function refreshEvents(jqXHR) {
+  if(jqXHR.status === 200) {
+    processEvents(jqXHR.responseJSON);
+  }
+}
+
+function showOldEvents() {
+  $.ajax({
+    url: '../api/v1/events',
+    complete: refreshEvents
+  });
+}
+
 function initPage() {
   let promises = [];
   promises.push($.ajax({
@@ -193,6 +217,7 @@ function initPage() {
   setTimeout(checkXLSX, 1);
   $('#hideEmpty').change(hideEmptyShifts);
   $('#hideInviteOnly').change(hideInviteOnlyShifts);
+  $('#showOld').change(showOldEvents);
 }
 
 $(initPage);

@@ -4,19 +4,18 @@ var deptId;
 var table;
 
 function roleNameUpdated() {
-  var disp_name = $('#display_name').val();
-  var id = disp_name.replace(/ /g, '_');
+  let dispName = $('#display_name').val();
+  let id = dispName.replace(/ /g, '_');
   id = id.replace(/[\/\\]/g, '_');
-  var full_id = deptId+'_'+id;
-  $('#short_name').val(full_id);
+  let fullId = deptId+'_'+id;
+  $('#short_name').val(fullId);
 }
 
 function groupsAllowedUpdated() {
   var allowed = $('#groups_allowed')[0].checked;
   if(allowed) {
     $('#grouped_with').removeAttr('disabled');
-  }
-  else {
+  } else {
     $('#grouped_with').attr('disabled', true);
   }
 }
@@ -29,8 +28,7 @@ function publiclyVisibleUpdated() {
   if(allowed) {
     inputs.attr('disabled', true);
     textareas.attr('disabled', true);
-  }
-  else {
+  } else {
     inputs.removeAttr('disabled');
     if(email) {
       textareas.removeAttr('disabled');
@@ -42,8 +40,7 @@ function onEmailListUpdated() {
   var allowed = $('#onEmailList')[0].checked;
   if(allowed) {
     $('[id="requirements.email_list"]').removeAttr('disabled');
-  }
-  else {
+  } else {
     $('[id="requirements.email_list"]').attr('disabled', true);
   }
 }
@@ -101,8 +98,8 @@ function gotDept(jqXHR) {
 
 function newRole(role) {
   delete role.onEmailList;
-  role.short_name = role.short_name.replace(/ /g, '_');
-  role.short_name = role.short_name.replace(/[\/\\]/g, '_');
+  role.short_name = role.short_name.replace(/ /g, '_'); // eslint-disable-line camelcase
+  role.short_name = role.short_name.replace(/[\/\\]/g, '_'); // eslint-disable-line camelcase
   $.ajax({
     url: '../api/v1/departments/'+deptId+'/roles/',
     method: 'POST',
@@ -138,15 +135,14 @@ function groupedWithEditor(cell, onRendered, success) {
   if(value !== undefined) {
     if(Array.isArray(value)) {
       values = value;
-    }
-    else {
+    } else {
       values = value.split(',');
     }
   }
 
   editor.setAttribute('multiple', true);
   for(let row of rows) {
-    var data = row.getData();
+    let data = row.getData();
     if(data.short_name === rowData.short_name) {
       continue;
     }
@@ -160,8 +156,8 @@ function groupedWithEditor(cell, onRendered, success) {
       editor.add(opt);
     }
   }
-  function successFunc(){
-    var data = $(editor).select2('data');
+  function successFunc() {
+    let data = $(editor).select2('data');
     var ret = '';
     for(let item in data) {
       ret+=item.id;
@@ -189,10 +185,16 @@ function gotDeptList(jqXHR) {
     return a.departmentName.localeCompare(b.departmentName);
   });
   var sel = $('#deptFilter');
+  let count = 0;
   for(let dept of array) {
     if(dept.isAdmin) {
       addOptiontoSelect(sel[0], dept.departmentID, dept.departmentName);
+      count++;
     }
+  }
+  if(count === 1) {
+    $('#deptFilter')[0].selectedIndex=1;
+    $('#newRoleBtn').removeAttr('disabled').removeAttr('title');
   }
 }
 
@@ -202,8 +204,7 @@ function deptFilterChanged(e) {
     table.setData('../api/v1/roles');
     $('#newRoleBtn').attr('disabled', true).attr('title', 'Adding a new role is disabled except on the individual department pages');
     deptId = null;
-  }
-  else {
+  } else {
     table.setData('../api/v1/departments/'+value+'/roles');
     $('#newRoleBtn').removeAttr('disabled').removeAttr('title');
     deptId = value;
@@ -292,8 +293,7 @@ function initPage() {
       url: tableURL,
       complete: gotRoles
     });
-  }
-  else {
+  } else {
     $('#deptName').html('All');
     tableURL = '../api/v1/roles';
     $('#newRoleBtn').attr('disabled', true).attr('title', 'Adding a new role is disabled except on the individual department pages');

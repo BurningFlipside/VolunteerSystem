@@ -15,8 +15,8 @@ if(!isset($_GET['id']))
 }
 
 $groupID = $_GET['id'];
-$dataTable = DataSetFactory::getDataTableByNames('fvs', 'shifts');
-$filter = new \Data\Filter('signupLink eq '.$groupID);
+$dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+$filter = new \Flipside\Data\Filter('signupLink eq '.$groupID);
 $shifts = $dataTable->read($filter);
 if(empty($shifts))
 {

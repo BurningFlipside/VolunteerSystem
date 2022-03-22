@@ -3,6 +3,7 @@
 //error_reporting(E_ALL);
 require_once('class.VolunteerAdminPage.php');
 $page = new VolunteerAdminPage('Volunteer System Admin');
+$page->addWellKnownJS(JS_BOOTBOX);
 
 $page->body .= '
 <div class="row">

@@ -40,7 +40,7 @@ function finishedCertOp(jqXHR) {
 
 function approveCert(e, cell) {
   var data = cell.getRow().getData();
-  var certType = Object.keys(data.certs)[0];
+  let certType = Object.keys(data.certs)[0];
   if(certs[`${certType}`].expires) {
     //TODO Expires dialog...
     alert('TODO');
@@ -94,7 +94,7 @@ function volName(cell) {
   return data.firstName+' "'+data.burnerName+'" '+data.lastName;
 }
 
-function certType(cell) {
+function certTypeFormatter(cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
   return certs[`${certType}`].name;
@@ -130,7 +130,7 @@ function initPage() {
       {formatter: disapproveIcon, width:40, align: 'center', cellClick: disapproveCert},
       {title: 'Volunteer Name', formatter: volName},
       {title: 'Volunteer Email', field: 'email', formatter: 'link', formatterParams:{urlPrefix: 'mailto://', target: '_blank'}},
-      {title: 'Cert Type', formatter: certType},
+      {title: 'Cert Type', formatter: certTypeFormatter},
       {title: 'Cert Image', formatter: certImage, width: 300, cellClick: fullImage}
     ]
   });

@@ -39,7 +39,7 @@ trait Processor
         }
         if(isset($requirements['email_list']))
         {
-            $emails = explode(',', $requirements['email_list']);
+            $emails = explode(',', str_replace(' ', '', $requirements['email_list']));
             if(!$user->userInEmailList($emails))
             {
                 return array('whyClass' => 'INVITE', 'whyMsg' => 'Shift is invite only.');

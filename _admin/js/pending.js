@@ -37,8 +37,7 @@ function gotInitialData(results) {
   var obj = {};
   if(Array.isArray(deptResult.value)) {
     obj.depts = processDeptList(deptResult.value);
-  }
-  else {
+  } else {
     obj.dept = processDept(deptResult.value);
   }
   obj.roles = processRoles(roleResult.value);
@@ -61,11 +60,10 @@ function gotInitialData(results) {
 function deptFilterChanged(e) {
   var value = e.target.value;
   if(value === '*') {
-    table.setData('../api/v1/shifts?$filter=status%20eq%20pending and needEEApproval ne true');
+    table.setData('../api/v1/shifts/PendingShifts');
     deptId = null;
-  }
-  else {
-    table.setData('../api/v1/departments/'+value+'/shifts?$filter=status%20eq%20pending and needEEApproval ne true');
+  } else {
+    table.setData('../api/v1/shifts/PendingShifts?dept='+value);
     deptId = value;
   }
 }
@@ -153,11 +151,11 @@ function initPage() {
     promises.push($.ajax({
       url: '../api/v1/departments/'+deptId+'/roles'
     }));
-    tableURL = '../api/v1/departments/'+deptId+'/shifts?$filter=status%20eq%20pending and needEEApproval ne true';
+    tableURL = '../api/v1/shifts/PendingShifts?dept='+deptId;
     promises.push(Promise.resolve(tableURL));
     $('#grouped_with').select2({width: '100%'});
-  }
-  else {
+    $('#deptFilter').hide();
+  } else {
     promises.push($.ajax({
       url: '../api/v1/departments'
     }));
@@ -165,7 +163,7 @@ function initPage() {
       url: '../api/v1/roles'
     }));
     $('#deptName').html('All');
-    tableURL = '../api/v1/shifts?$filter=status%20eq%20pending and needEEApproval ne true';
+    tableURL = '../api/v1/shifts/PendingShifts';
     promises.push(Promise.resolve(tableURL));
     $('#deptFilter').change(deptFilterChanged);
   }

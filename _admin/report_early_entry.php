@@ -25,6 +25,11 @@ $page->body .= '
       <option value="2">Tuesday Morning Infrastructure Setup</option>
     </select>
   </div>
+  <div class="w-100"></div>
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="showPending">
+    <label class="form-check-label" for="showPending">Show Shifts Still Pending</label>
+  </div>
 </div>
 <div class="row">
   <table class="table" id="eeTable">

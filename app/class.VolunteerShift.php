@@ -133,7 +133,7 @@ class VolunteerShift extends VolunteerObject
 
     public function isSame($shift)
     {
-        return $this->dbData['_id'] === $shift->dbData['_id'];
+        return (string)$this->dbData['_id'] === (string)$shift->dbData['_id'];
     }
 
     public function overlaps($shift)
@@ -142,11 +142,11 @@ class VolunteerShift extends VolunteerObject
         {
             return false;
         }
-        if($this->startTimeWithMod > $shift->startTimeWithMod && $this->startTimeWithMod < $shift->endTimeWithMod)
+        if($this->startTimeWithMod >= $shift->startTimeWithMod && $this->startTimeWithMod <= $shift->endTimeWithMod)
         {
             return true;
         }
-        if($this->endTimeWithMod < $shift->endTimeWithMod && $this->endTimeWithMod > $shift->startTimeWithMod)
+        if($this->endTimeWithMod <= $shift->endTimeWithMod && $this->endTimeWithMod > $shift->startTimeWithMod)
         {
             return true;
         }
@@ -161,7 +161,12 @@ class VolunteerShift extends VolunteerObject
     public function findOverlaps($uid, $shortCircuit = false)
     {
         static $userShifts = null;
+        static $lastUid = null;
         static $count = 0;
+        if($lastUid !== $uid)
+        {
+            $userShifts = null;
+        }
         if($userShifts === null)
         {
             $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
@@ -172,6 +177,7 @@ class VolunteerShift extends VolunteerObject
             {
                 $userShifts[$i] = new VolunteerShift(false, $userShifts[$i]);
             }
+            $lastUid = $uid;
         }
         $res = array();
         for($i = 0; $i < $count; $i++)

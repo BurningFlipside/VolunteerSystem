@@ -61,13 +61,13 @@ $page->body .= '
 </div>
 <script type="text/javascript">
     window.nodes = new Array();
-    init_page();
+    initPage();
     updateQuestionText();
     window.nodes.push(window.currentNode);
     function reload(){
         location.reload();
     }
-    function image_not_found(){
+    function imageNotFound(){
         var imageNode = document.getElementById("volunteer_image");
         imageNode.src = "images/lostimage.png";
         imageNode.style.width="470px";

@@ -51,8 +51,7 @@ function eventRenderHelper(info) {
         content: content,
         trigger: 'hover'
       });
-    }
-    else {
+    } else {
       if(shift.whyClass === 'TAKEN' && shift.volunteer !== undefined) {
         $(info.el).popover({
           animation:true,
@@ -61,8 +60,7 @@ function eventRenderHelper(info) {
           content: 'Shift is taken by '+shift.volunteer,
           trigger: 'hover'
         });
-      }
-      else {
+      } else {
         $(info.el).popover({
           animation:true,
           delay: 300,
@@ -90,8 +88,7 @@ function renderResource(info) {
   var role = roles[resource.id];
   if(!validDepts.includes(role.departmentID)) {
     //console.log(resource);
-  }
-  else {
+  } else {
     $(info.el).popover({
       animation:true,
       delay: 300,
@@ -103,21 +100,18 @@ function renderResource(info) {
   }
 }
 
-function eventShouldBeShown(shift, validDepts, validShifts) {
+function eventShouldBeShown(shift, _validDepts, validShifts) {
   if(shift.enabled === false) {
     return false;
   }
-  if(validDepts.includes(shift.departmentID)) {
+  if(_validDepts.includes(shift.departmentID)) {
     if(shift.whyClass === 'MINE' && validShifts.includes('mine')) {
       return true;
-    }
-    else if(shift.available && validShifts.includes('unfilled') && !shift.overlap) {
+    } else if(shift.available && validShifts.includes('unfilled') && !shift.overlap) {
       return true;
-    }
-    else if(shift.overlap && validShifts.includes('overlap') && shift.whyClass !== 'TAKEN') {
+    } else if(shift.overlap && validShifts.includes('overlap') && shift.whyClass !== 'TAKEN') {
       return true;
-    }
-    else if(shift.why && validShifts.includes('unavailable') && shift.whyClass !== 'MINE' && shift.whyClass !== 'TAKEN') {
+    } else if(shift.why && validShifts.includes('unavailable') && shift.whyClass !== 'MINE' && shift.whyClass !== 'TAKEN') {
       return true;
     }
     return false;
@@ -376,8 +370,7 @@ function unhideFilters() {
   if(div.length > 0) {
     div.removeClass('d-none');
     $('[for=departments]').removeClass('d-none');
-  }
-  else {
+  } else {
     $('#departments').parent(':not(.d-none)').addClass('d-none');
     $('[for=departments]').addClass('d-none');
   }
@@ -446,8 +439,7 @@ function initPage() {
   promises.push(new Promise(waitForSelect2));
   if(Promise.allSettled !== undefined) {
     Promise.allSettled(promises).then(gotInitialData);
-  }
-  else {
+  } else {
     //Older browser...
     fakePromiseSettled(promises).then(gotInitialData);
   }

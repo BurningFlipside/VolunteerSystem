@@ -122,12 +122,33 @@ class EventAPI extends VolunteerAPI
 
     private function getFilterString($eventId, $obj)
     {
-        $filterStr = 'eventID eq '.$eventId.' and status eq filled';
+        $filter = array('eventID' => $eventId);
+        $filter['status'] = 'filled';
+        if(isset($obj['includePending']))
+        {
+            $filter['status'] = array('$exists' => true, '$ne' => 'unfilled');
+        }
+        $filter['earlyLate'] = array('$ne' => '-1');
         if(isset($obj['earlyLate']))
         {
-            return $filterStr.' and earlyLate eq \''.$obj['earlyLate'].'\'';
+            $filter['earlyLate'] = (string)$obj['earlyLate'];
         }
-        return $filterStr." and earlyLate ne '-1'";
+        return $filter;
+    }
+
+    public function getTicketStringForVol($vol)
+    {
+        $ticket = $vol->getTicketStatus();
+        $ticketStr = 'No';
+        if($ticket['request'] === true)
+        {
+            $ticketStr = 'Requested';
+        }
+        else if($ticket['ticket'] === true)
+        {
+            $ticketStr = 'Yes';
+        }
+        return $ticketStr;
     }
 
     public function getEEShiftReportForEvent($request, $response, $args)
@@ -143,19 +164,44 @@ class EventAPI extends VolunteerAPI
         {
             $obj = json_decode($request->getBody()->getContents(), true);
         }
-        $filterStr = getFilterString($eventId, $obj);
-        $filter = new \Flipside\Data\Filter($filterStr);
+        if($request->getQueryParam('includePending'))
+        {
+            $obj['includePending'] = true;
+        }
+        $filter = $this->getFilterString($eventId, $obj);
         $shifts = $shiftDataTable->read($filter);
         $ret = array();
         $count = count($shifts);
+        $dedup = array();
         for($i = 0; $i < $count; $i++)
         {
             $shift = new \VolunteerShift(false, $shifts[$i]);
             $vol = $shift->participantObj;
             $role = $shift->role;
-            $entry = array('name' => $vol->getDisplayName('paperName'), 'email'=> $vol->email, 'dept'=> $shift->departmentID, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate);
-            array_push($ret, $entry);
-        }
+            if(!isset($dedup[$vol->uid]))
+            {
+                $dedup[$vol->uid] = array();
+            }
+            if(!isset($dedup[$vol->uid][$shift->departmentID]))
+            {
+                $dedup[$vol->uid][$shift->departmentID] = array();
+            }
+            if(!isset($dedup[$vol->uid][$shift->departmentID][$role->short_name]))
+            {
+                $dedup[$vol->uid][$shift->departmentID][$role->short_name] = -1;
+            }
+            if($dedup[$vol->uid][$shift->departmentID][$role->short_name] < $shift->earlyLate)
+            {
+                $dedup[$vol->uid][$shift->departmentID][$role->short_name] = $shift->earlyLate;
+                $entry = array('name' => $vol->firstName.' '.$vol->lastName, 'email'=> $vol->email, 'dept'=> $shift->department->departmentName, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate, 'ticket'=>$this->getTicketStringForVol($vol));
+                array_push($ret, $entry);
+            }
+            else if($shift->earlyLate === -2)
+            {
+                $entry = array('name' => $vol->firstName.' '.$vol->lastName, 'email'=> $vol->email, 'dept'=> $shift->department->departmentName, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate, 'ticket'=>$this->getTicketStringForVol($vol));
+                array_push($ret, $entry);
+            }
+        }        
         return $response->withJson($ret);
     }
 
@@ -166,7 +212,8 @@ class EventAPI extends VolunteerAPI
             case 'aar':
                 return $this->user->isInGroupNamed('AAR');
             case 'af':
-                return $this->user->isInGroupNamed('AFs');
+                //Allow AAR to approve in leu of AFs
+                return ($this->user->isInGroupNamed('AFs') || $this->user->isInGroupNamed('AAR'));
             case 'lead':
                 return $this->user->isInGroupNamed('Leads');
             default:
@@ -178,7 +225,7 @@ class EventAPI extends VolunteerAPI
     public function approveEEForEvent($request, $response, $args)
     {
         $eventId = $args['event'];
-        if($this->canUpdate($request, null) === false)
+        if($this->canUpdate($request, null) === false && $this->user->isInGroupNamed('Leads') === false)
         {
             return $response->withStatus(401);
         }
@@ -190,11 +237,17 @@ class EventAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $eeList = $event->eeLists[(int)$obj['eeList']];
-        if(!isset($eeList[$obj['uid']]))
+        $uid = $obj['uid'];
+        if(!isset($eeList[$uid]))
         {
-            return $response->withStatus(404);
+            $uid = urlencode($uid);
+            $uid = str_replace('.', '%2E', $uid);
+            if(!isset($eeList[$uid]))
+            {
+                return $response->withStatus(404);
+            }
         }
-        $ret = $event->approveEE($obj['uid'], (int)$obj['eeList'], $obj['approvalType']);
+        $ret = $event->approveEE($uid, (int)$obj['eeList'], $obj['approvalType']);
         return $response->withJson($ret);
     }
 }

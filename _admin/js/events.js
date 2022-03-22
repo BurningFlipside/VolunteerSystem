@@ -42,8 +42,7 @@ function privateEventChange(target) {
   if(target.checked) {
     $('#volList').removeAttr('disabled');
     $('#invites').removeAttr('disabled');
-  }
-  else {
+  } else {
     $('#volList').attr('disabled', true);
     $('#invites').attr('disabled', true);
   }
@@ -57,7 +56,7 @@ function gotDepartments(jqXHR) {
   }
   var array = jqXHR.responseJSON;
   var deptList = $('#deptList');
-  for(let dept in array) {
+  for(let dept of array) {
     deptList.append('<div class="col-sm-2"><input class="form-control" type="checkbox" name="dept_'+dept.departmentID+'" id="dept_'+dept.departmentID+'"></div><div class="col-sm-10">'+dept.departmentName+'</div>');
   }
 }
@@ -70,13 +69,11 @@ function newEvent(e) {
       if(e[`${key}`] === true) {
         obj.departments.push(key.substring(5));
       }
-    }
-    else if(key === 'volList') {
+    } else if(key === 'volList') {
       if(e.private === true) {
         obj.volList = e[`${key}`].split('\n');
       }
-    }
-    else {
+    } else {
       obj[`${key}`] = e[`${key}`];
     }
   }
@@ -147,8 +144,7 @@ function getShiftsBeforeDelete(jqXHR) {
         }
       }
     });
-  }
-  else {
+  } else {
     bootbox.alert('This event has one or more shifts. All shifts must be deleted first!');
   }
 }
@@ -167,8 +163,22 @@ function editEvent(e, cell) {
   console.log(data);
 }
 
+function hideOldEvents(data) {
+  let endTime = new Date(data.endTime);
+  return endTime >= Date.now();
+}
+
+function hideOldChanged(e) {
+  let table = Tabulator.prototype.findTable('#events')[0];
+  if(!e.target.checked) {
+    table.clearFilter();
+    return;
+  }
+  table.addFilter(hideOldEvents);
+}
+
 function initPage() {
-  new Tabulator('#events', {
+  let table = new Tabulator('#events', {
     ajaxURL: '../api/v1/events',
     columns:[
       {formatter: delIcon, width:40, align: 'center', cellClick: delEvent},
@@ -185,10 +195,12 @@ function initPage() {
     ],
     cellEdited: dataChanged
   });
+  table.setFilter(hideOldEvents);
   $.ajax({
     url: '../api/v1/departments',
     complete: gotDepartments
   });
+  $('#hideOld').change(hideOldChanged);
 }
 
 $(initPage);

@@ -6,8 +6,7 @@ function doneShiftCopy(jqXHR) {
     return;
   }
   let str = 'Successfully created '+jqXHR.responseJSON.success+' shifts.';
-  if(jqXHR.responseJSON.fail > 0)
-  {
+  if(jqXHR.responseJSON.fail > 0) {
     str+=' Failed on '+jqXHR.responseJSON.fail+' shifts';
   }
   bootbox.alert(str);
