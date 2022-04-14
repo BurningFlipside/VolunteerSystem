@@ -30,22 +30,57 @@ function processRoles(roles) {
   return obj;
 }
 
+function gotDepts(jqXHR) {
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    alert('Failed to get department list!');
+    return;
+  }
+  let data = jqXHR.responseJSON;
+  if(Array.isArray(data)) {
+    data = data.filter((dept) => {
+      return dept.isAdmin;
+    });
+  } else {
+    data = [data];
+  }
+  let promises = [];
+  if(data.length === 1) {
+    $('#deptName').html(data[0].departmentName);
+    promises.push($.ajax({
+      url: '../api/v1/departments/'+data[0].departmentID+'/roles'
+    }));
+    tableURL = '../api/v1/shifts/PendingShifts?dept='+data[0].departmentID;
+    promises.push(Promise.resolve(tableURL));
+    $('#grouped_with').select2({width: '100%'});
+    $('#deptFilter').hide();
+  } else {
+    promises.push($.ajax({
+      url: '../api/v1/roles'
+    }));
+    $('#deptName').html('All');
+    tableURL = '../api/v1/shifts/PendingShifts';
+    promises.push(Promise.resolve(tableURL));
+    let sel = $('#deptFilter');
+    for(let dept of data) {
+      addOptiontoSelect(sel[0], dept.departmentID, dept.departmentName);
+    }
+    $('#deptFilter').change(deptFilterChanged);
+  }
+  Promise.allSettled(promises).then(gotInitialData);
+}
+
 function gotInitialData(results) {
-  var deptResult = results.shift();
+  //var deptResult = results.shift();
   var roleResult = results.shift();
   let tableURL = results.shift().value;
   var obj = {};
-  if(Array.isArray(deptResult.value)) {
-    obj.depts = processDeptList(deptResult.value);
-  } else {
-    obj.dept = processDept(deptResult.value);
-  }
   obj.roles = processRoles(roleResult.value);
   table = new Tabulator('#pendingShifts', {
     ajaxURL: tableURL,
     columns:[
-      {formatter: upIcon, width:40, align: 'center', cellClick: approve},
-      {formatter: downIcon, width:40, align: 'center', cellClick: disapprove},
+      {formatter: upIcon, width:40, hozAlign: 'center', cellClick: approve},
+      {formatter: downIcon, width:40, hozAlign: 'center', cellClick: disapprove},
       {title: 'ID', field: '_id.$oid', visible: false},
       {title: 'Department', field: 'departmentID', formatter: deptName, formatterParams: obj},
       {title: 'Role', field: 'roleID', formatter: roleName, formatterParams: obj.roles},
@@ -142,32 +177,17 @@ function disapprove(e, cell) {
 
 function initPage() {
   deptId = getParameterByName('dept');
-  let promises = [];
-  let tableURL = '';
   if(deptId !== null) {
-    promises.push($.ajax({
-      url: '../api/v1/departments/'+deptId
-    }));
-    promises.push($.ajax({
-      url: '../api/v1/departments/'+deptId+'/roles'
-    }));
-    tableURL = '../api/v1/shifts/PendingShifts?dept='+deptId;
-    promises.push(Promise.resolve(tableURL));
-    $('#grouped_with').select2({width: '100%'});
-    $('#deptFilter').hide();
+    $.ajax({
+      url: '../api/v1/departments/'+deptId,
+      complete: gotDepts
+    });
   } else {
-    promises.push($.ajax({
-      url: '../api/v1/departments'
-    }));
-    promises.push($.ajax({
-      url: '../api/v1/roles'
-    }));
-    $('#deptName').html('All');
-    tableURL = '../api/v1/shifts/PendingShifts';
-    promises.push(Promise.resolve(tableURL));
-    $('#deptFilter').change(deptFilterChanged);
+    $.ajax({
+      url: '../api/v1/departments',
+      complete: gotDepts
+    });
   }
-  Promise.allSettled(promises).then(gotInitialData);
 }
 
 $(initPage);

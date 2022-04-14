@@ -234,6 +234,8 @@ class EventAPI extends VolunteerAPI
         //First make sure the current user can do the auth they are trying...
         if($this->userCanAuth($obj['approvalType']) === false)
         {
+            $log = new \VolunteerAuditLog();
+            $log->writeEntry($this->user->uid, false, 'tried to approve EE not allowed to', $request->getServerParam('REMOTE_ADDR'), 'Early Entry', $obj);
             return $response->withStatus(401);
         }
         $eeList = $event->eeLists[(int)$obj['eeList']];
@@ -248,6 +250,8 @@ class EventAPI extends VolunteerAPI
             }
         }
         $ret = $event->approveEE($uid, (int)$obj['eeList'], $obj['approvalType']);
+        $log = new \VolunteerAuditLog();
+        $log->writeEntry($this->user->uid, $ret, 'Approved EE', $request->getServerParam('REMOTE_ADDR'), 'Early Entry', $obj);
         return $response->withJson($ret);
     }
 }

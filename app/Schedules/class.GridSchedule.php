@@ -15,11 +15,13 @@ class GridSchedule
     protected $department;
     protected $shifts;
     protected $ssheat;
+    protected $includeCampNames;
 
-    public function __construct($department, $shifts)
+    public function __construct($department, $shifts, $includeCampNames = false)
     {
         $this->department = $department;
         $this->shifts = $shifts;
+        $this->includeCampNames = $includeCampNames;
         $this->ssheat = $this->createSpreadSheet();
     }
 
@@ -67,7 +69,17 @@ class GridSchedule
     {
         if(isset($shift['participant']))
         {
-            $sheat->setCellValueByColumnAndRow($col, $row, $this->getParticipantDiplayName($shift['participant']));
+            $profile = new \VolunteerProfile($shift['participant']);
+            if($this->includeCampNames)
+            {
+                $richText = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
+                $richText->createText($profile->getDisplayName('paperName').' ');
+                $campName = $richText->createTextRun($profile->campName);
+                $campName->getFont()->setItalic(true);
+                $sheat->setCellValueByColumnAndRow($col, $row, $richText);
+                return;
+            }
+            $sheat->setCellValueByColumnAndRow($col, $row, $profile->getDisplayName('paperName'));
         }
     }
 

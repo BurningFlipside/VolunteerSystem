@@ -61,7 +61,7 @@ function gotDepartments(jqXHR) {
       }
     }
     if(deptCount === 0) {
-      alert('Unable to determine which department is assosiated to your account. Please contact your AF to fix your access.');
+      alert('Unable to determine which department is associated to your account. Please contact your AF to fix your access.');
     }
     if(chart === null) {
       var eventID = $('#events').val();
@@ -90,6 +90,9 @@ function gotRoles(jqXHR) {
 
 function chartClick(e) {
   var slice = this.getElementAtEvent(e)[0];
+  if(slice === undefined) {
+    return;
+  }
   var index = slice._index;
   var eventId = $('#events').val();
   var deptId = $('#departments').val();

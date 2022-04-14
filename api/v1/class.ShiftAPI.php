@@ -134,6 +134,9 @@ class ShiftAPI extends VolunteerAPI
         {
             $email = new \Emails\ShiftEmail($shift, 'shiftCanceledSource');
             $this->sendEmail($email);
+            //Back these up so that I can undo the delete later if needs be
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shiftBackup');
+            $dataTable->create($entry[0]);
         }
         return true;
     }
@@ -168,7 +171,7 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        if($this->isVolunteerAdmin($request) === false && $this->isUserDepartmentLead($dept, $this->user))
+        if($this->isVolunteerAdmin($request) === false && $this->isUserDepartmentLead($dept, $this->user) === false)
         {
             return $response->withStatus(401);
         }
@@ -185,7 +188,7 @@ class ShiftAPI extends VolunteerAPI
         for($i = 0; $i < $count; $i++)
         {
             $shift = $shifts[$i];
-            if(!isset($shift['needEEApproval']) || $shift['needEEApproval'] === false)
+            if(!isset($shift['needEEApproval']) || $shift['needEEApproval'] === false || $shift['approvalNeeded'] === true)
             {
                 //Easy this shift needs approval...
                 array_push($pendingShifts, $shift);
@@ -195,7 +198,7 @@ class ShiftAPI extends VolunteerAPI
             $objShift = new \VolunteerShift((string)$shift['_id'], $shift);
             if($objShift->findOverlaps($objShift->participant, true))
             {
-                //User has an overlap despite being EE... show this hear too...
+                //User has an overlap despite being EE... show this here too...
                 array_push($pendingShifts, $shift);
                 continue;
             }
@@ -591,7 +594,15 @@ class ShiftAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $data = $request->getParsedBody();
-        $myShift = $data['myshift'];
+        $myShift = null;
+        if(isset($data['myshift']))
+        {
+            $myShift = $data['myshift'];
+        }
+        if($myShift === null && $this->isVolunteerAdmin($request) === false && $this->isUserDepartmentLead($entity['departmentID'], $this->user) === false)
+        {
+            return $response->withStatus(400);
+        }
         $roles = array();
         foreach($data as $key => $value)
         {
@@ -601,6 +612,10 @@ class ShiftAPI extends VolunteerAPI
             }
         }
         $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        if($myShift === null) 
+        {
+            $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID']);
+        }
         $entities = $dataTable->read($filter);
         $count = count($entities);
         $uuid = $this->genUUID();
@@ -612,7 +627,7 @@ class ShiftAPI extends VolunteerAPI
                 $entities[$i] = false;
                 continue;
             }
-            if((string)$entities[$i]['_id'] === (string)new \MongoDB\BSON\ObjectId($myShift))
+            if($myShift !== null && (string)$entities[$i]['_id'] === (string)new \MongoDB\BSON\ObjectId($myShift))
             {
                 $entities[$i]['participant'] = $this->user->uid;
                 $entities[$i]['status'] = 'filled';

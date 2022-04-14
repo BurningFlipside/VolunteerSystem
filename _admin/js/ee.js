@@ -4,6 +4,9 @@ var table;
 
 function eventChanged(e) {
   var eventID = e.target.value;
+  if(table === null) {
+    return;
+  }
   table.setFilter(function(data) {
     for(let shift of data.shifts) {
       if(shift.eventID === eventID) {
@@ -16,6 +19,9 @@ function eventChanged(e) {
 
 function deptChanged(e) {
   var deptID = e.target.value;
+  if(table === null) {
+    return;
+  }
   table.setFilter(function(data) {
     for(let shift of data.shifts) {
       if(shift.departmentID === deptID) {
@@ -328,6 +334,14 @@ function gotInitialData(results) {
               delete eeList[`${uid}`];
             }
           }
+        } else if(obj.vols[`${uid}`] === undefined) {
+          console.log(uid);
+          let rep = decodeURIComponent(uid);
+          if(obj.vols[`${rep}`] !== undefined) {
+            console.log(rep);
+            eeList[`${rep}`] = eeList[`${uid}`];
+            delete eeList[`${uid}`];
+          }
         }
       }
     }
@@ -351,6 +365,7 @@ function gotInitialData(results) {
     if(vol.shifts !== undefined) {
       var row = {id: uid, name: vol.firstName+' "'+vol.burnerName+'" '+vol.lastName, eeType: '', shifts: vol.shifts};
       var bestEE = -1;
+      let lateStay = false;
       for(var id in obj.events) {
         var event = obj.events[`${id}`];
         if(event.eeLists !== undefined) {
@@ -363,9 +378,15 @@ function gotInitialData(results) {
               row.AAR = list[`${uid}`].AAR;
               row.AF = list[`${uid}`].AF;
               row.Lead = list[`${uid}`].Lead;
+              if(parseInt(eeType, 10) === -2) {
+                lateStay = true;
+              }
             }
           }
         }
+      }
+      if(bestEE === -1 && lateStay) {
+        bestEE = -2;
       }
       switch(bestEE) {
         case 2:
@@ -377,6 +398,8 @@ function gotInitialData(results) {
         case 0:
           row.eeType = 'Wednesday Afternoon';
           break;
+        case -2:
+          row.eeType = 'Late Stay';
       }
       row.eeTypeID = bestEE;
       rows.push(row);

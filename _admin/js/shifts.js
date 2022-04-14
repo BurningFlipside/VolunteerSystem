@@ -794,6 +794,25 @@ function removeGroupSignup(e) {
   });
 }
 
+function generateGroupSignup(e) {
+  let obj = {};
+  for(let shift of e.data.shifts) {
+    if(obj['roles.'+shift.roleID] === undefined) {
+      obj['roles.'+shift.roleID] = 1;
+    } else {
+      obj['roles.'+shift.roleID]++;
+    }
+  }
+  $.ajax({
+    url: '../api/v1/shifts/'+e.data.shifts[0]['_id']['$oid']+'/Actions/GenerateGroupLink',
+    contentType: 'application/json',
+    data: JSON.stringify(obj),
+    type: 'POST',
+    dataType: 'json',
+    complete: doneCreatingShift
+  });
+}
+
 function gotGroupToEdit(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
@@ -829,7 +848,7 @@ function gotGroupToEdit(jqXHR) {
     }
   }
   for(var role in roleList) {
-    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[`${role}`]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+getRoleName(role)+'</span></div></div>';
+    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roleList[`${role}`]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+getRoleName(role)+'</span></div></div>';
   }
   var dialogOptions = {
     title: 'Edit Shift Set',
@@ -885,6 +904,8 @@ function gotGroupToEdit(jqXHR) {
       }
     }
     dialogOptions.buttons.push({text: 'Remove Group Signup', callback: removeGroupSignup});
+  } else {
+    dialogOptions.buttons.push({text: 'Generate Group Signup', callback: generateGroupSignup});
   }
   flipDialog.dialog(dialogOptions);
 }
@@ -914,6 +935,7 @@ function sortEvents(a, b) {
 }
 
 function gotShifts(jqXHR) {
+  let roleID = getParameterByName('role');
   if(jqXHR.status !== 200) {
     alert('Unable to obtain shifts');
     console.log(jqXHR);
@@ -933,6 +955,7 @@ function gotShifts(jqXHR) {
     var filledCount = 0;
     var pendingCount = 0;
     var emptyCount = 0;
+    let found = false;
     for(let groupShift of group) {
       if(groupShift.status === 'filled') {
         filledCount++;
@@ -941,6 +964,12 @@ function gotShifts(jqXHR) {
       } else {
         emptyCount++;
       }
+      if(roleID !== null && groupShift.roleID === roleID) {
+        found = true;
+      }
+    }
+    if(roleID !== null && !found) {
+      continue;
     }
     let badge = '';
     if(filledCount > 0) {
@@ -956,6 +985,9 @@ function gotShifts(jqXHR) {
   }
   singles.sort(sortEvents);
   for(let single of singles) {
+    if(roleID !== null && single.roleID !== roleID) {
+      continue;
+    }
     let shiftName = '';
     if(single.name !== undefined && single.name.length > 0) {
       shiftName = single.name+': '+getRoleName(single.roleID);
@@ -1010,6 +1042,7 @@ function processEvents(eventToProcess) {
 }
 
 function processDepartments(array) {
+  let deptID = getParameterByName('dept');
   array.sort(function(a, b) {
     return a.departmentName.localeCompare(b.departmentName);
   });
@@ -1019,6 +1052,11 @@ function processDepartments(array) {
   var count = 0;
   var accordian = $('#accordion');
   for(let dept of array) {
+    if(deptID !== null) {
+      if(dept.departmentID !== deptID) {
+        continue;
+      }
+    }
     count++;
     departments[dept.departmentID] = dept;
     accordian.append('<div class="card"><div class="card-header" id="heading'+dept.departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+dept.departmentID+'" aria-expanded="true" aria-controls="collapse'+dept.departmentID+'">'+dept.departmentName+'</button></h2></div><div id="collapse'+dept.departmentID+'" class="collapse show" aria-labelledby="heading'+dept.departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+dept.departmentID+'List"><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
@@ -1069,9 +1107,10 @@ function gotInitialData(results) {
   var roleResult = results.shift();
   var obj = {};
   if(eventResult.status !== 'fulfilled' || deptResult.status !== 'fulfilled' || roleResult.status !== 'fulfilled') {
-    console.log(eventResult);
-    console.log(deptResult);
-    console.log(roleResult);
+    if(eventResult.reason.status === 401) {
+      //User is just not logged in. Return silently...
+      return;
+    }
     Sentry.withScope(scope => {
       scope.setExtra('eventResult', eventResult);
       scope.setExtra('deptResult', deptResult);

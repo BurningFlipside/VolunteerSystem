@@ -51,6 +51,14 @@ function gotSrcAndDstEvents(results) {
 function srcOrDstChanged() {
   $('#nextStep').empty();
   let promises = [];
+  if($('#src').val() === null) {
+    alert('Source Event not set!');
+    return;
+  }
+  if($('#dst').val() === null) {
+    alert('Destination Event not set!');
+    return;
+  }
   promises.push($.ajax({
     url: '../api/v1/events/'+$('#src').val(),
   }));
@@ -124,6 +132,9 @@ function gotDepartments(jqXHR) {
     return;
   }
   let depts = jqXHR.responseJSON;
+  depts = depts.sort(function(a, b) {
+    return a.departmentName.localeCompare(b.departmentName);
+  });
   for(let dept of depts) {
     if(dept.isAdmin) {
       $('#department').append($('<option>', {

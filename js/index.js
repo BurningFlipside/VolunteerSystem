@@ -113,6 +113,8 @@ function eventShouldBeShown(shift, _validDepts, validShifts) {
       return true;
     } else if(shift.why && validShifts.includes('unavailable') && shift.whyClass !== 'MINE' && shift.whyClass !== 'TAKEN') {
       return true;
+    } else if(validShifts.includes('filled') && shift.whyClass === 'TAKEN') {
+      return true;
     }
     return false;
   }
@@ -199,6 +201,10 @@ function gotShifts(jqXHR) {
   start = new Date('2100-01-01T01:00:00');
   end = new Date('2000-01-01T01:00:00');
   for(let shift of shifts) {
+    if(shift.enabled === false) {
+      //Skip it!
+      continue;
+    }
     let myStart = new Date(shift.startTime);
     let myEnd = new Date(shift.endTime);
     if(myStart < start) {

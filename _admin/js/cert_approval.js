@@ -100,7 +100,7 @@ function certTypeFormatter(cell) {
   return certs[`${certType}`].name;
 }
 
-function certImage(cell) {
+function certImage(cell, formatterParams, onRendered) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
   var imagedata = data.certs[`${certType}`].image;
@@ -126,8 +126,8 @@ function fullImage(e, cell) {
 function initPage() {
   table = new Tabulator('#certs', {
     columns: [
-      {formatter: approveIcon, width:40, align: 'center', cellClick: approveCert},
-      {formatter: disapproveIcon, width:40, align: 'center', cellClick: disapproveCert},
+      {formatter: approveIcon, width:40, hozAlign: 'center', cellClick: approveCert},
+      {formatter: disapproveIcon, width:40, hozAlign: 'center', cellClick: disapproveCert},
       {title: 'Volunteer Name', formatter: volName},
       {title: 'Volunteer Email', field: 'email', formatter: 'link', formatterParams:{urlPrefix: 'mailto://', target: '_blank'}},
       {title: 'Cert Type', formatter: certTypeFormatter},

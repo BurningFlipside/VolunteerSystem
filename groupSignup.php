@@ -46,7 +46,31 @@ for($i = 0; $i < $count; $i++)
         array_push($available, $shifts[$i]);
     }
 }
-$page->body .= '<div class="row"><h3>Filled Shifts</h3></div><div class="row"><table class="table"><tr><th>Role</th><th>Participant</th></tr>';
+$deptName = $shifts[0]->department->departmentName;
+$start = $shifts[0]->startTime;
+$end = $shifts[0]->endTime;
+$diff = $end->diff($start);
+$shiftLength = $diff->h + ($diff->i / 60.0);
+$page->body .= '
+<div class="row">
+  <label for="department" class="col-sm-2 col-form-label">Department:</label>
+  <div class="col-sm-10">
+    <input type="text" name="department" id="department" class="form-control" readonly="readonly" value="'.$deptName.'">
+  </div>
+  <label for="startTime" class="col-sm-2 col-form-label">Start Time:</label>
+  <div class="col-sm-10">
+    <input type="datetime-local" name="startTime" id="startTime" class="form-control" readonly="readonly" value="'.$start->format('Y-m-d\TH:i').'">
+  </div>
+  <label for="endTime" class="col-sm-2 col-form-label">End Time:</label>
+  <div class="col-sm-10">
+    <input type="datetime-local" name="endTime" id="endTime" class="form-control" readonly="readonly" value="'.$end->format('Y-m-d\TH:i').'">
+  </div>
+  <label for="length" class="col-sm-2 col-form-label">Length:</label>
+  <div class="col-sm-10">
+    <input type="text" name="length" id="length" class="form-control" readonly="readonly" value="'.$shiftLength.' hours">
+  </div>
+</div>
+<div class="row"><h3>Filled Shifts</h3></div><div class="row"><table class="table"><tr><th>Role</th><th>Participant</th></tr>';
 foreach($filled as $shift)
 {
   $page->body .= '<tr><td>'.$shift->role->display_name.'</td><td>'.$shift->webParticipantName.'</td></tr>';

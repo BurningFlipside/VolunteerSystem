@@ -88,7 +88,7 @@ class DepartmentAPI extends VolunteerAPI
                     }
                     if(isset($requirements['email_list']))
                     {
-                        $emails = explode(",", $requirements['email_list']);
+                        $emails = explode(",", str_replace(' ', '', $requirements['email_list']));
                         $userEmails = $this->user->mail;
                         if(is_string($this->user->mail))
                         {
@@ -240,11 +240,15 @@ class DepartmentAPI extends VolunteerAPI
         switch($request->getParam('type'))
         {
             case 'simplePDF':
-               return $this->generateSimplePDFSchedule($depts[0], $shifts, $response);
+                return $this->generateSimplePDFSchedule($depts[0], $shifts, $response);
             case 'gridXLSX':
-               return $this->generateGridSchedule($depts[0], $shifts, $response, 'XLSX');
+                return $this->generateGridSchedule($depts[0], $shifts, $response, 'XLSX');
+            case 'gridXLSXWithCamps':
+                return $this->generateGridSchedule($depts[0], $shifts, $response, 'XLSX', true);
             case 'gridPDF':
-               return $this->generateGridSchedule($depts[0], $shifts, $response, 'PDF');
+                return $this->generateGridSchedule($depts[0], $shifts, $response, 'PDF');
+            case 'gridPDFWithCamps':
+                return $this->generateGridSchedule($depts[0], $shifts, $response, 'PDF', true);
         }
         return $response->withJson($shifts);
     }
@@ -257,9 +261,9 @@ class DepartmentAPI extends VolunteerAPI
         return $response;
     }
 
-    public function generateGridSchedule($dept, $shifts, $response, $type)
+    public function generateGridSchedule($dept, $shifts, $response, $type, $includeCampNames = false)
     {
-        $ss = new \Schedules\GridSchedule($dept, $shifts);
+        $ss = new \Schedules\GridSchedule($dept, $shifts, $includeCampNames);
         $data = $ss->getBuffer($type);
         $response = $response->withHeader('Content-Type', $data['content-type']);
         $response = $response->withHeader('Content-Disposition', 'attachment; filename='.$dept['departmentName'].$data['extension']);

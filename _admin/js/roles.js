@@ -141,6 +141,7 @@ function groupedWithEditor(cell, onRendered, success) {
   }
 
   editor.setAttribute('multiple', true);
+  editor.setAttribute('style', 'width: 100%;');
   for(let row of rows) {
     let data = row.getData();
     if(data.short_name === rowData.short_name) {
@@ -159,7 +160,7 @@ function groupedWithEditor(cell, onRendered, success) {
   function successFunc() {
     let data = $(editor).select2('data');
     var ret = '';
-    for(let item in data) {
+    for(let item of data) {
       ret+=item.id;
       ret+=',';
     }
@@ -311,12 +312,21 @@ function initPage() {
 }
 
 function gotCerts(jqXHR) {
+  if(jqXHR.status !== 200) {
+    if(jqXHR.status === 401) {
+      //User is probably not logged in just silently fail...
+      return;
+    }
+    console.log(jqXHR);
+    alert('Failed to get certs!');
+    return;
+  }
   var cols = [
-    {formatter: delIcon, width:40, align: 'center', cellClick: delRole},
+    {formatter: delIcon, width:40, hozAlign: 'center', cellClick: delRole},
     {title: 'ID', field: '_id.$id', visible: false},
     {title: 'Short Name', field: 'short_name', visible: false},
     {title: 'Name', field: 'display_name', editor: 'input'},
-    {title: 'Description', field: 'description', editor: 'textarea', formatter: 'html', width: 250},
+    {title: 'Description', field: 'description', editor: 'textarea', formatter: 'html', width: 250, tooltip: true},
     {title: 'Public', field: 'publicly_visible', editor: 'tickCross', formatter: 'tickCross'},
     {title: 'Groups', field: 'groups_allowed', editor: 'tickCross', formatter: 'tickCross'},
     {title: 'Can be grouped with', field: 'grouped_with', editor: groupedWithEditor, formatter: groupFormatter},

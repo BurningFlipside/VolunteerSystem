@@ -125,7 +125,7 @@ trait Processor
             $otherAdmins = $dept['others'];
             if(!is_array($dept['others']))
             {
-                $otherAdmins = explode(',', $dept['others']);
+                $otherAdmins = explode(',', str_replace(' ', '', $dept['others']));
             }
             $deptCache[$uid] = in_array($email, $otherAdmins);
         }
@@ -237,7 +237,7 @@ trait Processor
             }
             if(isset($requirements['email_list']))
             {
-                $emails = explode(',', $requirements['email_list']);
+                $emails = explode(',', str_replace(' ', '', $requirements['email_list']));
                 if(!$profile->userInEmailList($emails))
                 {
                     return null;

@@ -57,7 +57,7 @@ function groupSignupInfoObtained(jqXHR) {
   };
   var myPos = {label: 'My position', type: 'select', id: 'myshift', options: []};
   var used = {};
-  for(let shift in data.shifts) {
+  for(let shift of data.shifts) {
     if(used[shift.roleID] === undefined) {
       let id = shift['_id']['$oid'];
       myPos.options.push({value: id, text: shift.role, selected: shiftID === id});

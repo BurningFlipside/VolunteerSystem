@@ -41,6 +41,9 @@ class VolunteerProfile extends VolunteerObject
 
     public function getDisplayName($type = 'webName')
     {
+        if($this->dbData === null) {
+            return 'Anonymous';
+        }
         switch($this->dbData[$type])
         {
             case 'anonymous':

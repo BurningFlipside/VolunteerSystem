@@ -10,8 +10,8 @@ class ShiftEmail extends VolunteerEmail
     {
         parent::__construct($shift->participantObj);
         $this->shift = $shift;
-        $dataTable = \DataSetFactory::getDataTableByNames('fvs', 'longText');
-        $entries = $dataTable->read(new \Data\Filter("id eq $emailTypeSource"));
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'longText');
+        $entries = $dataTable->read(new \Flipside\Data\Filter("id eq $emailTypeSource"));
         if(empty($entries))
         {
             throw new \Exception("Could not locate email with source type $emailTypeSource");

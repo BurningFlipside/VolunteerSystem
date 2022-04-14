@@ -9,8 +9,8 @@ class CertificationEmail extends VolunteerEmail
     public function __construct($profile, $emailTypeSource, $certType, $other = array())
     {
         parent::__construct($profile);
-        $dataTable = \DataSetFactory::getDataTableByNames('fvs', 'longText');
-        $entries = $dataTable->read(new \Data\Filter("id eq $emailTypeSource"));
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'longText');
+        $entries = $dataTable->read(new \Flipside\Data\Filter("id eq $emailTypeSource"));
         if(empty($entries))
         {
             throw new \Exception("Could not locate email with source type $emailTypeSource");
@@ -25,8 +25,8 @@ class CertificationEmail extends VolunteerEmail
         }
         $this->addToAddress($this->profile->email);
         $this->additionalProps = $other;
-        $dataTable = \DataSetFactory::getDataTableByNames('fvs', 'certifications');
-        $entries = $dataTable->read(new \Data\Filter("certID eq $certType"));
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');
+        $entries = $dataTable->read(new \Flipside\Data\Filter("certID eq $certType"));
         if(empty($entries))
         {
             throw new \Exception("Could not locate certification with type $certType");
