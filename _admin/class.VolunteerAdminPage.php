@@ -72,6 +72,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
             'T-Shirts' => 'tshirts.php',
             'Participant Shifts' => 'vol_shifts.php',
             'Volunteers without Shifts' => 'no_shifts.php',
+            'Volunteers without Tickets' => 'report_no_ticket.php',
             'Empty Shifts' => 'report_empty_shifts.php'
         );
         if($this->isLead === false)
