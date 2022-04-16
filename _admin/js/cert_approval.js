@@ -132,8 +132,21 @@ function certImage(cell, formatterParams, onRendered) {
   var certType = Object.keys(data.certs)[0];
   var imagedata = data.certs[`${certType}`].image;
   var imagetype = data.certs[`${certType}`].imageType;
+  let canvas = document.createElement("canvas");
+  canvas.width = 300;
   if(imagetype === 'application/pdf') {
-    return '<object width="300" data="data:'+imagetype+';base64, '+imagedata+'"/>';
+    let pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '//cdn.jsdelivr.net/npm/pdfjs-dist@2.13.216/build/pdf.worker.js';
+    let loadingTask = pdfjsLib.getDocument({data: atob(imagedata)});
+    loadingTask.promise.then(function(pdf) {
+      pdf.getPage(1).then((page) => {
+        let viewport = page.getViewport({scale: 0.5});
+        let context = canvas.getContext('2d');
+        let renderContext = {canvasContext: context, viewport: viewport};
+        page.render(renderContext);
+      });
+    });
+    return canvas;
   }
   return '<img width="300" src="data:'+imagetype+';base64, '+imagedata+'"/>';
 }
