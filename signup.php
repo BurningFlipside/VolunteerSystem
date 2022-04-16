@@ -243,7 +243,7 @@ if($processor->isAdminForShift($shift, $page->user) && (!isset($shift['participa
     $page->body .= '
         <div class="row d-none" id="adminSignup">
         <div class="alert alert-danger" role="alert">
-        First off, make sure you understand what this will do. While it will let you fill out the details for a shift, it will prevent the user from seeing the shift on their list when the log it, it will not be correctly reported for t-shirts or for rock star volunteers, their camp will not be listed on the shift schedule, and the ability to contact past volunteers will not work for anyone signed up in this manner. Basically, doing this removes about 90% of the advantage of using this system. So please only do this if participant in question is unable to sign up on their own.
+        First off, make sure you understand what this will do. While it will let you fill out the details for a shift, it will prevent the user from seeing the shift on their list when they log in, it will not be correctly reported for t-shirts or for rock star volunteers, their camp will not be listed on the shift schedule, and the ability to contact past volunteers will not work for anyone signed up in this manner. Basically, doing this removes about 90% of the advantage of using this system. So please only do this if participant in question is unable to sign up on their own.
         </div>
         <label for="participantOverride" class="col-sm-2 col-form-label">Participant Name:</label>
         <div class="col-sm-10">
