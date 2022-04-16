@@ -346,6 +346,11 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(404);
         }
         $user['certs'][$certType]['status'] = 'current';
+        $obj = $this->getParsedBody($request);
+        if(isset($obj['expiresOn']))
+        {
+            $user['certs'][$certType]['expiresOn'] = $obj['expiresOn'];
+        }
         $ret = $dataTable->update($filter, $user);
         if($ret)
         {

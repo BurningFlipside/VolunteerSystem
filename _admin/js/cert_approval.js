@@ -42,8 +42,35 @@ function approveCert(e, cell) {
   var data = cell.getRow().getData();
   let certType = Object.keys(data.certs)[0];
   if(certs[`${certType}`].expires) {
-    //TODO Expires dialog...
-    alert('TODO');
+    let imageData = data.certs[`${certType}`].image;
+    let imageType = data.certs[`${certType}`].imageType;
+    let message = '<img src="data:'+imageType+';base64, '+imageData+'"/>';
+    if(imageType === 'application/pdf') {
+      message = '<object data="data:'+imageType+';base64, '+imageData+'" style="width: 100%; height: '+screen.height*3/5+'px"/>';
+    }
+    bootbox.prompt({'title': 'Certificate Expires On:'+message, inputType: 'date', size: 'xl', callback: (result) => {
+      if(result === '') {
+        bootbox.confirm("Are you certain this certificate, which should expire, does not?", (result) => {
+          if(result) {
+            $.ajax({
+              url: '../api/v1/participants/'+data.uid+'/certs/'+certType+'/Actions/AcceptCert',
+              contentType: 'application/json',
+              method: 'POST',
+              complete: finishedCertOp
+            });
+          }
+        });
+        return;
+      }
+      let obj = {expiresOn: result};
+      $.ajax({
+        url: '../api/v1/participants/'+data.uid+'/certs/'+certType+'/Actions/AcceptCert',
+        contentType: 'application/json',
+        data: JSON.stringify(obj),
+        method: 'POST',
+        complete: finishedCertOp
+      });
+    }});
     return;
   }
   $.ajax({
@@ -116,11 +143,36 @@ function fullImage(e, cell) {
   var certType = Object.keys(data.certs)[0];
   var imagedata = data.certs[`${certType}`].image;
   var imagetype = data.certs[`${certType}`].imageType;
+  let message = '<img src="data:'+imagetype+';base64, '+imagedata+'"/>';
   if(imagetype === 'application/pdf') {
-    bootbox.alert({size: 'xl', message:'<object data="data:'+imagetype+';base64, '+imagedata+'" style="width: 100%; height: '+screen.height*3/5+'px"/>'});
-    return;
+    message = '<object data="data:'+imagetype+';base64, '+imagedata+'" style="width: 100%; height: '+screen.height*3/5+'px"/>';
   }
-  bootbox.alert({size: 'xl', message:'<img src="data:'+imagetype+';base64, '+imagedata+'"/>'});
+  bootbox.dialog({
+    title: 'Certificate Approval',
+    message: message,
+    onEscape: true,
+    size: 'xl',
+    buttons: {
+      approve: {
+        label: 'Approve Cert',
+        className: 'btn-success',
+        callback: () => {
+          approveCert(e, cell);
+        }
+      },
+      disapprove: {
+        label: 'Disapprove Cert',
+        className: 'btn-danger',
+        callback: () => {
+          disapproveCert(e, cell);
+        }
+      },
+      nothing: {
+        label: 'Do Nothing',
+        className: 'btn-primary',
+      }
+    }
+  });
 }
 
 function initPage() {
