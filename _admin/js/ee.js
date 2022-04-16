@@ -364,6 +364,9 @@ function gotInitialData(results) {
     var vol = obj.vols[`${uid}`];
     if(vol.shifts !== undefined) {
       var row = {id: uid, name: vol.firstName+' "'+vol.burnerName+'" '+vol.lastName, eeType: '', shifts: vol.shifts};
+      if(vol.burnerName.trim().length === 0 || vol.firstName === vol.burnerName) {
+        row.name = vol.firstName+' '+vol.lastName;
+      }
       var bestEE = -1;
       let lateStay = false;
       for(var id in obj.events) {
