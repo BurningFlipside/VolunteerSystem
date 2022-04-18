@@ -38,7 +38,11 @@ class VolunteerShift extends VolunteerObject
             case 'modTime':
                 if($this->mod === null)
                 {
-                    $this->mod = new \DateInterval('PT'.(string)$this->role->down_time.'H');
+                    $this->mod = new \DateInterval('PT0H');
+                    if($this->role->down_time !== 0)
+                    {
+                        $this->mod = new \DateInterval('PT'.(string)(intval($this->role->down_time,10)-1).'H59M');   
+                    }
                 }
                 return $this->mod;
             case 'startTime':
@@ -142,11 +146,23 @@ class VolunteerShift extends VolunteerObject
         {
             return false;
         }
-        if($this->startTimeWithMod >= $shift->startTimeWithMod && $this->startTimeWithMod <= $shift->endTimeWithMod)
+        //Does this shift or the other have a bigger down time requirement...
+        if($this->role->down_time > $shift->role->down_time)
+        {
+            if($this->startTimeWithMod >= $shift->startTime && $this->startTimeWithMod <= $shift->endTime)
+            {
+                return true;
+            }
+            if($this->endTimeWithMod <= $shift->endTime && $this->endTimeWithMod > $shift->startTime)
+            {
+                return true;
+            }
+        }
+        if($this->startTime >= $shift->startTimeWithMod && $this->startTime <= $shift->endTimeWithMod)
         {
             return true;
         }
-        if($this->endTimeWithMod <= $shift->endTimeWithMod && $this->endTimeWithMod > $shift->startTimeWithMod)
+        if($this->endTime <= $shift->endTimeWithMod && $this->endTime > $shift->startTimeWithMod)
         {
             return true;
         }
