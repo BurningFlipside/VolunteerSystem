@@ -133,7 +133,6 @@ function certImage(cell, formatterParams, onRendered) {
   var imagedata = data.certs[`${certType}`].image;
   var imagetype = data.certs[`${certType}`].imageType;
   let canvas = document.createElement("canvas");
-  canvas.width = 300;
   if(imagetype === 'application/pdf') {
     let pdfjsLib = window['pdfjs-dist/build/pdf'];
     pdfjsLib.GlobalWorkerOptions.workerSrc = '//cdn.jsdelivr.net/npm/pdfjs-dist@2.13.216/build/pdf.worker.js';
@@ -143,12 +142,35 @@ function certImage(cell, formatterParams, onRendered) {
         let viewport = page.getViewport({scale: 0.5});
         let context = canvas.getContext('2d');
         let renderContext = {canvasContext: context, viewport: viewport};
+        if(viewport.width < 500) {
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+        }
         page.render(renderContext);
+        let fakeCanvas = document.createElement("canvas");
+        let fakeViewport = page.getViewport({scale: 1.5});
+        fakeCanvas.height = fakeViewport.height;
+        fakeCanvas.width = fakeViewport.width;
+        let orientTask = page.render({canvasContext: fakeCanvas.getContext('2d'), viewport: fakeViewport});
+        orientTask.promise.then(() => {
+          const { createWorker } = Tesseract;
+          (async () => {
+            const worker = createWorker();
+            await worker.load();
+            await worker.loadLanguage('eng');
+            await worker.initialize('eng');
+            const { data } = await worker.detect(fakeCanvas);
+            if(data.orientation_degrees !== 0) {
+              //Not sure why but it seems to move down and left about 30px...
+              canvas.style = 'transform:rotate('+data.orientation_degrees+'deg);position:relative;left:30px;top:-30px;';
+            }
+          })();
+        });
       });
     });
     return canvas;
   }
-  return '<img width="300" src="data:'+imagetype+';base64, '+imagedata+'"/>';
+  return '<img width="500" src="data:'+imagetype+';base64, '+imagedata+'"/>';
 }
 
 function fullImage(e, cell) {
@@ -196,7 +218,7 @@ function initPage() {
       {title: 'Volunteer Name', formatter: volName},
       {title: 'Volunteer Email', field: 'email', formatter: 'link', formatterParams:{urlPrefix: 'mailto://', target: '_blank'}},
       {title: 'Cert Type', formatter: certTypeFormatter},
-      {title: 'Cert Image', formatter: certImage, width: 300, cellClick: fullImage}
+      {title: 'Cert Image', formatter: certImage, width: 500, cellClick: fullImage}
     ]
   });
   $.ajax({
