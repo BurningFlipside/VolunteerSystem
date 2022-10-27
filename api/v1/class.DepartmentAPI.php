@@ -263,8 +263,8 @@ class DepartmentAPI extends VolunteerAPI
 
     public function generateGridSchedule($dept, $shifts, $response, $type, $includeCampNames = false)
     {
-        $ss = new \Schedules\GridSchedule($dept, $shifts, $includeCampNames);
-        $data = $ss->getBuffer($type);
+        $spreadSheet = new \Schedules\GridSchedule($dept, $shifts, $includeCampNames);
+        $data = $spreadSheet->getBuffer($type);
         $response = $response->withHeader('Content-Type', $data['content-type']);
         $response = $response->withHeader('Content-Disposition', 'attachment; filename='.$dept['departmentName'].$data['extension']);
         $response->getBody()->write($data['buffer']);

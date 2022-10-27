@@ -16,6 +16,9 @@ class TextAPI extends VolunteerAPI
         return $this->isVolunteerAdmin($request);
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canUpdate($request, $entity)
     {
         return $this->isVolunteerAdmin($request);

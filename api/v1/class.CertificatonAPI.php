@@ -6,6 +6,9 @@ class CertificatonAPI extends VolunteerAPI
         parent::__construct('certifications', 'certID');
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canUpdate($request, $entity)
     {
         if($this->isVolunteerAdmin($request))
@@ -15,6 +18,9 @@ class CertificatonAPI extends VolunteerAPI
         return false;
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canDelete($request, $entity)
     {
         if($this->isVolunteerAdmin($request))

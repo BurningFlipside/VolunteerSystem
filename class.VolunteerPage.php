@@ -14,8 +14,8 @@ class VolunteerPage extends \Flipside\Secure\SecurePage
     {
         parent::__construct($title);
         $root = $_SERVER['DOCUMENT_ROOT'];
-        $script_dir = dirname(__FILE__);
-        $this->volunteerRoot = substr($script_dir, strlen($root));
+        $scriptDir = dirname(__FILE__);
+        $this->volunteerRoot = substr($scriptDir, strlen($root));
         $this->addJS($this->volunteerRoot.'/js/volunteer.js');
         $this->addTemplateDir(dirname(__FILE__).'/templates', 'Volunteer');
         $this->setTemplateName('@Volunteer/main.html');

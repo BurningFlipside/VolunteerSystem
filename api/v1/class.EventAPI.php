@@ -23,6 +23,9 @@ class EventAPI extends VolunteerAPI
         return new \Flipside\Data\Filter($this->primaryKeyName." eq '$value' or alias eq '$value'");
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canUpdate($request, $entity)
     {
         if($this->isVolunteerAdmin($request))
@@ -32,6 +35,9 @@ class EventAPI extends VolunteerAPI
         return false;
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canDelete($request, $entity)
     {
         if($this->isVolunteerAdmin($request))

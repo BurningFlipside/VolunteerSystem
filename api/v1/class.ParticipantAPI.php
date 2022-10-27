@@ -60,6 +60,9 @@ class ParticipantAPI extends VolunteerAPI
         return in_array($user->mail, $emailList);
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canUpdate($request, $entity)
     {
         if($this->isVolunteerAdmin($request))
@@ -195,13 +198,13 @@ class ParticipantAPI extends VolunteerAPI
             {
                 $text .= "BEGIN:VEVENT\r\n";
                 $text .= "UID:".$this->user->mail."\r\n";
-                $d = new DateTime($shifts[$i]['startTime']);
-                $d->setTimezone(new \DateTimeZone('UTC'));
-                $text .= "DTSTAMP:".$d->format('Ymd\THis\Z')."\r\n";
-                $text .= "DTSTART:".$d->format('Ymd\THis\Z')."\r\n";
-                $d = new DateTime($shifts[$i]['endTime']);
-                $d->setTimezone(new \DateTimeZone('UTC'));
-                $text .= "DTEND:".$d->format('Ymd\THis\Z')."\r\n";
+                $dateTime = new DateTime($shifts[$i]['startTime']);
+                $dateTime->setTimezone(new \DateTimeZone('UTC'));
+                $text .= "DTSTAMP:".$dateTime->format('Ymd\THis\Z')."\r\n";
+                $text .= "DTSTART:".$dateTime->format('Ymd\THis\Z')."\r\n";
+                $dateTime = new DateTime($shifts[$i]['endTime']);
+                $dateTime->setTimezone(new \DateTimeZone('UTC'));
+                $text .= "DTEND:".$dateTime->format('Ymd\THis\Z')."\r\n";
                 $text .= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
                 $text .= "END:VEVENT\r\n";
             }

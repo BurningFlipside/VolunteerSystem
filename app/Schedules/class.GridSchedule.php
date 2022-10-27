@@ -216,7 +216,8 @@ class GridSchedule
             $sheat->setCellValueByColumnAndRow(1, 4 + $i, $this->getRoleNameFromID($role));
             array_push($rows, $role);
             $overlaps = array();
-            for($j = 0; $j < count($roles2[$role]) - 1; $j++)
+            $roleCount = count($roles2[$role]);
+            for($j = 0; $j < $roleCount - 1; $j++)
             {
                 $currRole = $roles2[$role][$j];
                 $nextRole = $roles2[$role][$j + 1];

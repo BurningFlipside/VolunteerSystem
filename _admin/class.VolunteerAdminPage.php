@@ -66,7 +66,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
             $this->content['header']['sidebar']['Events'] = array('icon' => 'fa-calendar-alt', 'url' => 'events.php');
             $this->content['header']['sidebar']['Departments'] = array('icon' => 'fa-building', 'url' => 'departments.php');
         }
-        $charts_menu = array(
+        $chartsMenu = array(
             'Shift Schedules' => 'shift_schedules.php',
             'Shift Stats' => 'shift_stats.php',
             'T-Shirts' => 'tshirts.php',
@@ -77,14 +77,33 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
         );
         if($this->user->isInGroupNamed('Leads') || $this->user->isInGroupNamed('VolunteerAdmins'))
         {
-            $charts_menu['Early Entry'] = 'report_early_entry.php';
+            $chartsMenu['Early Entry'] = 'report_early_entry.php';
         }
-        $shifts_menu = array(
+        $shiftsMenu = array(
             'Add/Edit Shifts' => 'shifts.php',
             'Pending Shifts' => 'pending.php',
             'Early Entry/Late Stay Approval' => 'ee.php',
             'Copy from prior event' => 'copy_shifts.php'
         );
+        $certBadge = $this->getCertBadge();
+        $this->content['header']['sidebar']['Roles'] = array('icon' => 'fa-address-card', 'url' => 'roles.php');
+        $this->content['header']['sidebar']['Shifts'] = array('icon' => 'fa-tshirt', 'menu' => $shiftsMenu);
+        $this->content['header']['sidebar']['Volunteers'] = array('icon' => 'fa-user', 'url' => 'volunteers.php');
+        $this->content['header']['sidebar']['Certification Approval '.$certBadge] = array('icon' => 'fa-stamp', 'url' => 'cert_approval.php');
+        $this->content['header']['sidebar']['Reports'] = array('icon' => 'fa-chart-bar', 'menu' => $chartsMenu);
+        $this->content['header']['sidebar']['Contact'] = array('icon' => 'fa-envelope', 'url' => 'contact.php');
+        if($this->user && $this->user->isInGroupNamed('VolunteerAdmins'))
+        {
+            $adminMenu = array(
+                'Email Text' => 'emails.php',
+                'Certifications' => 'certs.php'
+            );
+            $this->content['header']['sidebar']['Admin'] = array('icon' => 'fa-cog', 'menu' => $adminMenu);
+        }
+    }
+
+    private function getCertBadge()
+    {
         $certApprovalCount = 0;
         $certTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');
         $userTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'participants');
@@ -104,20 +123,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
         {
             $certBadge = '<span class="badge badge-secondary">'.$certApprovalCount.'</span>';
         }
-        $this->content['header']['sidebar']['Roles'] = array('icon' => 'fa-address-card', 'url' => 'roles.php');
-        $this->content['header']['sidebar']['Shifts'] = array('icon' => 'fa-tshirt', 'menu' => $shifts_menu);
-        $this->content['header']['sidebar']['Volunteers'] = array('icon' => 'fa-user', 'url' => 'volunteers.php');
-        $this->content['header']['sidebar']['Certification Approval '.$certBadge] = array('icon' => 'fa-stamp', 'url' => 'cert_approval.php');
-        $this->content['header']['sidebar']['Reports'] = array('icon' => 'fa-chart-bar', 'menu' => $charts_menu);
-        $this->content['header']['sidebar']['Contact'] = array('icon' => 'fa-envelope', 'url' => 'contact.php');
-        if($this->user && $this->user->isInGroupNamed('VolunteerAdmins'))
-        {
-            $admin_menu = array(
-                'Email Text' => 'emails.php',
-                'Certifications' => 'certs.php'
-            );
-            $this->content['header']['sidebar']['Admin'] = array('icon' => 'fa-cog', 'menu' => $admin_menu);
-        }
+        return $certBadge;
     }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */
