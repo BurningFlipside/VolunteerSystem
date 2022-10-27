@@ -335,10 +335,8 @@ function gotInitialData(results) {
             }
           }
         } else if(obj.vols[`${uid}`] === undefined) {
-          console.log(uid);
           let rep = decodeURIComponent(uid);
           if(obj.vols[`${rep}`] !== undefined) {
-            console.log(rep);
             eeList[`${rep}`] = eeList[`${uid}`];
             delete eeList[`${uid}`];
           }
@@ -352,6 +350,7 @@ function gotInitialData(results) {
     }
     if(obj.vols[shift.participant] === undefined) {
       alert('Could not locate volunteer '+shift.participant);
+      console.log(shift);
       continue;
     }
     if(obj.vols[shift.participant].shifts === undefined) {
