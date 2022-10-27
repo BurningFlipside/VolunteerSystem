@@ -51,7 +51,6 @@ function gotDepartments(jqXHR) {
     });
     $('#deptName').html('Unable to locate department!');
     var departments = $('#departments');
-    departments.change(showDepartmentDetails);
     var deptCount = 0;
     for(let dept of array) {
       if(dept.isAdmin) {
@@ -60,13 +59,14 @@ function gotDepartments(jqXHR) {
         deptCount++;
       }
     }
+    departments.change(showDepartmentDetails);
     if(deptCount === 0) {
       alert('Unable to determine which department is associated to your account. Please contact your AF to fix your access.');
     }
-    if(chart === null) {
+    if(chart === null && deptID !== '*') {
       var eventID = $('#events').val();
       var deptID = $('#departments').val();
-      var url = '../api/v1/events/'+eventID+'/shifts?$filter=departmentID eq '+deptID;
+      var url = '../api/v1/events/'+eventID+'/shifts?$filter=departmentID eq '+deptID+' and enabled eq true';
       $.ajax({
         url: url,
         complete: gotShifts
@@ -180,51 +180,52 @@ function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     ctx.fillText('Unable to obtain shift data', 10, 50);
     console.log(jqXHR);
-  } else {
-    var data = jqXHR.responseJSON;
-    if(data.length === 0) {
-      ctx.fillText('Event has no shifts!', 10, 50);
-    } else {
-      var filled = 0;
-      var pending = 0;
-      var unfilled = data.length;
-      for(let shift of data) {
-        if(shift.status && shift.status === 'filled') {
-          filled++;
-          unfilled--;
-        } else if(shift.status && shift.status === 'pending') {
-          pending++;
-          unfilled--;
-        }
-      }
-      var percent = (filled/unfilled)*100;
-      var text = Number.parseFloat(percent).toPrecision(4)+'%';
-      if(percent !== 0 && percent < 1) {
-        text = '<1%';
-      }
-      var options = {
-        elements: {
-          center: {
-            text: text
-          }
-        },
-        onClick: chartClick
-      };
-      let chartData = {
-        datasets: [{
-          data: [unfilled, filled, pending],
-          backgroundColor: ['#d53e4f', '#66c2a5', '#f46d43']
-        }],
-        labels: ['Unfilled', 'Filled', 'Pending']
-      };
-      chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: chartData,
-        options: options
-      });
-    }
-    makeShiftTimeLine(jqXHR.responseJSON);
+    return;
   }
+  var data = jqXHR.responseJSON;
+  if(data.length === 0) {
+    ctx.fillText('Event has no shifts!', 10, 50);
+  } else {
+    var filled = 0;
+    var pending = 0;
+    var unfilled = data.length;
+    var total = data.length;
+    for(let shift of data) {
+      if(shift.status && shift.status === 'filled') {
+        filled++;
+        unfilled--;
+      } else if(shift.status && shift.status === 'pending') {
+        pending++;
+        unfilled--;
+      }
+    }
+    var percent = ((filled+pending)/total)*100;
+    var text = Number.parseFloat(percent).toPrecision(4)+'%';
+    if(percent !== 0 && percent < 1) {
+      text = '<1%';
+    }
+    var options = {
+      elements: {
+        center: {
+          text: text
+        }
+      },
+      onClick: chartClick
+    };
+    let chartData = {
+      datasets: [{
+        data: [unfilled, filled, pending],
+        backgroundColor: ['#d53e4f', '#66c2a5', '#f46d43']
+      }],
+      labels: ['Unfilled', 'Filled', 'Pending']
+    };
+    chart = new Chart(ctx, {
+      type: 'doughnut',
+      data: chartData,
+      options: options
+    });
+  }
+  makeShiftTimeLine(jqXHR.responseJSON);
 }
 
 function showEventDetails(e) {
@@ -232,7 +233,7 @@ function showEventDetails(e) {
   var eventID = e.target.value;
   if($('#departments').val() !== null) {
     $.ajax({
-      url: '../api/v1/events/'+eventID+'/shifts',
+      url: '../api/v1/events/'+eventID+'/shifts?$filter=enabled eq true',
       complete: gotShifts
     });
   }
@@ -246,9 +247,9 @@ function showEventDetails(e) {
 function showDepartmentDetails(e) {
   var eventID = $('#events').val();
   var deptID = e.target.value;
-  var url = '../api/v1/events/'+eventID+'/shifts?$filter=departmentID eq '+deptID;
+  var url = '../api/v1/events/'+eventID+'/shifts?$filter=departmentID eq '+deptID+' and enabled eq true';
   if(deptID === '*') {
-    url = '../api/v1/events/'+eventID+'/shifts';
+    url = '../api/v1/events/'+eventID+'/shifts?$filter=enabled eq true';
   }
   $.ajax({
     url: url,
