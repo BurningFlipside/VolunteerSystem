@@ -18,12 +18,15 @@ function gotShifts(jqXHR) {
     return;
   }
   var shifts = jqXHR.responseJSON;
-  console.log(shifts);
   let inviteOnly = ($('#hideInviteOnly').prop('checked') === true);
   if(!inviteOnly) {
     tableData['total'].shifts = shifts.length;
   }
+  let groupPending = ($('#groupPending').prop('checked') === true);
   for(let shift of shifts) {
+    if(shift.enabled === false) {
+      continue;
+    }
     if(inviteOnly) {
       if(shift.whyClass === 'INVITE') {
         continue;
@@ -42,7 +45,12 @@ function gotShifts(jqXHR) {
     }
     tableData['total'].hours += hours;
     tableData[shift.departmentID].hours += hours;
-    if(shift.status && shift.status === 'filled') {
+    if(groupPending && shift.status && shift.status === 'groupPending') {
+      tableData['total'].filled++;
+      tableData[shift.departmentID].filled++;
+      tableData['total'].filledHours += hours;
+      tableData[shift.departmentID].filledHours += hours;
+    } else if(shift.status && (shift.status === 'filled' || shift.status === 'pending')) {
       tableData['total'].filled++;
       tableData[shift.departmentID].filled++;
       tableData['total'].filledHours += hours;
@@ -60,6 +68,10 @@ function gotShifts(jqXHR) {
     tmp.hours = timeToString(tmp.hours);
     tmp.filledHours = timeToString(tmp.filledHours);
     tmp.unfilledHours = timeToString(tmp.unfilledHours);
+    tmp.percent = Number.parseFloat((tmp.filled/tmp.shifts)*100).toPrecision(4);
+    if(tmp.shifts === 0) {
+      tmp.percent = 0;
+    }
     array.push(tmp);
   }
   table = new Tabulator('#shift_stats', {
@@ -70,7 +82,8 @@ function gotShifts(jqXHR) {
       {title:'Filled Shift Count', field: 'filled', sorter: 'number'},
       {title:'Filled Shift Hours', field: 'filledHours', sorter: 'number'},
       {title:'Unfilled Shift Count', field: 'unfilled', sorter: 'number'},
-      {title:'Unfilled Shift Hours', field: 'unfilledHours', sorter: 'number'}
+      {title:'Unfilled Shift Hours', field: 'unfilledHours', sorter: 'number'},
+      {title:'Percentage Filled', field: 'percent', sorter: 'number'}
     ],
     initialSort:[
       {column: 'hours', dir: 'desc'}
@@ -218,6 +231,7 @@ function initPage() {
   $('#hideEmpty').change(hideEmptyShifts);
   $('#hideInviteOnly').change(hideInviteOnlyShifts);
   $('#showOld').change(showOldEvents);
+  $('#groupPending').change(hideInviteOnlyShifts);
 }
 
 $(initPage);
