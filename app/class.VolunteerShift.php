@@ -130,6 +130,12 @@ class VolunteerShift extends VolunteerObject
                     }
                 }
                 return $this->scheduleParticipantName;
+            case 'participant':
+                if(isset($this->dbData[$propName]))
+                {
+                    return $this->dbData[$propName];
+                }
+                return '';
             default:
                 return $this->dbData[$propName];
         }
@@ -157,6 +163,7 @@ class VolunteerShift extends VolunteerObject
             {
                 return true;
             }
+            return false;
         }
         if($this->startTime >= $shift->startTimeWithMod && $this->startTime <= $shift->endTimeWithMod)
         {
