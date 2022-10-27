@@ -2,6 +2,9 @@
 window.flipDialog = {};
 window.flipDialog.dialog = function(options) {
   var dialog = $('<div class="modal fade show" aria-modal="true"><div class="modal-dialog modal-lg"><div class="modal-content"></div></div></div>');
+  if(options.id !== undefined) {
+    dialog = $('<div class="modal fade show" id="'+options.id+'" aria-modal="true"><div class="modal-dialog modal-lg"><div class="modal-content"></div></div></div>');
+  }
   dialog.find('.modal-content').append('<div class="modal-header"><h4 class="modal-title">'+options.title+'</h4><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button></div>');
   dialog.find('.modal-content').append('<div class="modal-body"><div class-"containter-fluid"><div class="row"></div></div></div>');
   var body = dialog.find('.modal-content .row');
@@ -63,6 +66,10 @@ window.flipDialog.dialog = function(options) {
     if(input.onChange !== undefined && typeof input.onChange !== 'string') {
       inputEnt.change(input.onChange);
       delete input.onChange;
+    }
+    if(input.keyUp !== undefined && typeof input.keyUp !== 'string') {
+      inputEnt.keyup(input.keyUp);
+      delete input.keyUp;
     }
     inputEnt.attr('class', 'form-control');
     for(var attr in input) {
