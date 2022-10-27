@@ -75,7 +75,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
             'Volunteers without Tickets' => 'report_no_ticket.php',
             'Empty Shifts' => 'report_empty_shifts.php'
         );
-        if($this->isLead === false)
+        if($this->user->isInGroupNamed('Leads') || $this->user->isInGroupNamed('VolunteerAdmins'))
         {
             $charts_menu['Early Entry'] = 'report_early_entry.php';
         }
