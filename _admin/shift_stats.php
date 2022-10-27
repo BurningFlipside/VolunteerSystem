@@ -27,6 +27,11 @@ $page->content['selectors'] = '<label for="event" class="col-sm-2 col-form-label
     <input type="checkbox" class="form-check-input" id="hideInviteOnly">
     <label class="form-check-label" for="hideInviteOnly">Hide Invite Only Shifts</label>
   </div>
+  <div class="w-100"></div>
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="groupPending">
+    <label class="form-check-label" for="groupPending">Count Group Pending Shifts as Full</label>
+  </div>
 ';
 
 $page->printPage();
