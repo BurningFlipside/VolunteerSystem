@@ -25,7 +25,7 @@ class GridSchedule
         $this->ssheat = $this->createSpreadSheet();
     }
 
-    protected function isVolunteerAdmin()
+    protected function isVolunteerAdmin($request)
     {
         return true;
     }
@@ -69,17 +69,24 @@ class GridSchedule
     {
         if(isset($shift['participant']))
         {
-            $profile = new \VolunteerProfile($shift['participant']);
-            if($this->includeCampNames)
+            try
             {
-                $richText = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
-                $richText->createText($profile->getDisplayName('paperName').' ');
-                $campName = $richText->createTextRun($profile->campName);
-                $campName->getFont()->setItalic(true);
-                $sheat->setCellValueByColumnAndRow($col, $row, $richText);
-                return;
+                $profile = new \VolunteerProfile($shift['participant']);
+                if($this->includeCampNames)
+                {
+                    $richText = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
+                    $richText->createText($profile->getDisplayName('paperName').' ');
+                    $campName = $richText->createTextRun($profile->campName);
+                    $campName->getFont()->setItalic(true);
+                    $sheat->setCellValueByColumnAndRow($col, $row, $richText);
+                    return;
+                }
+                $sheat->setCellValueByColumnAndRow($col, $row, $profile->getDisplayName('paperName'));
             }
-            $sheat->setCellValueByColumnAndRow($col, $row, $profile->getDisplayName('paperName'));
+            catch(\Exception $e)
+            {
+                $sheat->setCellValueByColumnAndRow($col, $row, $shift['participant']);
+            }
         }
     }
 
@@ -183,6 +190,7 @@ class GridSchedule
             $mergeCount = $hourCount;
         }
         $days = array_keys($days);
+        usort($days, array($this, 'daySorter'));
         $cellIndex = 2;
         while($mergeCount)
         {
@@ -256,6 +264,15 @@ class GridSchedule
         $this->grayOutUnused($hourCount, $rowCount, $sheat);
         $sheat->getColumnDimension('A')->setAutoSize(true);
         return $ssheat;
+    }
+
+    public function daySorter($a, $b)
+    {
+        preg_match('#\((.*?)\)#', $a, $match);
+        $dtA = new \DateTime($match[1]);
+        preg_match('#\((.*?)\)#', $b, $match);
+        $dtB = new \DateTime($match[1]);
+        return $dtA->getTimestamp()-$dtB->getTimestamp();
     }
 
     public function getBuffer($type)
