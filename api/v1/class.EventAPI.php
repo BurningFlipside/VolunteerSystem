@@ -133,14 +133,21 @@ class EventAPI extends VolunteerAPI
         {
             $filter['earlyLate'] = (string)$obj['earlyLate'];
         }
+        if(isset($obj['department']))
+        {
+            $filter['departmentID'] = $obj['department'];
+        }
         return $filter;
     }
 
     public function getTicketStringForVol($vol)
     {
+        if($vol === false || method_exists($vol, 'getTicketStatus') === false) {
+            return 'No';
+        }
         $ticket = $vol->getTicketStatus();
         $ticketStr = 'No';
-        if($ticket['request'] === true)
+        if(isset($ticket['request']) && $ticket['request'] === true)
         {
             $ticketStr = 'Requested';
         }
@@ -154,7 +161,7 @@ class EventAPI extends VolunteerAPI
     public function getEEShiftReportForEvent($request, $response, $args)
     {
         $eventId = $args['event'];
-        if($this->canUpdate($request, null) === false)
+        if($this->isVolunteerAdmin($request) === false && $this->user->isInGroupNamed('Leads') === false)
         {
             return $response->withStatus(401);
         }
@@ -168,7 +175,22 @@ class EventAPI extends VolunteerAPI
         {
             $obj['includePending'] = true;
         }
+        if($request->getQueryParam('department'))
+        {
+            $obj['department'] = $request->getQueryParam('department');
+        }
         $filter = $this->getFilterString($eventId, $obj);
+        if($this->isVolunteerAdmin($request) === false)
+        {
+            //Only get shifts for this lead's department(s)...
+            $deptDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
+            $depts = $deptDataTable->read(array('lead'=>array('$in'=>$this->user->title)));
+            if(empty($depts))
+            {
+                return $response->withStatus(404);
+            }
+            $filter['departmentID'] = $depts[0]['departmentID'];
+        }
         $shifts = $shiftDataTable->read($filter);
         $ret = array();
         $count = count($shifts);
@@ -176,7 +198,14 @@ class EventAPI extends VolunteerAPI
         for($i = 0; $i < $count; $i++)
         {
             $shift = new \VolunteerShift(false, $shifts[$i]);
-            $vol = $shift->participantObj;
+            try {
+                $vol = $shift->participantObj;
+            } catch (\Exception $e) {
+                $vol = false;
+            }
+            if($vol === false) {
+                $vol = (object)array('uid'=>$shift->participant , 'firstName' => $shift->participant, 'lastName'=>'', 'email'=>$shift->participant);
+            }
             $role = $shift->role;
             if(!isset($dedup[$vol->uid]))
             {
