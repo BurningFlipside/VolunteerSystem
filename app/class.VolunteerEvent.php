@@ -74,7 +74,47 @@ class VolunteerEvent extends VolunteerObject
         {
             $dt = $this->getDataTable();
             $filter = $this->getDataFilter();
-            return $dt->update($filter, $this->dbData);
+            $ret = $dt->update($filter, $this->dbData);
+            if($ret)
+            {
+                switch($eeListIndex)
+                {
+                    case -2:
+                    default:
+                        //Done
+                        return $ret;
+                    case 0:
+                        if(isset($this->dbData['eeLists'][-2][$uid]))
+                        {
+                            return $this->approveEE($uid, -2, $type);
+                        }
+                        break;
+                    case 1:
+                        if(isset($this->dbData['eeLists'][0][$uid]))
+                        {
+                            return $this->approveEE($uid, 0, $type);
+                        }
+                        if(isset($this->dbData['eeLists'][-2][$uid]))
+                        {
+                            return $this->approveEE($uid, -2, $type);
+                        }
+                        break;
+                    case 2:
+                        if(isset($this->dbData['eeLists'][1][$uid]))
+                        {
+                            return $this->approveEE($uid, 1, $type);
+                        }
+                        if(isset($this->dbData['eeLists'][0][$uid]))
+                        {
+                            return $this->approveEE($uid, 0, $type);
+                        }
+                        if(isset($this->dbData['eeLists'][-2][$uid]))
+                        {
+                            return $this->approveEE($uid, -2, $type);
+                        }
+                        break;
+                }
+            }
         }
         return $ret;
     }
