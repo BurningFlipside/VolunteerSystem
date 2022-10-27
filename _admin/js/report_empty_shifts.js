@@ -8,9 +8,13 @@ function gotShifts(jqXHR) {
   var tbody = $('#shiftTable tbody');
   var nameObj = tbody.data('names');
   var depts = $('#depts').val();
+  let showPending = $('#showPending')[0].checked;
   tbody.empty();
   for(let shift of data) {
     if(!depts.includes(shift.departmentID)) {
+      continue;
+    }
+    if(!showPending && shift.status === 'pending') {
       continue;
     }
     let dept = shift.departmentID;
@@ -159,6 +163,7 @@ function initPage() {
   });
   $('#event').change(eventChanged);
   $('#startTime').change(startTimeChanged);
+  $('#showPending').change(getShifts);
 }
 
 $(initPage);
