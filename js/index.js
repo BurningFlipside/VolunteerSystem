@@ -34,6 +34,12 @@ function getRoleName(roleID) {
   return roleID;
 }
 
+function eventNameHelper(info) {
+  if(info.view.type === 'listWeek' || info.view.type === 'list') {
+    return info.event.extendedProps.department+": "+info.event.extendedProps.name;
+  }
+}
+
 function eventRenderHelper(info) {
   var evnt = info.event;
   var shift = evnt.extendedProps;
@@ -70,10 +76,6 @@ function eventRenderHelper(info) {
         });
       }
     }
-  }
-  if(info.view.type === 'listWeek' || info.view.type === 'list') {
-    var anchor = $(info.el).find('.fc-list-item-title a')[0];
-    anchor.innerHTML = getDeptName(shift.departmentID)+': '+anchor.innerHTML;
   }
 }
 
@@ -152,10 +154,9 @@ function filterEvents() {
       }
     }
   }
-  if(calendar.view.currentEnd < newStart) {
+  if(calendar.view === null || calendar.view.currentEnd < newStart) {
     calendar.gotoDate(newStart);
   }
-  console.log(calendar.view);
   calendar.renderingPauseDepth = false;
   if(calendar.needsRerender) {
     calendar.render();
@@ -167,6 +168,8 @@ function deptChanged() {
 }
 
 function shiftChanged() {
+  let types = $('#shiftTypes').select2('data');
+  localStorage.setItem('ShiftTypes', types.map(s=>s.id));
   filterEvents();
 }
 
@@ -249,7 +252,7 @@ function gotShifts(jqXHR) {
     allEvents.push(calEvent);
     deptHasShifts[shift.departmentID] = true;
   }
-  calendar.setOption('validRange.start', start);
+  calendar.gotoDate(start);
   try{
     calendar.render();
   } catch(error) {
@@ -268,16 +271,14 @@ function gotShifts(jqXHR) {
   }
   $('#departments').trigger('change');
   $('#departments').change(deptChanged);
-  if(getParameterByName('department') !== null) {
     filterEvents();
-  }
 }
 
 function eventChanged(e) {
   var extra = '';
-  if(calendar.view !== null) {
-    var defaultView = calendar.optionsManager.computed.defaultView;
-    var currentView = calendar.view.type;
+  if(calendar !== undefined && calendar.view !== null) {
+    let defaultView = calendar.currentData.calendarOptions.initialView;
+    let currentView = calendar.view.type;
     if(defaultView !== currentView) {
       extra = '&view='+currentView;
     }
@@ -394,6 +395,11 @@ function gotInitialData(results) {
   obj.depts = processDepartments(deptResult.value);
   var sel2 = $('#shiftTypes').select2();
   sel2.change(shiftChanged);
+  let myTypes = localStorage.getItem('ShiftTypes');
+  if(myTypes !== null) {
+    let types = myTypes.split(',');
+    sel2.val(types).trigger('change');
+  }
 }
 
 function retrySelect2() {
@@ -434,7 +440,22 @@ function fakePromiseSettled(promises) {
   }));
 }
 
+function viewChanged(arg) {
+  if(window.viewCalled === undefined) {
+    //I want only the second call of this to do something...
+    window.viewCalled = true;
+    return [];
+  }
+  localStorage.setItem('CalendarView', arg.view.type);
+}
+
 function initPage() {
+  if(FullCalendar === undefined) {
+    setTimeout(initPage, 100);
+  }
+  if(Intl.DateTimeFormat().resolvedOptions().timeZone !== 'America/Chicago') {
+    $('#content').prepend('<div class="alert alert-primary" role="alert">Note all times are displayed in your local time zone! Make sure you do the appropriate math as Flipside operates in Central Daylight Time!</div>');
+  }
   let promises = [];
   promises.push($.ajax({
     url: 'api/v1/events'
@@ -460,10 +481,17 @@ function initPage() {
     header.right = 'timeGridDay,listWeek,resourceTimelineDay';
     defaultView = 'list';
   }
+  let myView = getParameterByName('view');
+  if(myView === null) {
+    myView = localStorage.getItem('CalendarView');
+  }
+  if(myView !== null) {
+    defaultView = myView;
+  }
   calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
     schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
-    plugins: [ 'dayGrid', 'timeGrid', 'list', 'resourceTimeline' ],
-    header: header,
+    //plugins: [ 'dayGrid', 'timeGrid', 'list', 'resourceTimeline' ],
+    headerToolbar: header,
     buttonText: {
       month: 'Month Grid',
       timeGridWeek: 'Week Grid',
@@ -477,24 +505,22 @@ function initPage() {
       day: 'numeric',
       weekday: 'long'
     },
-    defaultView: defaultView,
+    initialView: defaultView,
     validRange: getDateRange,
-    eventRender: eventRenderHelper,
-    resourceColumns: [
+    eventContent: eventNameHelper,
+    eventDidMount: eventRenderHelper,
+    resourceAreaColumns: [
       {
         labelText: 'Role',
         field: 'title'
       }
     ],
     resources: [],
-    resourceRender: renderResource,
+    resourceLabelDidMount: renderResource,
     filterResourcesWithEvents: true,
-    resourceOrder: 'title'
+    resourceOrder: 'title',
+    viewClassNames: viewChanged
   });
-  var view = getParameterByName('view');
-  if(view !== null) {
-    calendar.changeView(view);
-  }
 }
 
 $(() => {
