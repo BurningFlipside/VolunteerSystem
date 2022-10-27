@@ -15,6 +15,7 @@ class ParticipantAPI extends VolunteerAPI
         $app->post('/{uid}/certs/{certId}/Actions/RejectCert', array($this, 'rejectCert'));
         $app->post('/{uid}/certs/{certId}/Actions/AcceptCert', array($this, 'acceptCert'));
         $app->get('/{uid}/ticketStatus', array($this, 'getTicketStatus'));
+        $app->post('/Actions/BulkTicketStatus', array($this, 'bulkTicketStatus'));
     }
 
     protected function canCreate($request)
@@ -33,7 +34,30 @@ class ParticipantAPI extends VolunteerAPI
         {
             return true;
         }
+        //Lt's get access as well
+        if($this->isLt($this->user))
+        {
+            return true;
+        }
         return false;
+    }
+
+    protected function isLt($user)
+    {
+        $emailList = array();
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
+        $depts = $dataTable->read();
+        $count = count($depts);
+        for($i = 0; $i < $count; $i++)
+        {
+            if(isset($depts[$i]['others']))
+            {
+                $others = $depts[$i]['others'];
+                $others = explode(',', str_replace(' ', '', $depts[$i]['others']));
+                $emailList = array_merge($emailList, $others);
+            }
+        }
+        return in_array($user->mail, $emailList);
     }
 
     protected function canUpdate($request, $entity)
@@ -415,6 +439,60 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withJson(array('ticket' => false, 'request' => true));
         }
         return $response->withJson(array('ticket' => true));
+    }
+
+    function bulkTicketStatus($request, $response)
+    {
+        $this->validateLoggedIn($request);
+        if($this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $dataTable = $this->getDataTable();
+        $obj = $this->getParsedBody($request);
+        if(!isset($obj['uids']))
+        {
+            return $response->withStatus(400);
+        }
+        $ret = array();
+        $data = $dataTable->read(array('uid'=>array('$in'=>$obj['uids'])), array('email','ticketCode','uid'));
+        $settingsTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Variables');
+        $settings = $settingsTable->read(new \Flipside\Data\Filter('name eq \'year\''));
+        $year = $settings[0]['value'];
+        $ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+        $requestTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
+        $count = count($data);
+        for($i = 0; $i < $count; $i++)
+        {
+            $user = $data[$i];
+            if(isset($user['ticketCode']))
+            {
+                $code = $user['ticketCode'];
+                $tickets = $ticketTable->read(new \Flipside\Data\Filter("contains(hash,$code) and year eq $year"));
+            }
+            else
+            {
+                $email = $user['email'];
+                $tickets = $ticketTable->read(new \Flipside\Data\Filter("email eq '$email' and year eq $year"));
+            }
+            if(!empty($tickets))
+            {
+                $ret[$user['uid']] = array('ticket' => true);
+                continue;
+            }
+            $requests = $requestTable->read(new \Flipside\Data\Filter("mail eq '$email' and year eq $year"));
+            if(empty($requests))
+            {
+                $ret[$user['uid']] = array('ticket' => false, 'request' => false);
+                continue;
+            }
+            if($requests[0]['status'] === '1')
+            {
+                $ret[$user['uid']] = array('ticket' => false, 'request' => true, 'requestRecieved' => true);
+            }
+            $ret[$user['uid']] = array('ticket' => false, 'request' => true);
+        }
+        return $response->withJson($ret);
     }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */
