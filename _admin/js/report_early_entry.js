@@ -32,6 +32,10 @@ function getShifts() {
   if(ee !== '*') {
     obj.earlyLate = ee;
   }
+  let dept = $('#dept').val();
+  if(dept !== undefined) {
+    obj.department = dept;
+  }
   let includePending = $('#showPending')[0].checked;
   if(includePending === true) {
     obj.includePending = includePending;
@@ -73,15 +77,25 @@ function pendingChanged() {
   }
 }
 
+function departmentChanged() {
+  if($('#event').val() !== null) {
+    getShifts();
+  }
+}
+
 function generateCSV() {
   if($('#event').val() === null) {
     alert('Select an event first!');
   }
+  let append = '';
   if($('#showPending')[0].checked) {
-    window.location = '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport?includePending=true&$format=csv';
-    return;
+    append += 'includePending=true&';
   }
-  window.location = '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport?$format=csv';
+  let dept = $('#dept').val();
+  if(dept !== undefined) {
+    append += 'department='+dept+'&'
+  }
+  window.location = '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport?'+append+'$format=csv';
 }
 
 function initPage() {
@@ -100,9 +114,25 @@ function initPage() {
       }
     }
   });
+  $('#dept').select2({
+    ajax: {
+      url: '../api/v1/departments',
+      processResults: function(data) {
+        var res = [];
+        data.sort((a,b) => {
+          return a.departmentName.localeCompare(b.departmentName);
+        });
+        for(let dept of data) {
+          res.push({id: dept.departmentID, text: dept.departmentName});
+        }
+        return {results: res};
+      }
+    }
+  });
   $('#event').change(eventChanged);
   $('#earlyLate').change(eeChanged);
   $('#showPending').change(pendingChanged);
+  $('#dept').change(departmentChanged)
 }
 
 $(initPage);
