@@ -423,7 +423,8 @@ class ShiftAPI extends VolunteerAPI
             return $response->withStatus(400);
         }
         $partDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'participants');
-        $partFilter = new \Flipside\Data\Filter("email eq '".$data['email']."'");
+        $partFilter = array('email'=>array('$regex'=>new \MongoDB\BSON\Regex(trim($data['email']), 'i')));
+        //$partFilter = new \Flipside\Data\Filter("email eq '".$data['email']."'");
         $parts = $partDataTable->read($partFilter);
         $count = count($parts);
         if($count === 0 && (!isset($data['force']) || $data['force'] !== true))
@@ -650,6 +651,11 @@ class ShiftAPI extends VolunteerAPI
             {
                 $entities[$i] = false;
             }
+            if(isset($entity[$i]['minShifts']) && $entity[$i]['minShifts'] > 0)
+            {
+                $shift = new \VolunteerShift($shiftId, $entity);
+                $shift->makeCopy($dataTable);
+            }
         }
         if(count($roles) !== 0)
         {
@@ -697,7 +703,7 @@ class ShiftAPI extends VolunteerAPI
             $entity[$i]['signupLink'] = '';
             if($entity[$i]['status'] === 'groupPending')
             {
-                $entity['status'] = 'unfilled';
+                $entity[$i]['status'] = 'unfilled';
             }
             $entity[$i]['groupLinkCreated'] = '';
             $upFilter = new \Flipside\Data\Filter('_id eq '.$entity[$i]['_id']);
@@ -785,7 +791,7 @@ class ShiftAPI extends VolunteerAPI
         $shifts = $dataTable->read($filter);
         if(empty($shifts))
         {
-            return $response->withStatus(404);
+            return $response->withJSON(array('msg'=>'Unable to find shifts for provided source event and department'))->withStatus(404);
         }
         $evtDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
         $events = $evtDataTable->read(new \Flipside\Data\Filter('_id eq '.$data['src']));
@@ -802,6 +808,7 @@ class ShiftAPI extends VolunteerAPI
         $dstEvent = $events[0];
         $groupTrans = array();
         $srcStart = new \DateTimeImmutable($srcEvent['startTime']);
+        $srcStartMidnight = $srcStart->setTime(0, 0, 1);
         $dstStart = new \DateTimeImmutable($dstEvent['startTime']);
         $count = count($shifts);
         //Strip out or replace data...
@@ -862,7 +869,7 @@ class ShiftAPI extends VolunteerAPI
             //Ok this next bit is tricky... What I want to do is keep the time of day and keep the number of days from the beginning of the event...
             $shiftStartTime = new \DateTime($shifts[$i]['startTime']);
             $shiftEndTime = new \DateTime($shifts[$i]['endTime']);
-            $startDiff = $srcStart->diff($shiftStartTime);
+            $startDiff = $srcStartMidnight->diff($shiftStartTime);
             $shiftLen = $shiftStartTime->diff($shiftEndTime);
             $dayDiff = new \DateInterval('P'.$startDiff->d.'D');
             $newShiftEndTime = $dstStart->add($dayDiff);
