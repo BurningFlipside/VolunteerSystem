@@ -67,15 +67,26 @@ class SimplePDF extends \Flipside\PDF\PDF
 			    foreach($shifts as $shift)
 			    {
 				    $shift = new \VolunteerShift(false, $shift);
-				    $participant = $shift->participantObj;
-				    if($participant !== false)
-				    { 
-					    $html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$participant->getDisplayName('paperName').'</td><td>'.$participant->campName.'</td></tr>';
-				    }
-				    else
-				    {
-					    $html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td></td><td></td></tr>';
-				    }
+					try
+					{
+				    	$participant = $shift->participantObj;
+						if($participant !== false)
+						{ 
+							$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$participant->getDisplayName('paperName').'</td><td>'.$participant->campName.'</td></tr>';
+						}
+						else if($shift->participant)
+						{
+							$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$shift->participant.'</td><td><i>Unknown</i></td></tr>';
+						}
+						else
+						{
+							$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td></td><td></td></tr>';
+						}
+					}
+					catch(\Exception $e)
+					{
+						$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$shift->participant.'</td><td><i>Unknown</i></td></tr>';
+					}
 			    }
 			    $html .= '</table>';
 		    }
