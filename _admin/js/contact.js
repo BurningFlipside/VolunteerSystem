@@ -54,10 +54,11 @@ function gotShifts(jqXHR) {
 
 function getShifts() {
   //Create filter
-  var filter = 'status eq filled';
+  var filter = 'status in (filled,pending)';
+  let uri = '../api/v1/shifts?$filter=';
   var event = $('#event').val();
   if(event !== null) {
-    filter += ' and eventID eq '+event;
+    uri = '../api/v1/events/'+event+'/shifts?$filter=';
   }
   var dept = $('#dept').val();
   if(dept !== null) {
@@ -68,7 +69,7 @@ function getShifts() {
     filter += ' and roleID eq '+role;
   }
   $.ajax({
-    url: '../api/v1/shifts?$filter='+filter,
+    url: uri+filter,
     complete: gotShifts
   });
 }
