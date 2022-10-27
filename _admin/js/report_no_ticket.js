@@ -23,24 +23,37 @@ function generateCSV() {
   link.remove();
 }
 
-function gotTicketStatuses(participants) {
+function gotTicketStatuses(participants, results) {
+  let ticketStatusData = results.pop();
+  if(ticketStatusData.status !== 'fulfilled') {
+    console.log(ticketStatusData);
+    alert('Unable to get ticket status data!');
+    return;
+  }
+  let participantData = results.pop();
+  if(participantData.status !== 'fulfilled') {
+    console.log(participantData);
+    alert('Unable to get participant data!');
+    return;
+  }
+  participantData = participantData.value;
+  ticketStatusData = ticketStatusData.value;
   let showRegistered = $('#showRegistered')[0].checked;
   let table = $('#volTable');
   for(let uid in participants) {
     let participant = participants[`${uid}`];
     //All promises are settled now...
-    if(participant.ticketStatus.status === 200) {
-      if(participant.ticketStatus.responseJSON.ticket === true) {
-        continue;
-      }
-      if(participant.ticketStatus.responseJSON.request === true && showRegistered === false) {
-        continue;
-      }
+    let ticketStatus = ticketStatusData[`${uid}`];
+    if(ticketStatus !== undefined && ticketStatus.ticket === true) {
+      continue;
+    }
+    if(ticketStatus !== undefined && ticketStatus.request === true && showRegistered === false) {
+      continue;
     }
     let name = '<i>'+uid+'</i>';
     let email = '';
-    if(participant.participantDetails.status === 200) {
-      let details = participant.participantDetails.responseJSON;
+    let details = participantData.find(obj => {return obj.uid === uid});
+    if(details !== undefined) {
       if(details.burnerName !== undefined && details.burnerName.length > 0 && details.burnerName !== details.firstName) {
         name = details.firstName+' "'+details.burnerName+'" '+details.lastName;
       } else {
@@ -69,13 +82,6 @@ function gotShifts(jqXHR) {
     }
     if(participants[shift.participant] === undefined) {
       participants[shift.participant] = {count: 0, departments: []};
-      participants[shift.participant].participantDetails = $.ajax({
-        url: '../api/v1/participants/'+encodeURIComponent(shift.participant)
-      });
-      participants[shift.participant].ticketStatus = $.ajax({
-        url: '../api/v1/participants/'+encodeURIComponent(shift.participant)+'/ticketStatus'
-      });
-      promises.push(participants[shift.participant].participantDetails);
       promises.push(participants[shift.participant].ticketStatus);
     }
     participants[shift.participant].count++;
@@ -83,7 +89,18 @@ function gotShifts(jqXHR) {
       participants[shift.participant].departments.push(shift.departmentID);
     }
   }
-  Promise.allSettled(promises).then(() => {gotTicketStatuses(participants)}).finally(() => {dialog.modal('hide')});
+  let partArray = Object.keys(participants);
+  promises.push($.ajax({
+    url: '../api/v1/participants/?$filter=uid in ('+partArray.join(',')+')&$select=uid,email,firstName,lastName,burnerName'
+  }));
+  let obj = {uids: partArray};
+  promises.push($.ajax({
+    url: '../api/v1/participants/Actions/BulkTicketStatus',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(obj)
+  }));
+  Promise.allSettled(promises).then((results) => {gotTicketStatuses(participants, results)}).finally(() => {dialog.modal('hide')});
 }
 
 function eventChanged() {
