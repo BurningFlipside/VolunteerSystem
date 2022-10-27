@@ -53,6 +53,9 @@ function groupSignupInfoObtained(jqXHR) {
     ],
     buttons: [
       {text: 'Start Group Signup', callback: createGroupSignup}
+    ],
+    alerts: [
+      {type: 'info', text: 'By default this will create a group signup for all the positions in the shift. If you only want some of the positions for your group please reduce the number(s) at the bottom of this dialog.'}
     ]
   };
   var myPos = {label: 'My position', type: 'select', id: 'myshift', options: []};

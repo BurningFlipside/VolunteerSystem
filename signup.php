@@ -99,6 +99,10 @@ if($processor->isAdminForShift($shift, $page->user))
 //Is shift already taken?
 if($myShift->isFilled())
 {
+    if(isset($shift['signupLink']))
+    {
+        $page->body .= '<div class="alert alert-info" role="alert">This is a group shift. The group signup link is <a>https://secure.burningflipside.com/fvs/groupSignup.php?id='.$shift['signupLink'].'</a></div>';
+    }
     if(isset($shift['participant']) && $shift['participant'] === $page->user->uid)
     {
         $page->body .= '<div class="alert alert-success" role="alert">
@@ -203,6 +207,7 @@ if($overlap)
     $page->body .= 'class="d-none" ';
 }
 $page->body .= '/>';
+$groupLink = '';
 $page->body .= '
 <div class="row">
   <input type="hidden" id="shiftID" name="shiftID" value="'.$shiftID.'"/>
