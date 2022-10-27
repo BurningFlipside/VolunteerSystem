@@ -47,7 +47,8 @@ function gotMyProfile(jqXHR) {
     showProfileWizard();
     return;
   }
-  var profile = jqXHR.responseJSON;
+  let profile = jqXHR.responseJSON;
+  console.log(profile);
   $('body').data('profile', profile);
   $('body').trigger('fvs:ready');
 }

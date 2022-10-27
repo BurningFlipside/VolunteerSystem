@@ -1,6 +1,9 @@
 <?php
 require_once('../app/VolunteerAutoload.php');
 require_once('../../class.SecurePage.php');
+
+use \Flipside\Data\Filter as DataFilter;
+
 class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
 {
     use SecureWebPage;
@@ -45,7 +48,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
             //Is this user the assistant for a department?
             $uid = $this->user->uid;
             $email = $this->user->mail;
-            $filter = new \Flipside\Data\Filter("others eq $uid or others eq $email");
+            $filter = new DataFilter("others eq $uid or others eq $email");
             $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
             $depts = $dataTable->read($filter);
             $this->isLead = !empty($depts);
@@ -113,7 +116,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
             $count = count($certs);
             for($i = 0; $i < $count; $i++)
             {
-                $filter = new \Flipside\Data\Filter('certs.'.$certs[$i]['certID'].'.status eq pending');
+                $filter = new DataFilter('certs.'.$certs[$i]['certID'].'.status eq pending');
                 $users = $userTable->read($filter);
                 $certApprovalCount += count($users);
             }

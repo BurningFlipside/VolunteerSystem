@@ -164,6 +164,8 @@ function filterEvents() {
 }
 
 function deptChanged() {
+  let departments = $('#departments').select2('data');
+  localStorage.setItem('Departments', departments.map(s=>s.id));
   filterEvents();
 }
 
@@ -264,14 +266,24 @@ function gotShifts(jqXHR) {
   if(window.innerWidth <= 1024) {
     $('#calendar .fc-center h2').css('font-size', '1.0em');
   }
+  let departmentData = localStorage.getItem('Departments');
+  let departmentArray = [];
+  if(departmentData !== null) {
+    departmentArray = departmentData.split(',');
+    $('#departments').val(departmentArray);
+    addNonStandardViewAlert();
+  }
   for(var dept in deptHasShifts) {
+    if(departmentArray.includes(dept)) {
+      continue;
+    }
     if(deptHasShifts[`${dept}`] === false) {
       $('#departments').find("option[value='"+dept+"']").remove();
     }
   }
   $('#departments').trigger('change');
   $('#departments').change(deptChanged);
-    filterEvents();
+  filterEvents();
 }
 
 function eventChanged(e) {
@@ -399,6 +411,7 @@ function gotInitialData(results) {
   if(myTypes !== null) {
     let types = myTypes.split(',');
     sel2.val(types).trigger('change');
+    addNonStandardViewAlert();
   }
 }
 
@@ -449,6 +462,29 @@ function viewChanged(arg) {
   localStorage.setItem('CalendarView', arg.view.type);
 }
 
+function clearView() {
+  localStorage.removeItem('CalendarView');
+  localStorage.removeItem('Departments');
+  localStorage.removeItem('ShiftTypes');
+  location.reload();
+}
+
+function addNonStandardViewAlert() {
+  if($('#nonStandardView').length !== 0) {
+    return;
+  }
+  let alertDiv = $('<div/>', {'id': 'nonStandardView', 'class': 'alert alert-info alert-dismissible', role: 'alert'});
+  let button = $('<button/>', {type: 'button', 'class': 'close', 'data-dismiss': 'alert'});
+  $('<span/>', {'aria-hidden': 'true'}).html('&times;').appendTo(button);
+  $('<span/>', {'class': 'sr-only'}).html('Close').appendTo(button);
+  button.appendTo(alertDiv);
+  alertDiv.append('<strong>Notice:</strong> You are seeing a non-default view of the volunteer system from the last time you viewed the site. To restore the default view click ');
+  let link = $('<a/>', {'class': 'alert-link', 'href': '#'});
+  link.append('here.').click(clearView);
+  alertDiv.append(link);
+  $('#content').prepend(alertDiv);
+}
+
 function initPage() {
   if(FullCalendar === undefined) {
     setTimeout(initPage, 100);
@@ -484,6 +520,9 @@ function initPage() {
   let myView = getParameterByName('view');
   if(myView === null) {
     myView = localStorage.getItem('CalendarView');
+    if(myView !== null) {
+      addNonStandardViewAlert();
+    }
   }
   if(myView !== null) {
     defaultView = myView;
