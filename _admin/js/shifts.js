@@ -692,23 +692,33 @@ function shiftAssigned(jqXHR) {
   location.reload();
 }
 
+function finishAssignShift(e) {
+  let shiftID = e.data.id;
+  let obj = {id: shiftID, email: e.data.assignUser};
+  $.ajax({
+    url: '../api/v1/shifts/'+shiftID+'/Actions/Assign',
+    method: 'POST',
+    complete: shiftAssigned,
+    contentType: 'application/json',
+    data: JSON.stringify({email: e.data.assignUser}),
+    context: obj
+  });
+}
+
 function assignShift(e) {
   let shiftID = e.data['_id']['$oid'];
-  let obj = {id: shiftID};
-  bootbox.prompt("Enter the user's email to assign the shift to", function(result){ 
-    if(result === null || result === '') {
-      return;
-    }
-    obj.email = result;
-    $.ajax({
-      url: '../api/v1/shifts/'+shiftID+'/Actions/Assign',
-      method: 'POST',
-      complete: shiftAssigned,
-      contentType: 'application/json',
-      data: JSON.stringify({email: result}),
-      context: obj
-    }); 
-  });
+  let dialogOptions = {
+    id: 'assignShift',
+    title: 'Assign Shift',
+    data: {id: shiftID},
+    inputs: [
+      {label: 'User', type: 'text', id: 'assignUser', keyUp: searchUsers}
+    ],
+    buttons: [
+      {text: 'Assign', callback: finishAssignShift}
+    ]
+  };
+  flipDialog.dialog(dialogOptions);
 }
 
 function gotShiftToEdit(jqXHR) {
@@ -767,19 +777,49 @@ function gotShiftToEdit(jqXHR) {
       {text: 'Save Shift', callback: saveShift}
     ]
   };
+  let promises = [];
   if(shift.status === 'filled' || shift.status === 'pending') {
     dialogOptions.alerts = [
       {type: 'warning', text: 'Shift is already filled!'}
     ];
     dialogOptions.inputs.push({label: 'Participant', type: 'text', id: 'participant', value: shift.participant, disabled: true});
+    
     dialogOptions.buttons.push({text: 'Empty Shift', callback: emptyShift});
+    promises.push($.ajax({
+      url: '../api/v1/participants/'+shift.participant
+    }));
   } else {
     dialogOptions.buttons.push({text: 'Assign Shift', callback: assignShift});
   }
-  $.ajax({
-    url: '../api/v1/departments/'+shift.departmentID+'/roles',
-    complete: gotDepartmentRoles,
-    context: dialogOptions
+  promises.push($.ajax({
+    url: '../api/v1/departments/'+shift.departmentID+'/roles'
+  }));
+  Promise.allSettled(promises).then((results) => {
+    console.log(Object.assign({}, results));
+    if(results.length > 1) {
+      if(results[0].status === 'fulfilled') {
+        let partResults = results.shift().value;
+        let name = partResults.firstName+' "'+partResults.burnerName+'" '+partResults.lastName;
+        if(partResults.burnerName.trim().length === 0 || partResults.firstName === partResults.burnerName) {
+          name = partResults.firstName+' '+partResults.lastName;
+        }
+        dialogOptions.inputs.push({label: 'Participant Name', type: 'text', id: 'participant_name', value: name, disabled: true});
+        dialogOptions.inputs.push({label: 'Participant Email', type: 'text', id: 'participant_email', value: partResults.email, disabled: true});
+      } else {
+        results.shift();
+      }
+    }
+    let roleResult = results.shift().value;
+    console.log(roleResult);
+    for(let input of dialogOptions.inputs) {
+      if(input.id === 'roleID') {
+        input.options = [];
+        for(let role of roleResult) {
+          input.options.push({value: role.short_name, text: role.display_name});
+        }
+      }
+    }
+    flipDialog.dialog(dialogOptions);
   });
 }
 
@@ -797,6 +837,9 @@ function removeGroupSignup(e) {
 function generateGroupSignup(e) {
   let obj = {};
   for(let shift of e.data.shifts) {
+    if(shift.status === 'pending' || shift.status === 'filled') {
+      continue;
+    }
     if(obj['roles.'+shift.roleID] === undefined) {
       obj['roles.'+shift.roleID] = 1;
     } else {
