@@ -3,16 +3,18 @@ function gotShifts(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
   }
-  var data = jqXHR.responseJSON;
-  var tbody = $('#shiftTable tbody');
-  var participants = this;
+  let data = jqXHR.responseJSON;
+  let tbody = $('#shiftTable tbody');
+  let participants = this;
   tbody.empty();
   for(let shift of data) {
     if(shift.participant !== undefined && participants[shift.participant] !== undefined) {
       participants[shift.participant].shiftCount++;
+    } else {
+      console.log(shift);
     }
   }
-  for(var uid in participants) {
+  for(let uid in participants) {
     let part = participants[`${uid}`];
     if(part.shiftCount > 0) {
       continue;
@@ -31,13 +33,13 @@ function gotVols(jqXHR) {
   if(jqXHR.status !== 200) {
     return;
   }
-  var data = jqXHR.responseJSON;
-  var participants = {};
+  let data = jqXHR.responseJSON;
+  let participants = {};
   for(let vol of data) {
     vol.shiftCount = 0;
     participants[vol.uid] = vol;
   }
-  var event = $('#event').val();
+  let event = $('#event').val();
   if(event !== null) {
     $.ajax({
       url: '../api/v1/events/'+event+'/shifts',
@@ -54,14 +56,14 @@ function gotVols(jqXHR) {
 }
 
 function getVols() {
-  var certs = $('#certs').val();
+  let certs = $('#certs').val();
   if(certs.includes('none')) {
     $.ajax({
       url: '../api/v1/participants',
       complete: gotVols
     });
   } else {
-    var filter = '';
+    let filter = '';
     for(let cert of certs) {
       filter += 'certs.'+cert+'.status%20eq%20current';
       filter += ' or ';
@@ -95,6 +97,7 @@ function gotCerts(jqXHR) {
     $('#certs').append(opt);
   }
   $('#certs').trigger('change');
+  $('#certs').change(certChanged);
 }
 
 function initPage() {
@@ -119,7 +122,6 @@ function initPage() {
   });
   $('#certs').select2();
   $('#event').change(eventChanged);
-  $('#certs').change(certChanged);
 }
 
 $(initPage);
