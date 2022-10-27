@@ -82,7 +82,8 @@ class VolunteerProfile extends VolunteerObject
         $settingsTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Variables');
         $settings = $settingsTable->read(new \Flipside\Data\Filter('name eq \'year\''));
         $year = $settings[0]['value'];
-        $ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+	$ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+	$email = $this->dbData['email'];
         if(isset($this->dbData['ticketCode']))
         {
             $code = $this->dbData['ticketCode'];
@@ -90,7 +91,6 @@ class VolunteerProfile extends VolunteerObject
         }
         else
         {
-            $email = $this->dbData['email'];
             $tickets = $ticketTable->read(new \Flipside\Data\Filter("email eq '$email' and year eq $year"));
         }
         if(empty($tickets))
