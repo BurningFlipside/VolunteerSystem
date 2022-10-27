@@ -29,7 +29,7 @@ $page->body .= '
     </select>
   </div>
   <div class="w-100"></div>
-  <div id="calendar"></div>
+  <div id="calendar" class="w-100"></div>
   <div class="w-100"></div>
   <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts?$format=text/calendar"><i class="far fa-calendar-alt"></i> Download My Shifts</a>
   <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts?$format=application/pdf"><i class="fas fa-print"></i> Print My Shifts</a>
