@@ -36,7 +36,11 @@ function getRoleName(roleID) {
 
 function eventNameHelper(info) {
   if(info.view.type === 'listWeek' || info.view.type === 'list') {
-    return info.event.extendedProps.department+": "+info.event.extendedProps.name;
+    let deptName = info.event.extendedProps.department;
+    if(deptName === undefined) {
+      deptName = getDeptName(info.event.extendedProps.departmentID);
+    }
+    return deptName+": "+info.event.extendedProps.name;
   }
 }
 
