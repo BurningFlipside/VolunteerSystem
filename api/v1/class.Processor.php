@@ -1,4 +1,11 @@
 <?php
+use \DateTime as DateTime;
+
+use \Flipside\Data\Filter as DataFilter;
+
+use Volunteer\VolunteerProfile;
+use Volunteer\VolunteerShift;
+
 trait Processor
 {
     protected function certCheck($requirements, $certs, $certType)
@@ -55,14 +62,17 @@ trait Processor
         return true;
     }
 
-    protected function getParticipantDiplayName($uid)
+    /**
+     * @SuppressWarnings(PHPMD.UndefinedVariable) - False positive, phpmd thinks $uids is uninitialized
+     */
+    protected function getParticipantDisplayName($uid)
     {
         static $uids = array();
         if(!isset($uids[$uid]))
         {
             try
             {
-                $profile = new \VolunteerProfile($uid);
+                $profile = new VolunteerProfile($uid);
                 $uids[$uid] = $profile->getDisplayName();
             }
             catch(Exception $e)
@@ -73,19 +83,22 @@ trait Processor
         return $uids[$uid];
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UndefinedVariable) - False positive, phpmd thinks $deptCache is uninitialized
+     */
     protected function isUserDepartmentLead($departmentID, $user)
     {
         static $deptCache = array();
         if(!isset($deptCache[$departmentID]))
         {
             $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
-            $filter = new \Flipside\Data\Filter('departmentID eq '.$departmentID);
-            $depts = $dataTable->read($filter);
-            if(empty($depts))
+            $filter = new DataFilter('departmentID eq '.$departmentID);
+            $departments = $dataTable->read($filter);
+            if(empty($departments))
             {
                 return false;
             }
-            $deptCache[$departmentID] = $depts[0];
+            $deptCache[$departmentID] = $departments[0];
         }
         return $this->isUserDepartmentLead2($deptCache[$departmentID], $user);
     }
@@ -100,14 +113,17 @@ trait Processor
         return $userIsLead;
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UndefinedVariable) - False positive, phpmd thinks $departments is uninitialized
+     */
     protected function isUserDepartmentLead2($dept, $user)
     {
-        static $depts = array();
-        if(!isset($depts[$dept['departmentID']]))
+        static $departments = array();
+        if(!isset($departments[$dept['departmentID']]))
         {
-            $depts[$dept['departmentID']] = array();
+            $departments[$dept['departmentID']] = array();
         }
-        $deptCache = $depts[$dept['departmentID']];
+        $deptCache = $departments[$dept['departmentID']];
         $uid = $user->uid;
         if(!isset($deptCache[$uid]))
         {
@@ -156,7 +172,7 @@ trait Processor
         static $privateDepts = null;
         if($privateDepts === null)
         {
-            $privateDepts = VolunteerDepartment::getPrivateDepartments();
+            $privateDepts = Volunteer\VolunteerDepartment::getPrivateDepartments();
         }
         if($isAdmin)
         {
@@ -201,6 +217,47 @@ trait Processor
         }
     }
 
+    private function canDoAnyDepartmentRole($roleID, $profile, $roles) : bool
+    {
+        $requirements = array();
+        $role = $roles[$roleID];
+        if(isset($role['requirements']))
+        {
+            $requirements = $role['requirements'];
+        }
+        if(isset($requirements['email_list']))
+        {
+            $emails = explode(',', str_replace(' ', '', $requirements['email_list']));
+            if($profile->userInEmailList($emails))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function populateTakenShiftData(&$shift, $profile)
+    {
+        if(isset($shift['participant']) && $shift['participant'] === $profile->uid)
+        {
+            $shift['available'] = false;
+            $shift['why'] = 'Shift is already taken, by you';
+            $shift['whyClass'] = 'MINE';
+            return;
+        }
+        $shift['available'] = false;
+        $shift['why'] = 'Shift is already taken';
+        $shift['whyClass'] = 'TAKEN';
+    }
+
+    private function shiftHasValidParticipant($shift)
+    {
+        return (isset($shift['participant']) && ($shift['participant'] !== '/dev/null' || $shift['participant'] !== ''));
+    }
+
+    /**
+     * @SuppressWarnings(PHPMD.UndefinedVariable) - False positive, phpmd thinks $roles is uninitialized
+     */
     protected function processShift($entry, $request)
     {
         static $profile = null;
@@ -213,7 +270,7 @@ trait Processor
         }
         if($profile === null)
         {
-            $profile = new \VolunteerProfile($this->user->uid);
+            $profile = new VolunteerProfile($this->user->uid);
             $eeAvailable = $profile->isEEAvailable();
             $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
             $tmp = $dataTable->read();
@@ -223,31 +280,13 @@ trait Processor
             }
         }
         $this->cleanupNonDBFields($entry);
-        $shift = new \VolunteerShift(false, $entry);
+        $shift = new VolunteerShift(false, $entry);
         $entry['isAdmin'] = $this->isAdminForShift($entry, $this->user);
-        $entry['overlap'] = $shift->findOverlaps($this->user->uid, true);
+        $entry['overlap'] = $shift->doAnyOverlap($this->user->uid);
         if(!$this->shouldShowDepartment($entry['departmentID'], $entry['isAdmin']))
         {
             //Role's with an email list requirement can override this like AAR ride alongs...
-            $requirements = array();
-            $role = $roles[$entry['roleID']];
-            if(isset($role['requirements']))
-            {
-                $requirements = $role['requirements'];
-            }
-            if(isset($requirements['email_list']))
-            {
-                $emails = explode(',', str_replace(' ', '', $requirements['email_list']));
-                if(!$profile->userInEmailList($emails))
-                {
-                    return null;
-                }
-                else
-                {
-                    //Show the shift...
-                }
-            }
-            else
+            if(!$this->canDoAnyDepartmentRole($entry['roleID'], $profile, $roles))
             {
                 return null;
             }
@@ -271,22 +310,11 @@ trait Processor
         }
         if($shift->isFilled())
         {
-            if(isset($entry['participant']) && ($entry['participant'] !== '/dev/null' || $entry['participant'] !== ''))
+            if($this->shiftHasValidParticipant($entry))
             {
-                $entry['volunteer'] = $this->getParticipantDiplayName($entry['participant']);
+                $entry['volunteer'] = $this->getParticipantDisplayName($entry['participant']);
             }
-            if(isset($entry['participant']) && $entry['participant'] === $profile->uid)
-            {
-                $entry['available'] = false;
-                $entry['why'] = 'Shift is already taken, by you';
-                $entry['whyClass'] = 'MINE';
-            }
-            else
-            {
-                $entry['available'] = false;
-                $entry['why'] = 'Shift is already taken';
-                $entry['whyClass'] = 'TAKEN';
-            }
+            $this->populateTakenShiftData($entry, $profile);
             if(!$entry['isAdmin'])
             {
                 unset($entry['participant']);

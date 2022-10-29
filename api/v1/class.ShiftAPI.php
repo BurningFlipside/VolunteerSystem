@@ -1,4 +1,23 @@
 <?php
+use \DateInterval as DateInterval;
+use \DateTime as DateTime;
+use \DateTimeImmutable as DateTimeImmutable;
+use \Exception as Exception;
+use \MongoDB\BSON\Regex as MongoRegex;
+use \MongoDB\BSON\ObjectId as MongoId;
+
+use \Flipside\Data\Filter as DataFilter;
+
+use Volunteer\VolunteerDepartment;
+use Volunteer\VolunteerEvent;
+use Volunteer\VolunteerProfile;
+use Volunteer\VolunteerRole;
+use Volunteer\VolunteerShift;
+use Volunteer\Emails\AssignmentEmail;
+use Volunteer\Emails\PendingRejectedEmail;
+use Volunteer\Emails\ShiftEmail;
+use Volunteer\Emails\TwoShiftsAtOnceEmail;
+
 class ShiftAPI extends VolunteerAPI
 {
     use Processor;
@@ -28,6 +47,9 @@ class ShiftAPI extends VolunteerAPI
         $app->post('/{shift}/Actions/Assign[/]', array($this, 'assign'));
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function canCreate($request)
     {
         //Check is handled by validateCreate...
@@ -112,12 +134,15 @@ class ShiftAPI extends VolunteerAPI
         return $this->processShift($entry, $request);
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function postUpdateAction($newObj, $request, $oldObj)
     {
-        $oldShift = new \VolunteerShift(false, $oldObj);
+        $oldShift = new VolunteerShift(false, $oldObj);
         if($oldShift->isFilled() && ($oldObj['startTime'] != $newObj['startTime'] || $oldObj['endTime'] != $newObj['endTime']))
         {
-            $email = new \Emails\ShiftEmail($oldShift, 'shiftChangedSource');
+            $email = new ShiftEmail($oldShift, 'shiftChangedSource');
             $this->sendEmail($email);
         }
         return true;
@@ -129,10 +154,10 @@ class ShiftAPI extends VolunteerAPI
         {
             return true;
         }
-        $shift = new \VolunteerShift(false, $entry[0]);
+        $shift = new VolunteerShift(false, $entry[0]);
         if($shift->isFilled())
         {
-            $email = new \Emails\ShiftEmail($shift, 'shiftCanceledSource');
+            $email = new ShiftEmail($shift, 'shiftCanceledSource');
             $this->sendEmail($email);
             //Back these up so that I can undo the delete later if needs be
             $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shiftBackup');
@@ -195,8 +220,8 @@ class ShiftAPI extends VolunteerAPI
                 continue;
             }
             //This shift needs EE approval, but might be an overlap or something
-            $objShift = new \VolunteerShift((string)$shift['_id'], $shift);
-            if($objShift->findOverlaps($objShift->participant, true))
+            $objShift = new VolunteerShift((string)$shift['_id'], $shift);
+            if($objShift->doAnyOverlap($objShift->participant))
             {
                 //User has an overlap despite being EE... show this here too...
                 array_push($pendingShifts, $shift);
@@ -288,7 +313,7 @@ class ShiftAPI extends VolunteerAPI
     {
         $data = $request->getParsedBody();
         $dataTable = $this->getDataTable();
-        $filter = new \Flipside\Data\Filter('groupID eq '.$data['groupID']);
+        $filter = new DataFilter('groupID eq '.$data['groupID']);
         $entities = $dataTable->read($filter);
         if(empty($entities))
         {
@@ -310,7 +335,7 @@ class ShiftAPI extends VolunteerAPI
     {
         if(isset($entity['earlyLate']) && $entity['earlyLate'] !== '-1')
         {
-            $event = new \VolunteerEvent($entity['eventID']);
+            $event = new VolunteerEvent($entity['eventID']);
             if(!$event->hasVolOnEEList($uid, (int)$entity['earlyLate']))
             {
                 $status = 'pending';
@@ -344,7 +369,7 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $shift = new \VolunteerShift($shiftId, $entity);
+        $shift = new VolunteerShift($shiftId, $entity);
         $entity = $this->processShift($entity, $request);
         if(isset($entity['minShifts']) && $entity['minShifts'] > 0)
         {
@@ -352,32 +377,32 @@ class ShiftAPI extends VolunteerAPI
         }
         if(isset($entity['overlap']) && $entity['overlap'])
         {
-            $overlaps = $shift->findOverlaps($this->user->uid);
+            $overlaps = $shift->findAllOverlaps($this->user->uid);
             $count = count($overlaps);
             $leads = array();
             for($i = 0; $i < $count; $i++)
             {
-                $dept = new \VolunteerDepartment($overlaps[$i]->departmentID);
+                $dept = new VolunteerDepartment($overlaps[$i]->departmentID);
                 $leads = array_merge($leads, $dept->getLeadEmails());
                 $overlaps[$i]->status = 'pending';
-                $tmp = new \Flipside\Data\Filter('_id eq '.$overlaps[$i]->{'_id'});
+                $tmp = new DataFilter('_id eq '.$overlaps[$i]->{'_id'});
                 $res = $dataTable->update($tmp, $overlaps[$i]);
                 if($res === false)
                 {
                     return $response->withJSON(array('err'=>'Unable to update overlap with id '.$overlaps[$i]->{'_id'}));
                 }
             }
-            $dept = new \VolunteerDepartment($entity['departmentID']);
+            $dept = new VolunteerDepartment($entity['departmentID']);
             $leads = array_merge($leads, $dept->getLeadEmails());
             $leads = array_unique($leads);
             $ret = $this->doSignup($this->user->uid, 'pending', $entity, $filter, $dataTable);
-            $profile = new \VolunteerProfile($this->user->uid);
-            $email = new \Emails\TwoShiftsAtOnceEmail($profile);
+            $profile = new VolunteerProfile($this->user->uid);
+            $email = new TwoShiftsAtOnceEmail($profile);
             $email->addLeads($leads);
             $emailProvider = \Flipside\EmailProvider::getInstance();
             if($emailProvider->sendEmail($email) === false)
             {
-                throw new \Exception('Unable to send duplicate email!');
+                throw new Exception('Unable to send duplicate email!');
             }
             return $response->withJSON($ret);
         }
@@ -391,8 +416,7 @@ class ShiftAPI extends VolunteerAPI
             $ret = $this->doSignup($this->user->uid, 'filled', $entity, $filter, $dataTable);
             return $response->withJSON($ret);
         }
-        //print_r($entity); die();
-        throw new \Exception('Unable to signup! Unhandled case!');
+        throw new Exception('Unable to signup! Unhandled case!');
     }
 
     public function assign($request, $response, $args)
@@ -407,7 +431,7 @@ class ShiftAPI extends VolunteerAPI
             return $response->withStatus(404);
         }
         $entity = $entity[0];
-        $shift = new \VolunteerShift($shiftId, $entity);
+        $shift = new VolunteerShift($shiftId, $entity);
         if(!$this->isVolunteerAdmin($request) && !$this->isUserDepartmentLead($shift->departmentID, $this->user))
         {
             return $response->withStatus(401);
@@ -423,8 +447,8 @@ class ShiftAPI extends VolunteerAPI
             return $response->withStatus(400);
         }
         $partDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'participants');
-        $partFilter = array('email'=>array('$regex'=>new \MongoDB\BSON\Regex(trim($data['email']), 'i')));
-        //$partFilter = new \Flipside\Data\Filter("email eq '".$data['email']."'");
+        $partFilter = array('email'=>array('$regex'=>new MongoRegex(trim($data['email']), 'i')));
+        //$partFilter = new DataFilter("email eq '".$data['email']."'");
         $parts = $partDataTable->read($partFilter);
         $count = count($parts);
         if($count === 0 && (!isset($data['force']) || $data['force'] !== true))
@@ -454,11 +478,11 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withJSON($ret);
         }
-        $email = new \Emails\AssignmentEmail(new \VolunteerProfile($part['uid'], $part), $shift, $this->user);
+        $email = new AssignmentEmail(new VolunteerProfile($part['uid'], $part), $shift, $this->user);
         $emailProvider = \Flipside\EmailProvider::getInstance();
         if($emailProvider->sendEmail($email) === false)
         {
-            throw new \Exception('Unable to send assignment email!');
+            throw new Exception('Unable to send assignment email!');
         }
         return $response->withJSON($ret);
     }
@@ -524,8 +548,8 @@ class ShiftAPI extends VolunteerAPI
         }
         $entity['participant'] = '';
         $entity['status'] = 'unfilled';
-        $profile = new \VolunteerProfile($this->user->uid);
-        $email = new \Emails\PendingRejectedEmail($profile);
+        $profile = new VolunteerProfile($this->user->uid);
+        $email = new PendingRejectedEmail($profile);
         $email->setShift($entity);
         $this->sendEmail($email);
         return $response->withJSON($dataTable->update($filter, $entity));
@@ -547,10 +571,10 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        $filter = new DataFilter('groupID eq '.$entity['groupID'].' and enabled eq true');
         $entities = $dataTable->read($filter);
         $count = count($entities);
-        $dept = new \VolunteerDepartment($entity['departmentID']);
+        $dept = new VolunteerDepartment($entity['departmentID']);
         $res = array();
         $res['department'] = $dept->departmentName;
         $res['earlyLate'] = $entity['earlyLate'];
@@ -569,7 +593,7 @@ class ShiftAPI extends VolunteerAPI
             }
             if(!isset($roles[$entities[$i]['roleID']]))
             {
-                $roles[$entities[$i]['roleID']] = new \VolunteerRole($entities[$i]['roleID']);
+                $roles[$entities[$i]['roleID']] = new VolunteerRole($entities[$i]['roleID']);
             }
             $role = $roles[$entities[$i]['roleID']];
             $entities[$i]['role'] = $role->display_name;
@@ -612,10 +636,10 @@ class ShiftAPI extends VolunteerAPI
                 $roles[substr($key, 6)] = $value;
             }
         }
-        $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID'].' and enabled eq true');
+        $filter = new DataFilter('groupID eq '.$entity['groupID'].' and enabled eq true');
         if($myShift === null) 
         {
-            $filter = new \Flipside\Data\Filter('groupID eq '.$entity['groupID']);
+            $filter = new DataFilter('groupID eq '.$entity['groupID']);
         }
         $entities = $dataTable->read($filter);
         $count = count($entities);
@@ -628,7 +652,7 @@ class ShiftAPI extends VolunteerAPI
                 $entities[$i] = false;
                 continue;
             }
-            if($myShift !== null && (string)$entities[$i]['_id'] === (string)new \MongoDB\BSON\ObjectId($myShift))
+            if($myShift !== null && (string)$entities[$i]['_id'] === (string)new MongoId($myShift))
             {
                 $entities[$i]['participant'] = $this->user->uid;
                 $entities[$i]['status'] = 'filled';
@@ -653,13 +677,13 @@ class ShiftAPI extends VolunteerAPI
             }
             if(isset($entity[$i]['minShifts']) && $entity[$i]['minShifts'] > 0)
             {
-                $shift = new \VolunteerShift($shiftId, $entity);
+                $shift = new VolunteerShift($shiftId, $entity);
                 $shift->makeCopy($dataTable);
             }
         }
         if(count($roles) !== 0)
         {
-            throw new \Exception('Not enough shifts to fullfill requests');
+            throw new Exception('Not enough shifts to fullfil requests');
         }
         for($i = 0; $i < $count; $i++)
         {
@@ -667,11 +691,11 @@ class ShiftAPI extends VolunteerAPI
             {
                 continue;
             }
-            $filter = new \Flipside\Data\Filter('_id eq '.$entities[$i]['_id']);
+            $filter = new DataFilter('_id eq '.$entities[$i]['_id']);
             $res = $dataTable->update($filter, $entities[$i]);
             if($res === false)
             {
-                throw new \Exception('Not able to save shift '.$entities[$i]['_id']);
+                throw new Exception('Not able to save shift '.$entities[$i]['_id']);
             }
         }
         return $response->withJSON(array('uuid' => $uuid));
@@ -690,7 +714,7 @@ class ShiftAPI extends VolunteerAPI
         }
         $groupID = $data['groupID'];
         $dataTable = $this->getDataTable();
-        $filter = new \Flipside\Data\Filter("groupID eq '$groupID'");
+        $filter = new DataFilter("groupID eq '$groupID'");
         $entity = $dataTable->read($filter);
         if(empty($entity))
         {
@@ -706,7 +730,7 @@ class ShiftAPI extends VolunteerAPI
                 $entity[$i]['status'] = 'unfilled';
             }
             $entity[$i]['groupLinkCreated'] = '';
-            $upFilter = new \Flipside\Data\Filter('_id eq '.$entity[$i]['_id']);
+            $upFilter = new DataFilter('_id eq '.$entity[$i]['_id']);
             $tmp = $dataTable->update($upFilter, $entity[$i]);
             if($tmp === false)
             {
@@ -732,7 +756,7 @@ class ShiftAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $shift = new \VolunteerShift(false, $entity);
+        $shift = new VolunteerShift(false, $entity);
         $entity['participant'] = '';
         $entity['status'] = 'unfilled';
         if(isset($entity['needEEApproval']))
@@ -742,7 +766,7 @@ class ShiftAPI extends VolunteerAPI
         $ret = $dataTable->update($filter, $entity);
         if($ret)
         {
-            $email = new \Emails\ShiftEmail($shift, 'shiftEmptiedSource');
+            $email = new ShiftEmail($shift, 'shiftEmptiedSource');
             $this->sendEmail($email);
         }
         return $response->withJSON($ret);
@@ -773,6 +797,16 @@ class ShiftAPI extends VolunteerAPI
         return $response->withJSON($dataTable->update($filter, $entity));
     }
 
+    private function getNewGroupId(&$groupTrans, $oldGID)
+    {
+        if(isset($groupTrans[$oldGID]))
+        {
+            return $groupTrans[$oldGID];
+        }
+        $groupTrans[$oldGID] = $this->genUUID();
+        return $groupTrans[$oldGID];
+    }
+
     function eventClone($request, $response)
     {
         $this->validateLoggedIn($request);
@@ -794,22 +828,22 @@ class ShiftAPI extends VolunteerAPI
             return $response->withJSON(array('msg'=>'Unable to find shifts for provided source event and department'))->withStatus(404);
         }
         $evtDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
-        $events = $evtDataTable->read(new \Flipside\Data\Filter('_id eq '.$data['src']));
+        $events = $evtDataTable->read(new DataFilter('_id eq '.$data['src']));
         if(empty($events))
         {
             return $response->withStatus(404);
         }
         $srcEvent = $events[0];
-        $events = $evtDataTable->read(new \Flipside\Data\Filter('_id eq '.$data['dst']));
+        $events = $evtDataTable->read(new DataFilter('_id eq '.$data['dst']));
         if(empty($events))
         {
             return $response->withStatus(404);
         }
         $dstEvent = $events[0];
         $groupTrans = array();
-        $srcStart = new \DateTimeImmutable($srcEvent['startTime']);
+        $srcStart = new DateTimeImmutable($srcEvent['startTime']);
         $srcStartMidnight = $srcStart->setTime(0, 0, 1);
-        $dstStart = new \DateTimeImmutable($dstEvent['startTime']);
+        $dstStart = new DateTimeImmutable($dstEvent['startTime']);
         $count = count($shifts);
         //Strip out or replace data...
         for($i = 0; $i < $count; $i++)
@@ -819,15 +853,7 @@ class ShiftAPI extends VolunteerAPI
             {
                 //This needs to change to new unique ID
                 $oldGID = $shifts[$i]['groupID'];
-                if(isset($groupTrans[$oldGID]))
-                {
-                    $shifts[$i]['groupID'] = $groupTrans[$oldGID];
-                }
-                else
-                {
-                    $groupTrans[$oldGID] = $this->genUUID();
-                    $shifts[$i]['groupID'] = $groupTrans[$oldGID];
-                }
+                $shifts[$i]['groupID'] = $this->getNewGroupId($groupTrans, $oldGID);
             }
             $shifts[$i]['eventID'] = $data['dst'];
             if(isset($shifts[$i]['participant']))
@@ -867,11 +893,11 @@ class ShiftAPI extends VolunteerAPI
                 $shifts[$i]['approvalNeeded'] = false;
             }
             //Ok this next bit is tricky... What I want to do is keep the time of day and keep the number of days from the beginning of the event...
-            $shiftStartTime = new \DateTime($shifts[$i]['startTime']);
-            $shiftEndTime = new \DateTime($shifts[$i]['endTime']);
+            $shiftStartTime = new DateTime($shifts[$i]['startTime']);
+            $shiftEndTime = new DateTime($shifts[$i]['endTime']);
             $startDiff = $srcStartMidnight->diff($shiftStartTime);
             $shiftLen = $shiftStartTime->diff($shiftEndTime);
-            $dayDiff = new \DateInterval('P'.$startDiff->d.'D');
+            $dayDiff = new DateInterval('P'.$startDiff->d.'D');
             $newShiftEndTime = $dstStart->add($dayDiff);
             $newShiftEndTime = $newShiftEndTime->setTime((int)$shiftStartTime->format('H'), (int)$shiftStartTime->format('i'));
             $newShiftStartTime = clone $newShiftEndTime;
@@ -887,11 +913,9 @@ class ShiftAPI extends VolunteerAPI
             if($data === false)
             {
                 $fail++;
+                continue;
             }
-            else
-            {
-                $success++;
-            }
+            $success++;
         }
         return $response->withJSON(array('success'=>$success, 'fail'=>$fail));
     }

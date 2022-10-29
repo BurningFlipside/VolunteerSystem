@@ -1,6 +1,10 @@
 <?php
+namespace Volunteer;
+
+use \Flipside\Data\Filter as DataFilter;
+
 /**
- * A class to abstract access to a Volunter System Profile.
+ * A class to abstract access to a Volunteer System Profile.
  *
  * This class is the primary method to access volunteer information.
  * 
@@ -9,7 +13,7 @@
  * @property string $lastName The user's surname (last name)
  * @property string $firstName The user's given name (first name)
  * @property string $burnerName The user's nick name
- * @property array $certs Certifications possesed by the user
+ * @property array $certs Certifications possessed by the user
  */
 class VolunteerProfile extends VolunteerObject
 {
@@ -39,7 +43,7 @@ class VolunteerProfile extends VolunteerObject
         }
     }
 
-    public function getDisplayName($type = 'webName')
+    public function getDisplayName(string $type = 'webName')
     {
         if($this->dbData === null) {
             return 'Anonymous';
@@ -77,33 +81,39 @@ class VolunteerProfile extends VolunteerObject
         return false;
     }
 
-    public function getTicketStatus()
+    private function getTicketsFromTicketTable($ticketTable, string $email, $year) : array
     {
-        $settingsTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Variables');
-        $settings = $settingsTable->read(new \Flipside\Data\Filter('name eq \'year\''));
-        $year = $settings[0]['value'];
-	$ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
-	$email = $this->dbData['email'];
         if(isset($this->dbData['ticketCode']))
         {
             $code = $this->dbData['ticketCode'];
-            $tickets = $ticketTable->read(new \Flipside\Data\Filter("contains(hash,$code) and year eq $year"));
+            $tickets = $ticketTable->read(new DataFilter("contains(hash,$code) and year eq $year"));
+            if(!empty($tickets))
+            {
+                return $tickets;
+            }
         }
-        else
-        {
-            $tickets = $ticketTable->read(new \Flipside\Data\Filter("email eq '$email' and year eq $year"));
-        }
+        return $ticketTable->read(new DataFilter("email eq '$email' and year eq $year"));
+    }
+
+    public function getTicketStatus()
+    {
+        $settingsTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Variables');
+        $settings = $settingsTable->read(new DataFilter('name eq \'year\''));
+        $year = $settings[0]['value'];
+	    $ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+	    $email = $this->dbData['email'];
+        $tickets = $this->getTicketsFromTicketTable($ticketTable, $email, $year);
         if(empty($tickets))
         {
             $requestTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
-            $requests = $requestTable->read(new \Flipside\Data\Filter("mail eq '$email' and year eq $year"));
+            $requests = $requestTable->read(new DataFilter("mail eq '$email' and year eq $year"));
             if(empty($requests))
             {
                 return array('ticket' => false, 'request' => false);
             }
             if($requests[0]['status'] === '1')
             {
-                return array('ticket' => false, 'request' => true, 'requestRecieved' => true);
+                return array('ticket' => false, 'request' => true, 'requestReceived' => true);
             }
             return array('ticket' => false, 'request' => true);
         }

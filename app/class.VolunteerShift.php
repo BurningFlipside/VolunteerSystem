@@ -1,6 +1,12 @@
 <?php
+namespace Volunteer;
+
+use \DateInterval as DateInterval;
+use \DateTime  as DateTime;
+use \Flipside\Data\Filter as DataFilter;
+
 /**
- * A class to abstract access to a Volunter System Shift.
+ * A class to abstract access to a Volunteer System Shift.
  *
  * This class is the primary method to access shift information.
  *
@@ -24,118 +30,153 @@ class VolunteerShift extends VolunteerObject
     protected $modStart = null;
     protected $modEnd = null;
     protected $participantObj = null;
-    protected $webParticipantName = null;
 
     public function __construct($shiftID, $dbData = null)
     {
         parent::__construct($shiftID, $dbData, 'shifts', '_id');
     }
 
+    protected function getModTime() : DateInterval
+    {
+        if($this->mod === null)
+        {
+            $this->mod = new DateInterval('PT0H');
+            if($this->role->down_time !== 0)
+            {
+                $this->mod = new DateInterval('PT'.(string)(intval($this->role->down_time,10)-1).'H59M');   
+            }
+        }
+        return $this->mod;
+    }
+
+    protected function getStartTime() : DateTime
+    {
+        if($this->myStart === null)
+        {
+            $this->myStart = new DateTime($this->dbData['startTime']);
+        }
+        return $this->myStart;
+    }
+
+    protected function getStartTimeWithModification() : DateTime
+    {
+        if($this->modStart === null)
+        {
+            $this->modStart = clone $this->startTime;
+            $this->modStart->sub($this->modTime);
+        }
+        return $this->modStart;
+    }
+
+    protected function getEndTime() : DateTime
+    {
+        if($this->myEnd === null)
+        {
+            $this->myEnd = new DateTime($this->dbData['endTime']);
+        }
+        return $this->myEnd;
+    }
+
+    protected function getEndTimeWithModification() : DateTime
+    {
+        if($this->modEnd === null)
+        {
+            $this->modEnd = clone $this->endTime;
+            $this->modEnd->add($this->modTime);
+        }
+        return $this->modEnd;
+    }
+
+    protected function getDepartment() : VolunteerDepartment
+    {
+        if(!isset(self::$deptCache[$this->dbData['departmentID']]))
+        {
+            self::$deptCache[$this->dbData['departmentID']] = new VolunteerDepartment($this->dbData['departmentID']);
+        }
+        return self::$deptCache[$this->dbData['departmentID']];
+    }
+
+    protected function getRole() : VolunteerRole
+    {
+        if(!isset(self::$roleCache[$this->dbData['roleID']]))
+        {
+            self::$roleCache[$this->dbData['roleID']] = new VolunteerRole($this->dbData['roleID']);
+        }
+        return self::$roleCache[$this->dbData['roleID']];
+    }
+
+    protected function getEvent() : VolunteerEvent
+    {
+        if(!isset(self::$eventCache[$this->dbData['eventID']]))
+        {
+            self::$eventCache[$this->dbData['eventID']] = new VolunteerEvent($this->dbData['eventID']);
+        }
+        return self::$eventCache[$this->dbData['eventID']];
+    }
+
+    protected function getParticipantObj() : VolunteerProfile
+    {
+        if($this->participantObj === null)
+        {
+            if(!isset($this->dbData['participant']) || $this->dbData['participant'] === '' || $this->dbData['participant'] === '/dev/null')
+            {
+                return false;
+            }
+            $this->participantObj = new VolunteerProfile($this->dbData['participant']);
+        }
+        return $this->participantObj;
+    }
+
+    protected function getParticipantName(string $type = 'webName')
+    {
+        $part = $this->getParticipantObj();
+        if($part) 
+        {
+            return $part->getDisplayName($type);
+        }
+        return '';
+    }
+
+    protected function getParticipant()
+    {
+        if(isset($this->dbData['participant']))
+        {
+            return $this->dbData['participant'];
+        }
+        return '';
+    }
+
+    /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
     public function __get($propName)
     {
         switch($propName)
         {
             case 'modTime':
-                if($this->mod === null)
-                {
-                    $this->mod = new \DateInterval('PT0H');
-                    if($this->role->down_time !== 0)
-                    {
-                        $this->mod = new \DateInterval('PT'.(string)(intval($this->role->down_time,10)-1).'H59M');   
-                    }
-                }
-                return $this->mod;
+                return $this->getModTime();
             case 'startTime':
-                if($this->myStart === null)
-                {
-                    $this->myStart = new \DateTime($this->dbData['startTime']);
-                }
-                return $this->myStart;
+                return $this->getStartTime();
             case 'startTimeWithMod':
-                if($this->modStart === null)
-                {
-                    $this->modStart = clone $this->startTime;
-                    $this->modStart->sub($this->modTime);
-                }
-                return $this->modStart;
+                return $this->getStartTimeWithModification();
             case 'endTime':
-                if($this->myEnd === null)
-                {
-                    $this->myEnd = new \DateTime($this->dbData['endTime']);
-                }
-                return $this->myEnd;
+                return $this->getEndTime();
             case 'endTimeWithMod':
-                if($this->modEnd === null)
-                {
-                    $this->modEnd = clone $this->endTime;
-                    $this->modEnd->add($this->modTime);
-                }
-                return $this->modEnd;
+                return $this->getEndTimeWithModification();
             case 'department':
-                if(!isset(self::$deptCache[$this->dbData['departmentID']]))
-                {
-                    self::$deptCache[$this->dbData['departmentID']] = new \VolunteerDepartment($this->dbData['departmentID']);
-                }
-                return self::$deptCache[$this->dbData['departmentID']];
+                return $this->getDepartment();
             case 'role':
-                if(!isset(self::$roleCache[$this->dbData['roleID']]))
-                {
-                    self::$roleCache[$this->dbData['roleID']] = new \VolunteerRole($this->dbData['roleID']);
-                }
-                return self::$roleCache[$this->dbData['roleID']];
+                return $this->getRole();
             case 'event':
-                if(!isset(self::$eventCache[$this->dbData['eventID']]))
-                {
-                    self::$eventCache[$this->dbData['eventID']] = new \VolunteerEvent($this->dbData['eventID']);
-                }
-                return self::$eventCache[$this->dbData['eventID']];
+                return $this->getEvent();
             case 'participantObj':
-                if($this->participantObj === null)
-                {
-                    if(isset($this->dbData['participant']) && $this->dbData['participant'] !== '' && $this->dbData['participant'] !== '/dev/null')
-                    {
-                        $this->participantObj = new \VolunteerProfile($this->dbData['participant']);
-                    }
-                    else
-                    {
-                        $this->participantObj = false;
-                    }
-                }
-                return $this->participantObj;
+                return $this->getParticipantObj();
             case 'webParticipantName':
-                if($this->webParticipantName === null)
-                {
-                    if(isset($this->dbData['participant']))
-                    {
-                        $tmp = new \VolunteerProfile($this->dbData['participant']);
-                        $this->webParticipantName = $tmp->getDisplayName();
-                    }
-                    else
-                    {
-                        $this->webParticipantName = "";
-                    }
-                }
-                return $this->webParticipantName;
+                return $this->getParticipantName();
             case 'scheduleParticipantName':
-                if($this->scheduleParticipantName === null)
-                {
-                    if(isset($this->dbData['participant']))
-                    {
-                        $tmp = new \VolunteerProfile($this->dbData['participant']);
-                        $this->scheduleParticipantName = $tmp->getDisplayName('paperName');
-                    }
-                    else
-                    {
-                        $this->scheduleParticipantName = "";
-                    }
-                }
-                return $this->scheduleParticipantName;
+                return $this->getParticipantName('paperName');
             case 'participant':
-                if(isset($this->dbData[$propName]))
-                {
-                    return $this->dbData[$propName];
-                }
-                return '';
+                return $this->getParticipant();
             default:
                 return $this->dbData[$propName];
         }
@@ -144,6 +185,19 @@ class VolunteerShift extends VolunteerObject
     public function isSame($shift)
     {
         return (string)$this->dbData['_id'] === (string)$shift->dbData['_id'];
+    }
+
+    private function doShiftsOverlap($moreDown, $lessDown)
+    {
+        if($moreDown->startTimeWithMod >= $lessDown->startTime && $moreDown->startTimeWithMod <= $lessDown->endTime)
+        {
+            return true;
+        }
+        if($moreDown->endTimeWithMod <= $lessDown->endTime && $moreDown->endTimeWithMod > $lessDown->startTime)
+        {
+            return true;
+        }
+        return false;
     }
 
     public function overlaps($shift)
@@ -155,25 +209,9 @@ class VolunteerShift extends VolunteerObject
         //Does this shift or the other have a bigger down time requirement...
         if($this->role->down_time > $shift->role->down_time)
         {
-            if($this->startTimeWithMod >= $shift->startTime && $this->startTimeWithMod <= $shift->endTime)
-            {
-                return true;
-            }
-            if($this->endTimeWithMod <= $shift->endTime && $this->endTimeWithMod > $shift->startTime)
-            {
-                return true;
-            }
-            return false;
+            return $this->doShiftsOverlap($this, $shift);
         }
-        if($this->startTime >= $shift->startTimeWithMod && $this->startTime <= $shift->endTimeWithMod)
-        {
-            return true;
-        }
-        if($this->endTime <= $shift->endTimeWithMod && $this->endTime > $shift->startTimeWithMod)
-        {
-            return true;
-        }
-        return false;
+        return $this->doShiftsOverlap($shift, $this);
     }
 
     public function isFilled()
@@ -181,7 +219,7 @@ class VolunteerShift extends VolunteerObject
         return isset($this->dbData['status']) && ($this->dbData['status'] === 'pending' || $this->dbData['status'] === 'filled' || $this->dbData['status'] === 'groupPending');
     }
 
-    public function findOverlaps($uid, $shortCircuit = false)
+    public function findAllOverlaps($uid) : array
     {
         static $userShifts = null;
         static $lastUid = null;
@@ -193,7 +231,7 @@ class VolunteerShift extends VolunteerObject
         if($userShifts === null)
         {
             $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
-            $filter = new \Flipside\Data\Filter("participant eq '$uid'");
+            $filter = new DataFilter("participant eq '$uid'");
             $userShifts = $dataTable->read($filter);
             $count = count($userShifts);
             for($i = 0; $i < $count; $i++)
@@ -207,18 +245,41 @@ class VolunteerShift extends VolunteerObject
         {
             if($this->overlaps($userShifts[$i]))
             {
-                if($shortCircuit === true)
-                {
-                    return true;
-                }
                 array_push($res, $userShifts[$i]);
             }
         }
-        if($shortCircuit === true)
-        {
-            return false;
-        }
         return $res;
+    }
+
+    public function doAnyOverlap($uid) : bool
+    {
+        static $userShifts = null;
+        static $lastUid = null;
+        static $count = 0;
+        if($lastUid !== $uid)
+        {
+            $userShifts = null;
+        }
+        if($userShifts === null)
+        {
+            $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+            $filter = new DataFilter("participant eq '$uid'");
+            $userShifts = $dataTable->read($filter);
+            $count = count($userShifts);
+            for($i = 0; $i < $count; $i++)
+            {
+                $userShifts[$i] = new VolunteerShift(false, $userShifts[$i]);
+            }
+            $lastUid = $uid;
+        }
+        for($i = 0; $i < $count; $i++)
+        {
+            if($this->overlaps($userShifts[$i]))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function makeCopy($dataTable)

@@ -1,5 +1,10 @@
 <?php
 
+use \Flipside\Data\Filter as DataFilter;
+use \Flipside\ODataParams;
+use Volunteer\Schedules\SimplePDF as SimpleSchedulePDF;
+use Volunteer\Schedules\GridSchedule;
+
 class DepartmentAPI extends VolunteerAPI
 {
     use Processor;
@@ -72,7 +77,7 @@ class DepartmentAPI extends VolunteerAPI
             {
                 //Can the user fill any of the roles in the department even if it isn't public and they aren't an admin?
                 $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
-                $filter = new \Flipside\Data\Filter("departmentID eq '".$entry['departmentID']."'");
+                $filter = new DataFilter("departmentID eq '".$entry['departmentID']."'");
                 $roles = $dataTable->read($filter);
                 if($roles === false)
                 {
@@ -119,8 +124,8 @@ class DepartmentAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
-        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
-        $filter = new \Flipside\Data\Filter("departmentID eq '$deptId'");
+        $odata = $request->getAttribute('odata', new ODataParams(array()));
+        $filter = new DataFilter("departmentID eq '$deptId'");
         $roles = $dataTable->read($filter, $odata->select, $odata->top,
                                     $odata->skip, $odata->orderby);
         if($roles === false)
@@ -143,7 +148,7 @@ class DepartmentAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
+        $odata = $request->getAttribute('odata', new ODataParams(array()));
         $filter = $this->addRequiredFilter('departmentID', $deptId, $odata);
         if($filter === false)
         {
@@ -205,7 +210,7 @@ class DepartmentAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'roles');
-        $filter = new \Flipside\Data\Filter("departmentID eq '$deptId' and short_name eq '$roleId'");
+        $filter = new DataFilter("departmentID eq '$deptId' and short_name eq '$roleId'");
         $entry = $dataTable->read($filter);
         if(empty($entry))
         {
@@ -224,14 +229,14 @@ class DepartmentAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
-        $depts = $dataTable->read(new \Flipside\Data\Filter('departmentID eq '.$deptId));
-        if(empty($depts))
+        $departments = $dataTable->read(new DataFilter('departmentID eq '.$deptId));
+        if(empty($departments))
         {
             return $response->withStatus(404);
         }
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $eventId = $request->getParam('eventID');
-        $filter = new \Flipside\Data\Filter('eventID eq '.$eventId.' and departmentID eq '.$deptId);
+        $filter = new DataFilter('eventID eq '.$eventId.' and departmentID eq '.$deptId);
         $shifts = $dataTable->read($filter);
         if(empty($shifts))
         {
@@ -240,30 +245,34 @@ class DepartmentAPI extends VolunteerAPI
         switch($request->getParam('type'))
         {
             case 'simplePDF':
-                return $this->generateSimplePDFSchedule($depts[0], $shifts, $response);
+                return $this->generateSimplePDFSchedule($departments[0], $shifts, $response);
             case 'gridXLSX':
-                return $this->generateGridSchedule($depts[0], $shifts, $response, 'XLSX');
+                return $this->generateGridSchedule($departments[0], $shifts, $response, 'XLSX');
             case 'gridXLSXWithCamps':
-                return $this->generateGridSchedule($depts[0], $shifts, $response, 'XLSX', true);
+                return $this->generateGridSchedule($departments[0], $shifts, $response, 'XLSX', true);
             case 'gridPDF':
-                return $this->generateGridSchedule($depts[0], $shifts, $response, 'PDF');
+                return $this->generateGridSchedule($departments[0], $shifts, $response, 'PDF');
             case 'gridPDFWithCamps':
-                return $this->generateGridSchedule($depts[0], $shifts, $response, 'PDF', true);
+                return $this->generateGridSchedule($departments[0], $shifts, $response, 'PDF', true);
         }
         return $response->withJson($shifts);
     }
 
     public function generateSimplePDFSchedule($dept, $shifts, $response)
     {
-        $pdf = new \Schedules\SimplePDF($dept, $shifts);
+        $pdf = new SimpleSchedulePDF($dept, $shifts);
         $response = $response->withHeader('Content-Type', 'application/pdf');
         $response->getBody()->write($pdf->toPDFBuffer());
         return $response;
     }
 
-    public function generateGridSchedule($dept, $shifts, $response, $type, $includeCampNames = false)
+    /**
+     * The boolean flag really is just a minor flag
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     */
+    public function generateGridSchedule($dept, $shifts, $response, $type, bool $includeCampNames = false)
     {
-        $spreadSheet = new \Schedules\GridSchedule($dept, $shifts, $includeCampNames);
+        $spreadSheet = new GridSchedule($dept, $shifts, $includeCampNames);
         $data = $spreadSheet->getBuffer($type);
         $response = $response->withHeader('Content-Type', $data['content-type']);
         $response = $response->withHeader('Content-Disposition', 'attachment; filename='.$dept['departmentName'].$data['extension']);

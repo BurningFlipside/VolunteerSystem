@@ -1,5 +1,5 @@
 <?php
-namespace Emails;
+namespace Volunteer\Emails;
 
 class TwoShiftsAtOnceEmail extends VolunteerEmail
 {

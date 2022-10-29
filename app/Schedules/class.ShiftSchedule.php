@@ -1,5 +1,5 @@
 <?php
-namespace Schedules;
+namespace Volunteer\Schedules;
 
 trait ShiftSchedule
 {

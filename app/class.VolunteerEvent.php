@@ -1,4 +1,6 @@
 <?php
+namespace Volunteer;
+
 class VolunteerEvent extends VolunteerObject
 {
     public function __construct($departmentID, $dbData = null)
@@ -6,7 +8,16 @@ class VolunteerEvent extends VolunteerObject
         parent::__construct($departmentID, $dbData, 'events', '_id');
     }
 
-    public function hasVolOnEEList($uid, $eeListIndex)
+    private function allEEApproved($eeList, $uid) : bool
+    {
+        if(isset($eeList[$uid]) && $eeList[$uid]['AAR'] === true && $eeList[$uid]['AF'] === true && $eeList[$uid]['Lead'] === true)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public function hasVolOnEEList($uid, $eeListIndex) : bool
     {
         $uid = urlencode($uid);
         $uid = str_replace('.', '%2E', $uid);
@@ -22,10 +33,7 @@ class VolunteerEvent extends VolunteerObject
         if(isset($this->dbData['eeLists']) && isset($this->dbData['eeLists'][$eeListIndex]))
         {
             $eeList = $this->dbData['eeLists'][$eeListIndex];
-            if(isset($eeList[$uid]) && $eeList[$uid]['AAR'] === true && $eeList[$uid]['AF'] === true && $eeList[$uid]['Lead'] === true)
-            {
-                return true;
-            }
+            return $this->allEEApproved($eeList, $uid);
         }
         return false;
     }
@@ -45,11 +53,38 @@ class VolunteerEvent extends VolunteerObject
         if(!isset($this->dbData['eeLists'][$eeListIndex][$uid]))
         {
             $this->dbData['eeLists'][$eeListIndex][$uid] = array('AAR'=>false, 'AF'=>false, 'Lead'=>false);
-            $dt = $this->getDataTable();
+            $dataTable = $this->getDataTable();
             $filter = $this->getDataFilter();
-            return $dt->update($filter, $this->dbData);
+            return $dataTable->update($filter, $this->dbData);
         }
         return true;
+    }
+
+    private function getOtherEETypesThatInclude(int $eeType) : array
+    {
+        switch($eeType)
+        {
+            case -2: //Late Stay doesn't include others
+            default:
+                return array();
+            case 0:
+                return array(-2);
+            case 1:
+                //Wednesday Morning includes Wednesday Afternoon
+                return array(0, -2);
+            case 2:
+                return array(1, 0, -2);
+
+        }
+    }
+
+    private function setOtherType($uid, $eeListIndex, $type)
+    {
+        if(isset($this->dbData['eeLists'][$eeListIndex][$uid]))
+        {
+            return $this->approveEE($uid, $eeListIndex, $type);
+        }
+        return true; //This is fine, skip it
     }
 
     public function approveEE($uid, $eeListIndex, $type)
@@ -72,48 +107,22 @@ class VolunteerEvent extends VolunteerObject
         }
         if($ret)
         {
-            $dt = $this->getDataTable();
+            $dataTable = $this->getDataTable();
             $filter = $this->getDataFilter();
-            $ret = $dt->update($filter, $this->dbData);
+            $ret = $dataTable->update($filter, $this->dbData);
             if($ret)
             {
-                switch($eeListIndex)
+                $otherTypes = $this->getOtherEETypesThatInclude($eeListIndex);
+                $count = count($otherTypes);
+                for($i = 0; $i < $count; $i++)
                 {
-                    case -2:
-                    default:
-                        //Done
+                    $ret = $this->setOtherType($uid, $otherTypes[$i], $type);
+                    if($ret === false)
+                    {
                         return $ret;
-                    case 0:
-                        if(isset($this->dbData['eeLists'][-2][$uid]))
-                        {
-                            return $this->approveEE($uid, -2, $type);
-                        }
-                        break;
-                    case 1:
-                        if(isset($this->dbData['eeLists'][0][$uid]))
-                        {
-                            return $this->approveEE($uid, 0, $type);
-                        }
-                        if(isset($this->dbData['eeLists'][-2][$uid]))
-                        {
-                            return $this->approveEE($uid, -2, $type);
-                        }
-                        break;
-                    case 2:
-                        if(isset($this->dbData['eeLists'][1][$uid]))
-                        {
-                            return $this->approveEE($uid, 1, $type);
-                        }
-                        if(isset($this->dbData['eeLists'][0][$uid]))
-                        {
-                            return $this->approveEE($uid, 0, $type);
-                        }
-                        if(isset($this->dbData['eeLists'][-2][$uid]))
-                        {
-                            return $this->approveEE($uid, -2, $type);
-                        }
-                        break;
+                    }
                 }
+                return $ret;
             }
         }
         return $ret;

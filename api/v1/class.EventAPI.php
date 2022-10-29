@@ -1,10 +1,22 @@
 <?php
+
+use \DateTime as DateTime;
+use \Flipside\ODataParams;
+use \Flipside\Data\Filter as DataFilter;
+
+use Volunteer\VolunteerAuditLog;
+use Volunteer\VolunteerEvent;
+use Volunteer\VolunteerShift;
+
 class EventAPI extends VolunteerAPI
 {
+    private $logger;
+
     use Processor;
 
     public function __construct()
     {
+        $this->logger = new VolunteerAuditLog();
         parent::__construct('events');
     }
 
@@ -20,7 +32,7 @@ class EventAPI extends VolunteerAPI
 
     protected function getFilterForPrimaryKey($value)
     {
-        return new \Flipside\Data\Filter($this->primaryKeyName." eq '$value' or alias eq '$value'");
+        return new DataFilter($this->primaryKeyName." eq '$value' or alias eq '$value'");
     }
 
     /**
@@ -87,7 +99,7 @@ class EventAPI extends VolunteerAPI
         $this->validateLoggedIn($request);
         $eventId = $args['event'];
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
+        $odata = $request->getAttribute('odata', new ODataParams(array()));
         $filter = $this->addRequiredFilter('eventID', $eventId, $odata);
         if($filter === false)
         {
@@ -190,44 +202,41 @@ class EventAPI extends VolunteerAPI
         {
             //Only get shifts for this lead's department(s)...
             $deptDataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
-            $depts = $deptDataTable->read(array('lead'=>array('$in'=>$this->user->title)));
-            if(empty($depts))
+            $departments = $deptDataTable->read(array('lead'=>array('$in'=>$this->user->title)));
+            if(empty($departments))
             {
                 return $response->withStatus(404);
             }
-            $filter['departmentID'] = $depts[0]['departmentID'];
+            $filter['departmentID'] = $departments[0]['departmentID'];
         }
         $shifts = $shiftDataTable->read($filter);
         $ret = array();
         $count = count($shifts);
-        $dedup = array();
+        $dedupe = array();
         for($i = 0; $i < $count; $i++)
         {
-            $shift = new \VolunteerShift(false, $shifts[$i]);
-            try {
-                $vol = $shift->participantObj;
-            } catch (\Exception $e) {
-                $vol = false;
-            }
-            if($vol === false) {
+            $shift = new VolunteerShift(false, $shifts[$i]);
+            $vol = $shift->participantObj;
+            if($vol === false)
+            {
                 $vol = (object)array('uid'=>$shift->participant , 'firstName' => $shift->participant, 'lastName'=>'', 'email'=>$shift->participant);
             }
             $role = $shift->role;
-            if(!isset($dedup[$vol->uid]))
+            if(!isset($dedupe[$vol->uid]))
             {
-                $dedup[$vol->uid] = array();
+                $dedupe[$vol->uid] = array();
             }
-            if(!isset($dedup[$vol->uid][$shift->departmentID]))
+            if(!isset($dedupe[$vol->uid][$shift->departmentID]))
             {
-                $dedup[$vol->uid][$shift->departmentID] = array();
+                $dedupe[$vol->uid][$shift->departmentID] = array();
             }
-            if(!isset($dedup[$vol->uid][$shift->departmentID][$role->short_name]))
+            if(!isset($dedupe[$vol->uid][$shift->departmentID][$role->short_name]))
             {
-                $dedup[$vol->uid][$shift->departmentID][$role->short_name] = -1;
+                $dedupe[$vol->uid][$shift->departmentID][$role->short_name] = -1;
             }
-            if($dedup[$vol->uid][$shift->departmentID][$role->short_name] < $shift->earlyLate)
+            if($dedupe[$vol->uid][$shift->departmentID][$role->short_name] < $shift->earlyLate)
             {
-                $dedup[$vol->uid][$shift->departmentID][$role->short_name] = $shift->earlyLate;
+                $dedupe[$vol->uid][$shift->departmentID][$role->short_name] = $shift->earlyLate;
                 $entry = array('name' => $vol->firstName.' '.$vol->lastName, 'email'=> $vol->email, 'dept'=> $shift->department->departmentName, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate, 'ticket'=>$this->getTicketStringForVol($vol));
                 array_push($ret, $entry);
             }
@@ -264,13 +273,12 @@ class EventAPI extends VolunteerAPI
         {
             return $response->withStatus(401);
         }
-        $event = new \VolunteerEvent($eventId);
+        $event = new VolunteerEvent($eventId);
         $obj = $this->getParsedBody($request);
         //First make sure the current user can do the auth they are trying...
         if($this->userCanAuth($obj['approvalType']) === false)
         {
-            $log = new \VolunteerAuditLog();
-            $log->writeEntry($this->user->uid, false, 'tried to approve EE not allowed to', $request->getServerParam('REMOTE_ADDR'), 'Early Entry', $obj);
+            $this->logger->writeEntry($this->user->uid, false, 'tried to approve EE not allowed to', $request->getServerParam('REMOTE_ADDR'), 'Early Entry', $obj);
             return $response->withStatus(401);
         }
         $eeList = $event->eeLists[(int)$obj['eeList']];
@@ -285,8 +293,7 @@ class EventAPI extends VolunteerAPI
             }
         }
         $ret = $event->approveEE($uid, (int)$obj['eeList'], $obj['approvalType']);
-        $log = new \VolunteerAuditLog();
-        $log->writeEntry($this->user->uid, $ret, 'Approved EE', $request->getServerParam('REMOTE_ADDR'), 'Early Entry', $obj);
+        $this->logger->writeEntry($this->user->uid, $ret, 'Approved EE', $request->getServerParam('REMOTE_ADDR'), 'Early Entry', $obj);
         return $response->withJson($ret);
     }
 }

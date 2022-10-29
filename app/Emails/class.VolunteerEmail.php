@@ -1,5 +1,5 @@
 <?php
-namespace Emails;
+namespace Volunteer\Emails;
 require_once('Autoload.php');
 
 class VolunteerEmail extends \Flipside\Email\Email

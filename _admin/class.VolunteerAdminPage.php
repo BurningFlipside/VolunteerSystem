@@ -12,6 +12,9 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
     public $isAuthorized;
     public $secure_root;
 
+    /**
+     * @SuppressWarnings(PHPMD.Superglobals)
+     */
     public function __construct($title)
     {
         $this->isLead = false;
@@ -34,7 +37,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
         $this->addLink('Help <i class="fas fa-question"></i>', '../docs/admin_help.html#'.$noExt);
     }
 
-    protected function getAdminInfo()
+    protected function getAdminInfo() : void
     {
         if($this->is_admin === false && $this->user)
         {
@@ -56,7 +59,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
         }
     }
 
-    protected function addLinks()
+    protected function addLinks() : void
     {
         $this->content['header']['sidebar'] = array();
         if($this->user === false || $this->user === null)
@@ -105,7 +108,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
         }
     }
 
-    private function getCertBadge()
+    private function getCertBadge() : string
     {
         $certApprovalCount = 0;
         $certTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');

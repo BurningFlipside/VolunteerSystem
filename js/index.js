@@ -15,7 +15,7 @@ function getDateRange() {
 }
 
 function getDeptName(deptID) {
-  var option = $('#departments option[value="'+deptID+'"]');
+  let option = $('#departments option[value="'+deptID+'"]');
   if(option.length === 0) {
     return null;
   }
@@ -492,6 +492,7 @@ function addNonStandardViewAlert() {
 function initPage() {
   if(FullCalendar === undefined) {
     setTimeout(initPage, 100);
+    return;
   }
   if(Intl.DateTimeFormat().resolvedOptions().timeZone !== 'America/Chicago') {
     $('#content').prepend('<div class="alert alert-primary" role="alert">Note all times are displayed in your local time zone! Make sure you do the appropriate math as Flipside operates in Central Daylight Time!</div>');
@@ -571,3 +572,4 @@ $(() => {
     initPage();
   });
 });
+/* vim: set tabstop=2 shiftwidth=2 expandtab: */

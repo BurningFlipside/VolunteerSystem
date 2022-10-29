@@ -10,6 +10,9 @@ class VolunteerPage extends \Flipside\Secure\SecurePage
 {
     public  $volunteerRoot;
 
+    /**
+     * @SuppressWarnings(PHPMD.Superglobals)
+     */
     public function __construct($title)
     {
         parent::__construct($title);

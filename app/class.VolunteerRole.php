@@ -1,9 +1,11 @@
 <?php
+namespace Volunteer;
+
 class VolunteerRole extends VolunteerObject
 {
-    public function __construct($roleid, $dbData = null)
+    public function __construct($roleId, $dbData = null)
     {
-        parent::__construct($roleid, $dbData, 'roles', 'short_name');
+        parent::__construct($roleId, $dbData, 'roles', 'short_name');
     }
 
     public function __get($propName)

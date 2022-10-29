@@ -1,4 +1,16 @@
 <?php
+
+use \DateTime as DateTime;
+use \DateTimeZone as DateTimeZone;
+use \Exception as Exception;
+
+use \Flipside\ODataParams;
+use \Flipside\Data\Filter as DataFilter;
+
+use Volunteer\VolunteerProfile;
+use Volunteer\Emails\CertificationEmail;
+use Volunteer\Schedules\SimplePDF as SimpleSchedulePDF;
+
 class ParticipantAPI extends VolunteerAPI
 {
     public function __construct()
@@ -46,14 +58,14 @@ class ParticipantAPI extends VolunteerAPI
     {
         $emailList = array();
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
-        $depts = $dataTable->read();
-        $count = count($depts);
+        $departments = $dataTable->read();
+        $count = count($departments);
         for($i = 0; $i < $count; $i++)
         {
-            if(isset($depts[$i]['others']))
+            if(isset($departments[$i]['others']))
             {
-                $others = $depts[$i]['others'];
-                $others = explode(',', str_replace(' ', '', $depts[$i]['others']));
+                $others = $departments[$i]['others'];
+                $others = explode(',', str_replace(' ', '', $departments[$i]['others']));
                 $emailList = array_merge($emailList, $others);
             }
         }
@@ -78,6 +90,9 @@ class ParticipantAPI extends VolunteerAPI
         return $this->canUpdate($request, $entity);
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     protected function validateCreate(&$obj, $request)
     {
         if(isset($obj['uid']))
@@ -123,7 +138,7 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = $this->getDataTable();
-        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
+        $odata = $request->getAttribute('odata', new ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, $odata->select, $odata->top,
                                     $odata->skip, $odata->orderby);
@@ -132,6 +147,15 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(404);
         }
         return $response->withJson($areas[0]);
+    }
+
+    private function getSingleEntry($entry) : mixed
+    {
+        if(count($entry) === 1 && isset($entry[0]))
+        {
+            $entry = $entry[0];
+        }
+        return $entry;
     }
 
     public function updateEntry($request, $response, $args)
@@ -153,25 +177,12 @@ class ParticipantAPI extends VolunteerAPI
         {
             return $response->withStatus(404);
         }
-        if(count($entry) === 1 && isset($entry[0]))
-        {
-            $entry = $entry[0];
-        }
+        $entry = $this->getSingleEntry($entry);
         if($uid !== $this->user->uid && $this->canUpdate($request, $entry) === false)
         {
             return $response->withStatus(401);
         }
-        $obj = $request->getParsedBody();
-        if($obj === null)
-        {
-            $request->getBody()->rewind();
-            $obj = $request->getBody()->getContents();
-            $tmp = json_decode($obj, true);
-            if($tmp !== null)
-            {
-                $obj = $tmp;
-            }
-        }
+        $obj = $this->getParsedBody($request);
         if($this->validateUpdate($obj, $request, $entry) === false)
         {
             return $response->withStatus(400);
@@ -185,7 +196,7 @@ class ParticipantAPI extends VolunteerAPI
         $this->validateLoggedIn($request);
         $uid = $this->user->uid;
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
-        $filter = new \Flipside\Data\Filter("participant eq '$uid'");
+        $filter = new DataFilter("participant eq '$uid'");
         $shifts = $dataTable->read($filter);
         $format = $request->getAttribute('format', false);
         if($format === false || $format === 'text/calendar')
@@ -199,11 +210,11 @@ class ParticipantAPI extends VolunteerAPI
                 $text .= "BEGIN:VEVENT\r\n";
                 $text .= "UID:".$this->user->mail."\r\n";
                 $dateTime = new DateTime($shifts[$i]['startTime']);
-                $dateTime->setTimezone(new \DateTimeZone('UTC'));
+                $dateTime->setTimezone(new DateTimeZone('UTC'));
                 $text .= "DTSTAMP:".$dateTime->format('Ymd\THis\Z')."\r\n";
                 $text .= "DTSTART:".$dateTime->format('Ymd\THis\Z')."\r\n";
                 $dateTime = new DateTime($shifts[$i]['endTime']);
-                $dateTime->setTimezone(new \DateTimeZone('UTC'));
+                $dateTime->setTimezone(new DateTimeZone('UTC'));
                 $text .= "DTEND:".$dateTime->format('Ymd\THis\Z')."\r\n";
                 $text .= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
                 $text .= "END:VEVENT\r\n";
@@ -217,7 +228,7 @@ class ParticipantAPI extends VolunteerAPI
         }
         else if($format === 'application/pdf')
         {
-            $pdf = new \Schedules\SimplePDF('My', $shifts);
+            $pdf = new SimpleSchedulePDF('My', $shifts);
             $response = $response->withHeader('Content-Type', 'application/pdf');
             $response->getBody()->write($pdf->toPDFBuffer());
             return $response;
@@ -226,7 +237,7 @@ class ParticipantAPI extends VolunteerAPI
         {
             return $response->withJSON($shifts);
         }
-        throw new \Exception('Unknown format '.$format);
+        throw new Exception('Unknown format '.$format);
     }
 
     public function getCerts($request, $response, $args)
@@ -242,7 +253,7 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(401);
         }
         $dataTable = $this->getDataTable();
-        $odata = $request->getAttribute('odata', new \Flipside\ODataParams(array()));
+        $odata = $request->getAttribute('odata', new ODataParams(array()));
         $filter = $this->getFilterForPrimaryKey($uid);
         $areas = $dataTable->read($filter, array('certs'), $odata->top,
                                     $odata->skip, $odata->orderby);
@@ -294,6 +305,30 @@ class ParticipantAPI extends VolunteerAPI
         return $response->withStatus(500);
     }
 
+    private function sendCertificationEmail($user, $emailTypeSource, $certType, $other = array())
+    {
+        $profile = new VolunteerProfile(false, $user);
+        $email = new CertificationEmail($profile, $emailTypeSource, $certType, $other);
+        $emailProvider = \Flipside\EmailProvider::getInstance();
+        if($emailProvider->sendEmail($email) === false)
+        {
+            throw new Exception('Unable to send email!');
+        }
+    }
+
+    private function getRejectReason($reasonCode) : string
+    {
+        switch($reasonCode)
+        {
+            case 'invalid':
+                return 'the image provided did not seem to show a valid certification of the type selected';
+            case 'expired':
+                return 'the image provided was for a certification that had already expired';
+            default:
+                return 'Unknown';
+        }
+    }
+
     public function rejectCert($request, $response, $args)
     {
         $this->validateLoggedIn($request);
@@ -320,27 +355,12 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(404);
         }
         $obj = $this->getParsedBody($request);
-        $reason = 'Unknown';
-        switch($obj['reason'])
-        {
-            case 'invalid':
-                $reason = 'the image provided did not seem to show a valid certication of the type selected';
-                break;
-            case 'expired':
-                $reason = 'the image provided was for a certification that had already expired';
-                break;
-        }
+        $reason = $this->getRejectReason($obj['reason']);
         unset($user['certs'][$certType]);
         $ret = $dataTable->update($filter, $user);
         if($ret)
         {
-            $profile = new \VolunteerProfile(false, $user);
-            $email = new \Emails\CertificationEmail($profile, 'certifcationRejected', $certType, array('reason'=>$reason));
-            $emailProvider = \Flipside\EmailProvider::getInstance();
-            if($emailProvider->sendEmail($email) === false)
-            {
-                throw new \Exception('Unable to send email!');
-            }
+            $this->sendCertificationEmail($user, 'certificationRejected', $certType, array('reason'=>$reason));
             return $response->withStatus(200);
         }
         return $response->withStatus(500);
@@ -367,7 +387,6 @@ class ParticipantAPI extends VolunteerAPI
         }
         $user = $users[0];
         $certType = $args['certId'];
-        $certType = $args['certId'];
         if(!isset($user['certs']) || !isset($user['certs'][$certType]))
         {
             return $response->withStatus(404);
@@ -381,13 +400,7 @@ class ParticipantAPI extends VolunteerAPI
         $ret = $dataTable->update($filter, $user);
         if($ret)
         {
-            $profile = new \VolunteerProfile(false, $user);
-            $email = new \Emails\CertificationEmail($profile, 'certifcationAccepted', $certType);
-            $emailProvider = \Flipside\EmailProvider::getInstance();
-            if($emailProvider->sendEmail($email) === false)
-            {
-                throw new \Exception('Unable to send email!');
-            }
+            $this->sendCertificationEmail($user, 'certificationAccepted', $certType);
             return $response->withStatus(200);
         }
         return $response->withStatus(500);
@@ -413,35 +426,22 @@ class ParticipantAPI extends VolunteerAPI
             return $response->withStatus(404);
         }
         $user = $users[0];
-        $settingsTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Variables');
-        $settings = $settingsTable->read(new \Flipside\Data\Filter('name eq \'year\''));
-        $year = $settings[0]['value'];
-        $ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
+        $vol = new VolunteerProfile(false, $user);
+        return $vol->getTicketStatus();
+    }
+
+    private function getTicketsFromTicketTable($ticketTable, $user, string $email, $year) : array
+    {
         if(isset($user['ticketCode']))
         {
             $code = $user['ticketCode'];
-            $tickets = $ticketTable->read(new \Flipside\Data\Filter("contains(hash,$code) and year eq $year"));
-        }
-        else
-        {
-            $email = $user['email'];
-            $tickets = $ticketTable->read(new \Flipside\Data\Filter("email eq '$email' and year eq $year"));
-        }
-        if(empty($tickets))
-        {
-            $requestTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
-            $requests = $requestTable->read(new \Flipside\Data\Filter("mail eq '$email' and year eq $year"));
-            if(empty($requests))
+            $tickets = $ticketTable->read(new DataFilter("contains(hash,$code) and year eq $year"));
+            if(!empty($tickets))
             {
-                return $response->withJson(array('ticket' => false, 'request' => false));
+                return $tickets;
             }
-            if($requests[0]['status'] === '1')
-            {
-                return $response->withJson(array('ticket' => false, 'request' => true, 'requestRecieved' => true));
-            }
-            return $response->withJson(array('ticket' => false, 'request' => true));
         }
-        return $response->withJson(array('ticket' => true));
+        return $ticketTable->read(new DataFilter("email eq '$email' and year eq $year"));
     }
 
     function bulkTicketStatus($request, $response)
@@ -460,7 +460,7 @@ class ParticipantAPI extends VolunteerAPI
         $ret = array();
         $data = $dataTable->read(array('uid'=>array('$in'=>$obj['uids'])), array('email','ticketCode','uid'));
         $settingsTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Variables');
-        $settings = $settingsTable->read(new \Flipside\Data\Filter('name eq \'year\''));
+        $settings = $settingsTable->read(new DataFilter('name eq \'year\''));
         $year = $settings[0]['value'];
         $ticketTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'Tickets');
         $requestTable = \Flipside\DataSetFactory::getDataTableByNames('tickets', 'TicketRequest');
@@ -468,22 +468,14 @@ class ParticipantAPI extends VolunteerAPI
         for($i = 0; $i < $count; $i++)
         {
             $user = $data[$i];
-            if(isset($user['ticketCode']))
-            {
-                $code = $user['ticketCode'];
-                $tickets = $ticketTable->read(new \Flipside\Data\Filter("contains(hash,$code) and year eq $year"));
-            }
-            else
-            {
-                $email = $user['email'];
-                $tickets = $ticketTable->read(new \Flipside\Data\Filter("email eq '$email' and year eq $year"));
-            }
+            $email = $user['email'];
+            $tickets = $this->getTicketsFromTicketTable($ticketTable, $user, $email, $year);
             if(!empty($tickets))
             {
                 $ret[$user['uid']] = array('ticket' => true);
                 continue;
             }
-            $requests = $requestTable->read(new \Flipside\Data\Filter("mail eq '$email' and year eq $year"));
+            $requests = $requestTable->read(new DataFilter("mail eq '$email' and year eq $year"));
             if(empty($requests))
             {
                 $ret[$user['uid']] = array('ticket' => false, 'request' => false);
@@ -491,7 +483,7 @@ class ParticipantAPI extends VolunteerAPI
             }
             if($requests[0]['status'] === '1')
             {
-                $ret[$user['uid']] = array('ticket' => false, 'request' => true, 'requestRecieved' => true);
+                $ret[$user['uid']] = array('ticket' => false, 'request' => true, 'requestReceived' => true);
             }
             $ret[$user['uid']] = array('ticket' => false, 'request' => true);
         }

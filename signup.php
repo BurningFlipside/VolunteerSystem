@@ -124,7 +124,7 @@ if($myShift->isFilled())
 }
 
 $overlap = false;
-if($myShift->findOverlaps($page->user->uid, true))
+if($myShift->doAnyOverlap($page->user->uid))
 {
     $page->body .= '<div class="alert alert-warning" role="alert">
       You already have a shift during this time. If you choose to signup for this shift the lead(s) for the departments will be notified and must approve.
