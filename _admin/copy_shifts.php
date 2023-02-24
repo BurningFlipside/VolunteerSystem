@@ -12,6 +12,9 @@ $page->body .= '
   </div>
 </div>
 <div class="row">
+  <div class="alert alert-info" role="alert">In order to copy shifts from one year to the next you need to have not created any shifts for the target event.</div>
+</div>
+<div class="row">
   <label for="department" class="col-sm-2 col-form-label">Department:</label>
   <div class="col-sm-10">
     <select name="department" id="department" class="form-control"></select>
