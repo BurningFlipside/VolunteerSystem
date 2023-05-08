@@ -32,7 +32,7 @@ $alreadySignedUp = false;
 $count = count($shifts);
 for($i = 0; $i < $count; $i++)
 {
-    $shifts[$i] = new \VolunteerShift(false, $shifts[$i]);
+    $shifts[$i] = new Volunteer\VolunteerShift(false, $shifts[$i]);
     if($shifts[$i]->status === 'filled' || $shifts[$i]->status === 'pending')
     {
         array_push($filled, $shifts[$i]);
