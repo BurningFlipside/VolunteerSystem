@@ -1,6 +1,10 @@
 <?php
 namespace Volunteer\Emails;
 
+use \Exception as Exception;
+
+use \Flipside\Data\Filter as DataFilter;
+
 class CertificationEmail extends VolunteerEmail
 {
     protected $text;
@@ -10,10 +14,10 @@ class CertificationEmail extends VolunteerEmail
     {
         parent::__construct($profile);
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'longText');
-        $entries = $dataTable->read(new \Flipside\Data\Filter("id eq $emailTypeSource"));
+        $entries = $dataTable->read(new DataFilter("id eq $emailTypeSource"));
         if(empty($entries))
         {
-            throw new \Exception("Could not locate email with source type $emailTypeSource");
+            throw new Exception("Could not locate email with source type $emailTypeSource");
         }
         if(isset($entries['value']))
         {
@@ -26,10 +30,10 @@ class CertificationEmail extends VolunteerEmail
         $this->addToAddress($this->profile->email);
         $this->additionalProps = $other;
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');
-        $entries = $dataTable->read(new \Flipside\Data\Filter("certID eq $certType"));
+        $entries = $dataTable->read(new DataFilter("certID eq $certType"));
         if(empty($entries))
         {
-            throw new \Exception("Could not locate certification with type $certType");
+            throw new Exception("Could not locate certification with type $certType");
         }
         $this->additionalProps['certType'] = $entries[0]['name'];
     }
@@ -39,6 +43,9 @@ class CertificationEmail extends VolunteerEmail
         return 'Certification Notification - Burning Flipside Volunteer System';
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     */
     protected function getBody($html = true)
     {
         $firstName = $this->profile->firstName;
