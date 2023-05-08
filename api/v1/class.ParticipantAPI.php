@@ -28,6 +28,7 @@ class ParticipantAPI extends VolunteerAPI
         $app->post('/{uid}/certs/{certId}/Actions/AcceptCert', array($this, 'acceptCert'));
         $app->get('/{uid}/ticketStatus', array($this, 'getTicketStatus'));
         $app->post('/Actions/BulkTicketStatus', array($this, 'bulkTicketStatus'));
+        $app->post('/Actions/HasProfile', array($this, 'hasProfile'));
     }
 
     protected function canCreate($request)
@@ -198,6 +199,19 @@ class ParticipantAPI extends VolunteerAPI
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $filter = new DataFilter("participant eq '$uid'");
         $shifts = $dataTable->read($filter);
+        $oldDt = new DateTime('-6 months');
+        $filteredShifts = array();
+        $count = count($shifts);
+        for($i = 0; $i < $count; $i++)
+        {
+            $myEndTime = new DateTime($shifts[$i]['endTime']);
+            if($myEndTime < $oldDt)
+            {
+                continue;
+            }
+            array_push($filteredShifts, $shifts[$i]);
+        }
+        $shifts = $filteredShifts;
         $format = $request->getAttribute('format', false);
         if($format === false || $format === 'text/calendar')
         {
@@ -427,7 +441,7 @@ class ParticipantAPI extends VolunteerAPI
         }
         $user = $users[0];
         $vol = new VolunteerProfile(false, $user);
-        return $vol->getTicketStatus();
+        return $response->withJson($vol->getTicketStatus());
     }
 
     private function getTicketsFromTicketTable($ticketTable, $user, string $email, $year) : array
@@ -486,6 +500,49 @@ class ParticipantAPI extends VolunteerAPI
                 $ret[$user['uid']] = array('ticket' => false, 'request' => true, 'requestReceived' => true);
             }
             $ret[$user['uid']] = array('ticket' => false, 'request' => true);
+        }
+        return $response->withJson($ret);
+    }
+
+    private function isUserWithEmailInArray(string $email, array &$users) : bool
+    {
+        $count = count($users);
+        for($i = 0; $i < $count; $i++)
+        {
+            if(strcasecmp($users[$i]->mail, $email) === 0)
+            {
+                //Remove the user from the array to speed future searches
+                array_splice($users, $i, 1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function hasProfile($request, $response)
+    {
+        $this->validateLoggedIn($request);
+        if($this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $obj = $this->getParsedBody($request);
+        if(!isset($obj['emails']))
+        {
+            return $response->withStatus(400);
+        }
+        $auth = \Flipside\AuthProvider::getInstance();
+        $filter = new DataFilter('lower(mail) in ('.strtolower(implode(',', $obj['emails'])).')');
+        $users = $auth->getUsersByFilter($filter);
+        if($users === false)
+        {
+            $users = array();
+        }
+        $count = count($obj['emails']);
+        $ret = array();
+        for($i = 0; $i < $count; $i++)
+        {
+            $ret[$obj['emails'][$i]] = $this->isUserWithEmailInArray($obj['emails'][$i], $users);
         }
         return $response->withJson($ret);
     }
