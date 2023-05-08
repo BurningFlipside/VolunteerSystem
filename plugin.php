@@ -8,7 +8,8 @@ class FVSPlugin extends \Flipside\Secure\SecurePlugin
     function get_secure_menu_entries($page, $user)
     {
         $ret = array(
-                'Volunteer' => $page->secure_root.'fvs/index.php'
+            'Volunteer' => $page->secure_root.'fvs/index.php',
+            'Volunteer - Guided Signup' =>  $page->secure_root.'fvs/guidedEvent.php',
                 );
         if($user !== null && $user->isInGroupNamed('VolunteerAdmins'))
         {
