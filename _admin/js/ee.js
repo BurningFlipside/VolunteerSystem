@@ -196,7 +196,7 @@ function gotTicketStatusForConfirm(jqXHR) {
 function approve(type, uid, ee) {
   var obj = {};
   obj.event = $('#eventFilter').val();
-  if(obj.event === null) {
+  if(obj.event === null || obj.event === '*') {
     alert('More than one event has early entry/late stay! Please select an event first!');
     return;
   }
@@ -455,7 +455,7 @@ function initPage() {
     $('[for=deptFilter]').hide();
   }
   promises.push($.ajax({
-    url: '../api/v1/participants'
+    url: '../api/v1/participants?$select=firstName,lastName,burnerName,uid'
   }));
   if(deptId === null) {
     promises.push($.ajax({
