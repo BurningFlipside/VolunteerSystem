@@ -114,7 +114,7 @@ class VolunteerShift extends VolunteerObject
         return self::$eventCache[$this->dbData['eventID']];
     }
 
-    protected function getParticipantObj() : VolunteerProfile
+    protected function getParticipantObj() : VolunteerProfile|false
     {
         if($this->participantObj === null)
         {
