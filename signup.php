@@ -14,7 +14,7 @@ class ProcessorUser
         $this->isAdmin = $isAdmin;
     }
 
-    protected function isVolunteerAdmin()
+    protected function isVolunteerAdmin($request)
     {
         return $this->isAdmin;
     }
@@ -37,7 +37,7 @@ else
 }
 $processor = new ProcessorUser($admin);
 
-$page->body = '<div class="row"><h1>Shift Signup</h1></div>';
+$page->body = '<div class="row"><div class="col-12"><h1>Shift Signup</h1></div></div>';
 
 if(!isset($_GET['shiftID']))
 {
@@ -57,10 +57,10 @@ if(empty($shifts))
     return;
 }
 $shift = $shifts[0];
-$myShift = new \VolunteerShift(false, $shift);
+$myShift = new Volunteer\VolunteerShift(false, $shift);
 
 try {
-$profile = new \VolunteerProfile($page->user->uid);
+$profile = new Volunteer\VolunteerProfile($page->user->uid);
 } catch(Exception $e) {
 //User hasn't made a profile yet... Let the wizard take care of them
 $page->printPage();
@@ -142,10 +142,10 @@ $deptName = $shift['departmentID'];
 $roleName = $shift['roleID'];
 
 $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
-$depts = $dataTable->read(new \Flipside\Data\Filter('departmentID eq '.$shift['departmentID']));
-if(!empty($depts))
+$departments = $dataTable->read(new \Flipside\Data\Filter('departmentID eq '.$shift['departmentID']));
+if(!empty($departments))
 {
-    $deptName = $depts[0]['departmentName'];
+    $deptName = $departments[0]['departmentName'];
 }
 
 $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'events');
@@ -177,10 +177,10 @@ if($canDo !== true)
     switch($canDo['whyClass'])
     {
         case 'INVITE':
-            $page->body .= 'This shift requires an invite from the department lead. If you think you should have recieved such an invite please <a href="https://www.burningflipside.com/contact" class="alert-link">contact the lead</a>.';
+            $page->body .= 'This shift requires an invite from the department lead. If you think you should have received such an invite please <a href="https://www.burningflipside.com/contact" class="alert-link">contact the lead</a>.';
             break;
         case 'CERT':
-            $page->body .= $canDo['whyMsg'].' If you have this certification it is not recorded in your profile. You can <a href="certiciation.php" class="alert-link">record that certification</a> to sign up.';
+            $page->body .= $canDo['whyMsg'].' If you have this certification it is not recorded in your profile. You can <a href="certification.php" class="alert-link">record that certification</a> to sign up.';
             break;
         default:
             $page->body .= 'You are not eligible for this shift because: '.$canDo['whyMsg'];
@@ -229,12 +229,12 @@ $page->body .= '
   </div>
   <label for="length" class="col-sm-2 col-form-label">Length:</label>
   <div class="col-sm-10">
-    <input type="text" name="length" id="length" class="form-control" readonly="readonly" value="'.$shiftLength.' hours">
+    <input type="text" name="length" id="length" class="form-control" readonly="readonly" value="'.number_format((float)$shiftLength, 2, '.','').' hours">
   </div>
 </div>
 <div class="row">
   <div class="alert alert-info" role="alert">
-    By signing up for a Burning Flipside shift you are commiting to showing up on time for your shift prepared to work. Please make sure you are prepared to make this commitment before clicking signup below.
+    By signing up for a Burning Flipside shift you are committing to showing up on time for your shift prepared to work. Please make sure you are prepared to make this commitment before clicking signup below.
   </div>
 </div>
 <div class="row">
