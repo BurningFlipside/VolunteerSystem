@@ -25,7 +25,7 @@ class GridSchedule
         $this->ssheat = $this->createSpreadSheet();
     }
 
-    protected function isVolunteerAdmin($request)
+    protected function isVolunteerAdmin()
     {
         return true;
     }
