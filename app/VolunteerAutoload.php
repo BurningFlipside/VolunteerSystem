@@ -24,7 +24,7 @@ function VolunteerAutoload($className)
     $namespaces = explode('/', $filename);
     if($namespaces[0] === 'Volunteer')
     {
-        $filename = '';
+        $filename = substr($filename, 10);
     }
     $filename = __DIR__.DIRECTORY_SEPARATOR.$filename.'class.'.$className.'.php';
     if(is_readable($filename))
