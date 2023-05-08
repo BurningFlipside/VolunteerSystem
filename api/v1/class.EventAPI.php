@@ -91,6 +91,12 @@ class EventAPI extends VolunteerAPI
         {
             unset($entry['eeLists']);
         }
+        //See if there are any shifts for this event...
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $id = $entry['_id'];
+        $filter = new DataFilter("eventID eq '$id'");
+        $count = $dataTable->count($filter);
+        $entry['hasShifts'] = $count !== 0;
         return $entry;
     }
 
