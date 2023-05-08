@@ -66,7 +66,7 @@ class SimplePDF extends \Flipside\PDF\PDF
 			    $html .= '<table width="100%"><tr><th style="width: 20%">Role</th><th>Volunteer Name</th><th>Volunteer Camp</th></tr>';
 			    foreach($shifts as $shift)
 			    {
-				    $shift = new \VolunteerShift(false, $shift);
+				    $shift = new \Volunteer\VolunteerShift(false, $shift);
 					try
 					{
 				    	$participant = $shift->participantObj;
