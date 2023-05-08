@@ -74,6 +74,10 @@ function gotDepartmentRoles(jqXHR) {
   var options = this;
   var inputs = options.inputs;
   var array = jqXHR.responseJSON;
+  if(array.length === 0) {
+    alert('Department has no roles. Please create at least one role before attempting to create a shift!');
+    return;
+  }
   for(let input of inputs) {
     if(input.id === 'roleID') {
       input.options = [];
@@ -88,10 +92,15 @@ function gotDepartmentRoles(jqXHR) {
 function gotGroupDepartmentRoles(jqXHR) {
   var mySelect = $('#groupAddRole');
   var array = jqXHR.responseJSON;
+  if(array.length === 0) {
+    alert('Department has no roles. Please create at least one role before attempting to create a shift!');
+    return;
+  }
   for(let role of array) {
     var newOption = new Option(role.display_name, role.short_name, false, false);
     mySelect.append(newOption);
   }
+  $('#groupWizard').modal('show');
 }
 
 function addNewShift(elem) {
@@ -188,7 +197,6 @@ function addNewGroup(elem) {
     url: '../api/v1/departments/'+href+'/roles',
     complete: gotGroupDepartmentRoles
   });
-  $('#groupWizard').modal('show');
 }
 
 function groupEventChanged(elem) {
@@ -596,6 +604,18 @@ function saveGroup(event) {
       if(event.data[`${role}`] > 0) {
         while(event.data[`${role}`] > 0) {
           var newShift = Object.assign({}, shifts[0]);
+          delete newShift['_id'];
+          if(newShift.participant !== undefined) {
+            delete newShift.participant;
+          }
+          if(newShift.volunteer !== undefined) {
+            delete newShift.volunteer;
+          }
+          delete newShift.status;
+          delete newShift.why;
+          if(newShift.whyClass !== undefined) {
+            delete newShift.whyClass;
+          }
           newShift.roleID = role;
           shifts.push(newShift);
           event.data[`${role}`]--;
@@ -782,6 +802,9 @@ function gotShiftToEdit(jqXHR) {
     dialogOptions.alerts = [
       {type: 'warning', text: 'Shift is already filled!'}
     ];
+    if(shift.needEEApproval) {
+      dialogOptions.alerts.push({type: 'info', text: 'Shift requires Early Entry approval.'});
+    }
     dialogOptions.inputs.push({label: 'Participant', type: 'text', id: 'participant', value: shift.participant, disabled: true});
     
     dialogOptions.buttons.push({text: 'Empty Shift', callback: emptyShift});
