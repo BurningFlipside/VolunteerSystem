@@ -47,4 +47,9 @@ class VolunteerObject
     {
         return $this->dbData[$propName];
     }
+
+    public function getId() : string
+    {
+        return $this->id;
+    }
 }
