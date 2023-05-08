@@ -2,8 +2,8 @@
 
 use \Flipside\Data\Filter as DataFilter;
 use \Flipside\ODataParams;
-use Volunteer\Schedules\SimplePDF as SimpleSchedulePDF;
-use Volunteer\Schedules\GridSchedule;
+use \Volunteer\Schedules\SimplePDF as SimpleSchedulePDF;
+use \Volunteer\Schedules\GridSchedule;
 
 class DepartmentAPI extends VolunteerAPI
 {
