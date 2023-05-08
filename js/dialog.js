@@ -121,7 +121,7 @@ window.flipDialog.dialog = function(options) {
     dialog.remove();
   });
   $('body').append(dialog);
-  finishDialog(dialog, options);
+  return finishDialog(dialog, options);
 };
 
 function dialogButtonClick(e) {
@@ -199,4 +199,7 @@ function finishDialog(dialog, options) {
     }
   }
   dialog.modal('show');
+  return new Promise((resolve) => {
+    dialog.on('shown.bs.modal', resolve);
+  });
 }
