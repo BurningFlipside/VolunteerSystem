@@ -164,20 +164,20 @@ class EventAPI extends VolunteerAPI
         return $filter;
     }
 
-    public function getTicketStringForVol($vol)
+    public function getTicketStatusForVol($vol)
     {
         if($vol === false || method_exists($vol, 'getTicketStatus') === false) {
-            return 'No';
+            return array('str'=>'No');
         }
         $ticket = $vol->getTicketStatus();
-        $ticketStr = 'No';
+        $ticketStr = array('str'=>'No');
         if(isset($ticket['request']) && $ticket['request'] === true)
         {
-            $ticketStr = 'Requested';
+            $ticketStr = array('str'=>'Requested');
         }
         else if($ticket['ticket'] === true)
         {
-            $ticketStr = 'Yes';
+            $ticketStr = array('str' => 'Yes', 'code' => $ticket['shortCode']);
         }
         return $ticketStr;
     }
@@ -243,12 +243,22 @@ class EventAPI extends VolunteerAPI
             if($dedupe[$vol->uid][$shift->departmentID][$role->short_name] < $shift->earlyLate)
             {
                 $dedupe[$vol->uid][$shift->departmentID][$role->short_name] = $shift->earlyLate;
-                $entry = array('name' => $vol->firstName.' '.$vol->lastName, 'email'=> $vol->email, 'dept'=> $shift->department->departmentName, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate, 'ticket'=>$this->getTicketStringForVol($vol));
+                $ticketStatus = $this->getTicketStatusForVol($vol);
+                $entry = array('name' => $vol->firstName.' '.$vol->lastName, 'email'=> $vol->email, 'dept'=> $shift->department->departmentName, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate, 'ticket'=>$ticketStatus['str']);
+                if(isset($ticketStatus['code']))
+                {
+                    $entry['ticketCode'] = $ticketStatus['code'];
+                }
                 array_push($ret, $entry);
             }
             else if($shift->earlyLate === -2)
             {
-                $entry = array('name' => $vol->firstName.' '.$vol->lastName, 'email'=> $vol->email, 'dept'=> $shift->department->departmentName, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate, 'ticket'=>$this->getTicketStringForVol($vol));
+                $ticketStatus = $this->getTicketStatusForVol($vol);
+                $entry = array('name' => $vol->firstName.' '.$vol->lastName, 'email'=> $vol->email, 'dept'=> $shift->department->departmentName, 'role' => $role->display_name, 'earlyLate'=>$shift->earlyLate, 'ticket'=>$ticketStatus['str']);
+                if(isset($ticketStatus['code']))
+                {
+                    $entry['ticketCode'] = $ticketStatus['code'];
+                }
                 array_push($ret, $entry);
             }
         }        

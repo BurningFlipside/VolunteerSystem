@@ -81,7 +81,7 @@ class VolunteerProfile extends VolunteerObject
         return false;
     }
 
-    private function getTicketsFromTicketTable($ticketTable, string $email, $year) : array
+    private function getTicketsFromTicketTable($ticketTable, string $email, $year) : array|false
     {
         if(isset($this->dbData['ticketCode']))
         {
@@ -117,6 +117,6 @@ class VolunteerProfile extends VolunteerObject
             }
             return array('ticket' => false, 'request' => true);
         }
-        return array('ticket' => true);
+        return array('ticket' => true, 'shortCode'=> substr($tickets[0]['hash'], 0, 8));
     }
 }
