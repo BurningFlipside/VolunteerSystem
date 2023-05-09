@@ -23,8 +23,12 @@ function gotShifts(jqXHR) {
     tableData['total'].shifts = shifts.length;
   }
   let groupPending = ($('#groupPending').prop('checked') === true);
+  let hideEmptyUnbound = ($('#unbound').prop('checked') === true);
   for(let shift of shifts) {
     if(shift.enabled === false) {
+      continue;
+    }
+    if(hideEmptyUnbound && shift.unbounded === true && (shift.status === undefined || shift.status === 'unfilled')) {
       continue;
     }
     if(inviteOnly) {
@@ -102,6 +106,10 @@ function hideEmptyShifts() {
 }
 
 function hideInviteOnlyShifts() {
+  eventChanged({target: $('#event')[0]});
+}
+
+function hideEmptyUnboundShifts() {
   eventChanged({target: $('#event')[0]});
 }
 
@@ -232,6 +240,7 @@ function initPage() {
   $('#hideInviteOnly').change(hideInviteOnlyShifts);
   $('#showOld').change(showOldEvents);
   $('#groupPending').change(hideInviteOnlyShifts);
+  $('#unbound').change(hideEmptyUnboundShifts);
 }
 
 $(initPage);
