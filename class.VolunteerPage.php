@@ -1,6 +1,6 @@
 <?php
-//ini_set('display_errors', 1);
-//error_reporting(E_ALL);
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 if(file_exists('../SecurePage.php'))
 {
     require_once('../SecurePage.php');
@@ -10,12 +10,15 @@ class VolunteerPage extends \Flipside\Secure\SecurePage
 {
     public  $volunteerRoot;
 
+    /**
+     * @SuppressWarnings(PHPMD.Superglobals)
+     */
     public function __construct($title)
     {
         parent::__construct($title);
         $root = $_SERVER['DOCUMENT_ROOT'];
-        $script_dir = dirname(__FILE__);
-        $this->volunteerRoot = substr($script_dir, strlen($root));
+        $scriptDir = dirname(__FILE__);
+        $this->volunteerRoot = substr($scriptDir, strlen($root));
         $this->addJS($this->volunteerRoot.'/js/volunteer.js');
         $this->addTemplateDir(dirname(__FILE__).'/templates', 'Volunteer');
         $this->setTemplateName('@Volunteer/main.html');
@@ -33,6 +36,13 @@ class VolunteerPage extends \Flipside\Secure\SecurePage
         $page = end($split);
         $noExt = pathinfo($page, PATHINFO_FILENAME);
         $this->addLink('Help <i class="fas fa-question"></i>', 'docs/help.html#'.$noExt);
+
+        $browser = get_browser();
+        if(strpos($browser->parent, 'IE') !== false)
+        {
+            header('Location: /badBrowser.php');
+            exit;
+        }
     }
 
     public function printPage()

@@ -1,5 +1,5 @@
 <?php
-namespace Emails;
+namespace Volunteer\Emails;
 
 class TwoShiftsAtOnceEmail extends VolunteerEmail
 {
@@ -24,7 +24,7 @@ class TwoShiftsAtOnceEmail extends VolunteerEmail
 
     protected function getApprovalLink()
     {
-        $settings = \Settings::getInstance();
+        $settings = \Flipside\Settings::getInstance();
         $profilesUrl = $settings->getGlobalSetting('secure_url', 'https://secure.burningflipside.com');
         return $profilesUrl.'/fvs/_admin/pending.php';
     }

@@ -66,7 +66,7 @@ Shifts are color-coded to help you easily see what is available or not.
 | ------ | --------------- |
 | <span style="color: blue;">Blue</span>   | Unfilled--You should sign up! |
 | <span style="color: red;">Red</span>    | Filled--Someone else has signed up already |
-| <span style="color: blue;">Green</span>  | Your shifts--You've got this! |
+| <span style="color: green;">Green</span>  | Your shifts--You've got this! |
 | <span style="color: gray;">Gray</span>   | Unavailable--Probably means you need certifications/training |
 | <span style="color: yellow;">Yellow</span> | Overlapping--You probably want to avoid this! |
 

@@ -2,6 +2,9 @@
 window.flipDialog = {};
 window.flipDialog.dialog = function(options) {
   var dialog = $('<div class="modal fade show" aria-modal="true"><div class="modal-dialog modal-lg"><div class="modal-content"></div></div></div>');
+  if(options.id !== undefined) {
+    dialog = $('<div class="modal fade show" id="'+options.id+'" aria-modal="true"><div class="modal-dialog modal-lg"><div class="modal-content"></div></div></div>');
+  }
   dialog.find('.modal-content').append('<div class="modal-header"><h4 class="modal-title">'+options.title+'</h4><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button></div>');
   dialog.find('.modal-content').append('<div class="modal-body"><div class-"containter-fluid"><div class="row"></div></div></div>');
   var body = dialog.find('.modal-content .row');
@@ -38,8 +41,7 @@ window.flipDialog.dialog = function(options) {
         }
         delete input.options;
       }
-    }
-    else {
+    } else {
       inputEnt.attr('type', input.type);
     }
     if(input.type === 'datetime-local') {
@@ -52,8 +54,7 @@ window.flipDialog.dialog = function(options) {
           myOptions.maxDate = new Date(input.max);
         }
         inputEnt.flatpickr(myOptions);
-      }
-      else if(input.value) {
+      } else if(input.value) {
         let datetime = new Date(input.value);
         inputEnt.val(dateTimeToString(datetime));
       }
@@ -65,6 +66,10 @@ window.flipDialog.dialog = function(options) {
     if(input.onChange !== undefined && typeof input.onChange !== 'string') {
       inputEnt.change(input.onChange);
       delete input.onChange;
+    }
+    if(input.keyUp !== undefined && typeof input.keyUp !== 'string') {
+      inputEnt.keyup(input.keyUp);
+      delete input.keyUp;
     }
     inputEnt.attr('class', 'form-control');
     for(var attr in input) {
@@ -116,7 +121,7 @@ window.flipDialog.dialog = function(options) {
     dialog.remove();
   });
   $('body').append(dialog);
-  finishDialog(dialog, options);
+  return finishDialog(dialog, options);
 };
 
 function dialogButtonClick(e) {
@@ -131,7 +136,7 @@ function dialogButtonClick(e) {
   var group = $(e.target).parents('.input-group');
   if(group.length > 0) {
     let inputs = group.find('input');
-    var name = inputs[0].id;
+    let name = inputs[0].id;
     e.data[`${name}`] = inputs[0].value;
   }
   //Update data with the latest
@@ -194,4 +199,7 @@ function finishDialog(dialog, options) {
     }
   }
   dialog.modal('show');
+  return new Promise((resolve) => {
+    dialog.on('shown.bs.modal', resolve);
+  });
 }

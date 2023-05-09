@@ -52,7 +52,7 @@ $page->body .= '
 </div>
 <div id="VC_Footer">
     <p>
-        <a href=# onclick="doBack()">Or, maybe you\'d like to go back to your previous quesiton?</a>
+        <a href=# onclick="doBack()">Or, maybe you\'d like to go back to your previous question?</a>
     </p>
     <p>
     Confused about anything you see here?  Did you find an error or a dead link?  You might want to visit the <a href="http://wiki.burningflipside.com/wiki/Volunteer_Coordinator">Volunteer Coordinator page on Pyropedia</a> or email the volunteer team at <a href="mailto:volunteerinfo@burningflipside.com">volunteerinfo@burningflipside.com</a>
@@ -61,13 +61,13 @@ $page->body .= '
 </div>
 <script type="text/javascript">
     window.nodes = new Array();
-    init_page();
+    initPage();
     updateQuestionText();
     window.nodes.push(window.currentNode);
     function reload(){
         location.reload();
     }
-    function image_not_found(){
+    function imageNotFound(){
         var imageNode = document.getElementById("volunteer_image");
         imageNode.src = "images/lostimage.png";
         imageNode.style.width="470px";

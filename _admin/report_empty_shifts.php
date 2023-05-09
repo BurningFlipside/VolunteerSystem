@@ -25,6 +25,10 @@ $page->body .= '
   <div class="col-sm-10">
     <input class="form-control" type="datetime-local" name="startTime" id="startTime"/>
   </div>
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="showPending" checked="true">
+    <label class="form-check-label" for="showPending">Include Pending Shifts as Empty</label>
+  </div>
 </div>
 <div class="row">
   <table class="table" id="shiftTable">

@@ -1,5 +1,11 @@
 <?php
-namespace Emails;
+namespace Volunteer\Emails;
+
+use \Exception as Exception;
+
+use \Flipside\Data\Filter as DataFilter;
+
+use Volunteer\VolunteerShift;
 
 class ShiftEmail extends VolunteerEmail
 {
@@ -10,11 +16,11 @@ class ShiftEmail extends VolunteerEmail
     {
         parent::__construct($shift->participantObj);
         $this->shift = $shift;
-        $dataTable = \DataSetFactory::getDataTableByNames('fvs', 'longText');
-        $entries = $dataTable->read(new \Data\Filter("id eq $emailTypeSource"));
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'longText');
+        $entries = $dataTable->read(new DataFilter("id eq $emailTypeSource"));
         if(empty($entries))
         {
-            throw new \Exception("Could not locate email with source type $emailTypeSource");
+            throw new Exception("Could not locate email with source type $emailTypeSource");
         }
         if(isset($entries['value']))
         {
@@ -32,6 +38,9 @@ class ShiftEmail extends VolunteerEmail
         return 'Shift Change Notification - Burning Flipside Volunteer System';
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     */
     protected function getBody($html = true)
     {
         $firstName = $this->profile->firstName;
@@ -56,7 +65,7 @@ class ShiftEmail extends VolunteerEmail
                 );
         if(strpos($this->text, '{$newStart}') !== false || strpos($this->text, '{$newEnd}') !== false)
         {
-            $newShift = new \VolunteerShift($this->shift->{'_id'});
+            $newShift = new VolunteerShift($this->shift->{'_id'});
             $newStart = $newShift->startTime->format('r');
             $newEnd = $newShift->endTime->format('r');
             $vars['{$newStart}'] = $newStart;

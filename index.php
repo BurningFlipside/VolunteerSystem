@@ -4,6 +4,12 @@ $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 $page->addJS('js/index.js');
 
 $page->body .= '
+<div class="alert alert-primary" role="alert">
+  There is a new guided signup process if you are having issues with this one. You can find it <a href="guidedEvent.php" class="alert-link">here</a>.
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
 <div class="row">
   <label for="event" class="col-sm-2 col-form-label">Event</label>
   <div class="col-sm-10">
@@ -29,7 +35,7 @@ $page->body .= '
     </select>
   </div>
   <div class="w-100"></div>
-  <div id="calendar"></div>
+  <div id="calendar" class="w-100"></div>
   <div class="w-100"></div>
   <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts?$format=text/calendar"><i class="far fa-calendar-alt"></i> Download My Shifts</a>
   <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts?$format=application/pdf"><i class="fas fa-print"></i> Print My Shifts</a>

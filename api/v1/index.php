@@ -1,6 +1,6 @@
 <?php
-//ini_set('display_errors', 1);
-//error_reporting(E_ALL);
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 require('../../app/VolunteerAutoload.php');
 require_once('class.Processor.php');
 require_once('class.VolunteerAPI.php');
@@ -9,7 +9,7 @@ require_once('class.EventAPI.php');
 require_once('class.RoleAPI.php');
 require_once('class.ShiftAPI.php');
 require_once('class.ParticipantAPI.php');
-require_once('class.CertificatonAPI.php');
+require_once('class.CertificationAPI.php');
 require_once('class.TextAPI.php');
 
 $site = new \Flipside\Http\WebSite();
@@ -18,7 +18,7 @@ $site->registerAPI('/departments', new DepartmentAPI());
 $site->registerAPI('/roles', new RoleAPI());
 $site->registerAPI('/shifts', new ShiftAPI());
 $site->registerAPI('/participants', new ParticipantAPI());
-$site->registerAPI('/certs', new CertificatonAPI());
+$site->registerAPI('/certs', new CertificationAPI());
 $site->registerAPI('/longText', new TextAPI());
 /*
 $app = new FlipREST();

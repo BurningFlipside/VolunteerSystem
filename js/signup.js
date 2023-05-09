@@ -53,11 +53,14 @@ function groupSignupInfoObtained(jqXHR) {
     ],
     buttons: [
       {text: 'Start Group Signup', callback: createGroupSignup}
+    ],
+    alerts: [
+      {type: 'info', text: 'By default this will create a group signup for all the positions in the shift. If you only want some of the positions for your group please reduce the number(s) at the bottom of this dialog.'}
     ]
   };
   var myPos = {label: 'My position', type: 'select', id: 'myshift', options: []};
   var used = {};
-  for(let shift in data.shifts) {
+  for(let shift of data.shifts) {
     if(used[shift.roleID] === undefined) {
       let id = shift['_id']['$oid'];
       myPos.options.push({value: id, text: shift.role, selected: shiftID === id});

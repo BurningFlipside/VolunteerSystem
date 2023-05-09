@@ -6,7 +6,7 @@ function validateFields(content) {
   for(let element of elements) {
     if(element.hasAttribute('required') && element.classList.contains('flatpickr-input')) {
       //Work around for Firefox and Safari
-      if(element.value == '') {
+      if(element.value === '') {
         res = false;
         $(element).popover({
           content: 'Please enter a valid date!',
@@ -74,8 +74,7 @@ function addToObj(obj, id, value) {
       obj[split[0]] = {};
     }
     obj[split[0]][split[1]] = value;
-  }
-  else {
+  } else {
     obj[`${id}`] = value;
   }
   return obj;

@@ -4,6 +4,7 @@ var calendar;
 var start;
 var end;
 var allEvents = [];
+var allDepts = [];
 var roles = {};
 var validDepts = [];
 
@@ -15,7 +16,7 @@ function getDateRange() {
 }
 
 function getDeptName(deptID) {
-  var option = $('#departments option[value="'+deptID+'"]');
+  let option = $('#departments option[value="'+deptID+'"]');
   if(option.length === 0) {
     return null;
   }
@@ -32,6 +33,16 @@ function getRoleName(roleID) {
     return roles[`${roleID}`].display_name;
   }
   return roleID;
+}
+
+function eventNameHelper(info) {
+  if(info.view.type === 'listWeek' || info.view.type === 'list') {
+    let deptName = info.event.extendedProps.department;
+    if(deptName === undefined) {
+      deptName = getDeptName(info.event.extendedProps.departmentID);
+    }
+    return {html: '<a href="'+info.event.url+'">'+deptName+": "+info.event.extendedProps.name+'</a>'};
+  }
 }
 
 function eventRenderHelper(info) {
@@ -51,8 +62,7 @@ function eventRenderHelper(info) {
         content: content,
         trigger: 'hover'
       });
-    }
-    else {
+    } else {
       if(shift.whyClass === 'TAKEN' && shift.volunteer !== undefined) {
         $(info.el).popover({
           animation:true,
@@ -61,8 +71,7 @@ function eventRenderHelper(info) {
           content: 'Shift is taken by '+shift.volunteer,
           trigger: 'hover'
         });
-      }
-      else {
+      } else {
         $(info.el).popover({
           animation:true,
           delay: 300,
@@ -72,10 +81,6 @@ function eventRenderHelper(info) {
         });
       }
     }
-  }
-  if(info.view.type === 'listWeek' || info.view.type === 'list') {
-    var anchor = $(info.el).find('.fc-list-item-title a')[0];
-    anchor.innerHTML = getDeptName(shift.departmentID)+': '+anchor.innerHTML;
   }
 }
 
@@ -90,8 +95,7 @@ function renderResource(info) {
   var role = roles[resource.id];
   if(!validDepts.includes(role.departmentID)) {
     //console.log(resource);
-  }
-  else {
+  } else {
     $(info.el).popover({
       animation:true,
       delay: 300,
@@ -103,21 +107,23 @@ function renderResource(info) {
   }
 }
 
-function eventShouldBeShown(shift, validDepts, validShifts) {
+function eventShouldBeShown(shift, _validDepts, validShifts, role) {
   if(shift.enabled === false) {
     return false;
   }
-  if(validDepts.includes(shift.departmentID)) {
+  if(role !== null && shift.roleID !== role) {
+    return false;
+  }
+  if(_validDepts.includes(shift.departmentID)) {
     if(shift.whyClass === 'MINE' && validShifts.includes('mine')) {
       return true;
-    }
-    else if(shift.available && validShifts.includes('unfilled') && !shift.overlap) {
+    } else if(shift.available && validShifts.includes('unfilled') && !shift.overlap) {
       return true;
-    }
-    else if(shift.overlap && validShifts.includes('overlap') && shift.whyClass !== 'TAKEN') {
+    } else if(shift.overlap && validShifts.includes('overlap') && shift.whyClass !== 'TAKEN') {
       return true;
-    }
-    else if(shift.why && validShifts.includes('unavailable') && shift.whyClass !== 'MINE' && shift.whyClass !== 'TAKEN') {
+    } else if(shift.why && validShifts.includes('unavailable') && shift.whyClass !== 'MINE' && shift.whyClass !== 'TAKEN') {
+      return true;
+    } else if(validShifts.includes('filled') && shift.whyClass === 'TAKEN') {
       return true;
     }
     return false;
@@ -129,6 +135,7 @@ function filterEvents() {
   var depts = $('#departments').select2('data');
   var shifts = $('#shiftTypes').select2('data');
   var validShifts = [];
+  let role = getParameterByName('role');
   validDepts = [];
   for(let dept of depts) {
     validDepts.push(dept.id);
@@ -140,7 +147,7 @@ function filterEvents() {
   var newStart = new Date('2100-01-01T01:00:00');
   calendar.renderingPauseDepth = true;
   for(let event of events) {
-    let valid = eventShouldBeShown(event.extendedProps, validDepts, validShifts);
+    let valid = eventShouldBeShown(event.extendedProps, validDepts, validShifts, role);
     if(!valid && !event.classNames.includes('d-none')) {
       event.setProp('classNames', 'd-none');
     } else if(event.classNames.includes('d-none') && valid) {
@@ -156,10 +163,9 @@ function filterEvents() {
       }
     }
   }
-  if(calendar.view.currentEnd < newStart) {
+  if(calendar.view === null || calendar.view.currentEnd < newStart) {
     calendar.gotoDate(newStart);
   }
-  console.log(calendar.view);
   calendar.renderingPauseDepth = false;
   if(calendar.needsRerender) {
     calendar.render();
@@ -167,10 +173,14 @@ function filterEvents() {
 }
 
 function deptChanged() {
+  let departments = $('#departments').select2('data');
+  localStorage.setItem('Departments', departments.map(s=>s.id));
   filterEvents();
 }
 
 function shiftChanged() {
+  let types = $('#shiftTypes').select2('data');
+  localStorage.setItem('ShiftTypes', types.map(s=>s.id));
   filterEvents();
 }
 
@@ -194,10 +204,16 @@ function gotShifts(jqXHR) {
     return;
   }
   var depts = $('#departments').select2('data');
+  if(depts.length === 0) {
+    $('#departments').find("option[value='"+dept+"']").removeAttr('disabled');
+    $('#departments').val(allDepts).trigger('change');
+    depts = $('#departments').select2('data');
+  }
   var deptHasShifts = {};
   for(let dept of depts) {
     deptHasShifts[dept.id] = false;
   }
+  console.log(deptHasShifts);
   var shifts = jqXHR.responseJSON;
   if(shifts.length === 0) {
     add_notification($('#content'), 'This event does not have any shifts at this time. Check back later or contact your lead!');
@@ -205,6 +221,10 @@ function gotShifts(jqXHR) {
   start = new Date('2100-01-01T01:00:00');
   end = new Date('2000-01-01T01:00:00');
   for(let shift of shifts) {
+    if(shift.enabled === false) {
+      //Skip it!
+      continue;
+    }
     let myStart = new Date(shift.startTime);
     let myEnd = new Date(shift.endTime);
     if(myStart < start) {
@@ -249,7 +269,7 @@ function gotShifts(jqXHR) {
     allEvents.push(calEvent);
     deptHasShifts[shift.departmentID] = true;
   }
-  calendar.setOption('validRange.start', start);
+  calendar.gotoDate(start);
   try{
     calendar.render();
   } catch(error) {
@@ -261,23 +281,35 @@ function gotShifts(jqXHR) {
   if(window.innerWidth <= 1024) {
     $('#calendar .fc-center h2').css('font-size', '1.0em');
   }
+  let departmentData = localStorage.getItem('Departments');
+  let departmentArray = [];
+  if(departmentData !== null && departmentData !== '') {
+    departmentArray = departmentData.split(',');
+    $('#departments').val(departmentArray);
+    addNonStandardViewAlert();
+  }
+  let deptsToInclude = [];
   for(var dept in deptHasShifts) {
-    if(deptHasShifts[`${dept}`] === false) {
-      $('#departments').find("option[value='"+dept+"']").remove();
+    if(departmentArray.includes(dept)) {
+      deptsToInclude.push(dept);
+      continue;
     }
+    if(deptHasShifts[`${dept}`] === false) {
+      $('#departments').find("option[value='"+dept+"']").attr('disabled', true);
+      continue;
+    }
+    deptsToInclude.push(dept);
   }
-  $('#departments').trigger('change');
+  $('#departments').val(deptsToInclude).trigger('change');
   $('#departments').change(deptChanged);
-  if(getParameterByName('department') !== null) {
-    filterEvents();
-  }
+  filterEvents();
 }
 
 function eventChanged(e) {
   var extra = '';
-  if(calendar.view !== null) {
-    var defaultView = calendar.optionsManager.computed.defaultView;
-    var currentView = calendar.view.type;
+  if(calendar !== undefined && calendar.view !== null) {
+    let defaultView = calendar.currentData.calendarOptions.initialView;
+    let currentView = calendar.view.type;
     if(defaultView !== currentView) {
       extra = '&view='+currentView;
     }
@@ -294,6 +326,8 @@ function eventChanged(e) {
 }
 
 function processEvents(events) {
+  let anyHasShift = false;
+  let noEventShifts = [];
   var data = [];
   var id = getParameterByName('event');
   events.sort(function(a, b) {
@@ -307,8 +341,16 @@ function processEvents(events) {
       if(id !== null && (id === event['_id']['$oid'] || id === event.alias)) {
         option.selected = true;
       }
-      data.push(option);
+      if(event.hasShifts) {
+        data.push(option);
+        anyHasShift = true;
+      } else {
+        noEventShifts.push(option);
+      }
     }
+  }
+  if(anyHasShift === false) {
+    data = noEventShifts;
   }
   if(data.length === 0) {
     alert('All events are in the past!');
@@ -336,6 +378,7 @@ function processDepartments(depts) {
       validDepts.push(dept.departmentID);
     }
     groups[dept.area].push(tmp);
+    allDepts.push(dept);
   }
   var data = [];
   for(var group in groups) {
@@ -376,8 +419,7 @@ function unhideFilters() {
   if(div.length > 0) {
     div.removeClass('d-none');
     $('[for=departments]').removeClass('d-none');
-  }
-  else {
+  } else {
     $('#departments').parent(':not(.d-none)').addClass('d-none');
     $('[for=departments]').addClass('d-none');
   }
@@ -395,6 +437,12 @@ function gotInitialData(results) {
   obj.depts = processDepartments(deptResult.value);
   var sel2 = $('#shiftTypes').select2();
   sel2.change(shiftChanged);
+  let myTypes = localStorage.getItem('ShiftTypes');
+  if(myTypes !== null) {
+    let types = myTypes.split(',');
+    sel2.val(types).trigger('change');
+    addNonStandardViewAlert();
+  }
 }
 
 function retrySelect2() {
@@ -435,7 +483,46 @@ function fakePromiseSettled(promises) {
   }));
 }
 
+function viewChanged(arg) {
+  if(window.viewCalled === undefined) {
+    //I want only the second call of this to do something...
+    window.viewCalled = true;
+    return [];
+  }
+  localStorage.setItem('CalendarView', arg.view.type);
+}
+
+function clearView() {
+  localStorage.removeItem('CalendarView');
+  localStorage.removeItem('Departments');
+  localStorage.removeItem('ShiftTypes');
+  location.reload();
+}
+
+function addNonStandardViewAlert() {
+  if($('#nonStandardView').length !== 0) {
+    return;
+  }
+  let alertDiv = $('<div/>', {'id': 'nonStandardView', 'class': 'alert alert-info alert-dismissible', role: 'alert'});
+  let button = $('<button/>', {type: 'button', 'class': 'close', 'data-dismiss': 'alert'});
+  $('<span/>', {'aria-hidden': 'true'}).html('&times;').appendTo(button);
+  $('<span/>', {'class': 'sr-only'}).html('Close').appendTo(button);
+  button.appendTo(alertDiv);
+  alertDiv.append('<strong>Notice:</strong> You are seeing a non-default view of the volunteer system from the last time you viewed the site. To restore the default view click ');
+  let link = $('<a/>', {'class': 'alert-link', 'href': '#'});
+  link.append('here.').click(clearView);
+  alertDiv.append(link);
+  $('#content').prepend(alertDiv);
+}
+
 function initPage() {
+  if(FullCalendar === undefined) {
+    setTimeout(initPage, 100);
+    return;
+  }
+  if(Intl.DateTimeFormat().resolvedOptions().timeZone !== 'America/Chicago') {
+    $('#content').prepend('<div class="alert alert-primary" role="alert">Note all times are displayed in your local time zone! Make sure you do the appropriate math as Flipside operates in Central Daylight Time!</div>');
+  }
   let promises = [];
   promises.push($.ajax({
     url: 'api/v1/events'
@@ -446,8 +533,7 @@ function initPage() {
   promises.push(new Promise(waitForSelect2));
   if(Promise.allSettled !== undefined) {
     Promise.allSettled(promises).then(gotInitialData);
-  }
-  else {
+  } else {
     //Older browser...
     fakePromiseSettled(promises).then(gotInitialData);
   }
@@ -462,10 +548,20 @@ function initPage() {
     header.right = 'timeGridDay,listWeek,resourceTimelineDay';
     defaultView = 'list';
   }
+  let myView = getParameterByName('view');
+  if(myView === null) {
+    myView = localStorage.getItem('CalendarView');
+    if(myView !== null) {
+      addNonStandardViewAlert();
+    }
+  }
+  if(myView !== null) {
+    defaultView = myView;
+  }
   calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
     schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
-    plugins: [ 'dayGrid', 'timeGrid', 'list', 'resourceTimeline' ],
-    header: header,
+    //plugins: [ 'dayGrid', 'timeGrid', 'list', 'resourceTimeline' ],
+    headerToolbar: header,
     buttonText: {
       month: 'Month Grid',
       timeGridWeek: 'Week Grid',
@@ -479,24 +575,22 @@ function initPage() {
       day: 'numeric',
       weekday: 'long'
     },
-    defaultView: defaultView,
+    initialView: defaultView,
     validRange: getDateRange,
-    eventRender: eventRenderHelper,
-    resourceColumns: [
+    eventContent: eventNameHelper,
+    eventDidMount: eventRenderHelper,
+    resourceAreaColumns: [
       {
         labelText: 'Role',
         field: 'title'
       }
     ],
     resources: [],
-    resourceRender: renderResource,
+    resourceLabelDidMount: renderResource,
     filterResourcesWithEvents: true,
-    resourceOrder: 'title'
+    resourceOrder: 'title',
+    viewClassNames: viewChanged
   });
-  var view = getParameterByName('view');
-  if(view !== null) {
-    calendar.changeView(view);
-  }
 }
 
 $(() => {
@@ -504,3 +598,4 @@ $(() => {
     initPage();
   });
 });
+/* vim: set tabstop=2 shiftwidth=2 expandtab: */

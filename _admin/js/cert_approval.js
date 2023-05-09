@@ -40,10 +40,37 @@ function finishedCertOp(jqXHR) {
 
 function approveCert(e, cell) {
   var data = cell.getRow().getData();
-  var certType = Object.keys(data.certs)[0];
+  let certType = Object.keys(data.certs)[0];
   if(certs[`${certType}`].expires) {
-    //TODO Expires dialog...
-    alert('TODO');
+    let imageData = data.certs[`${certType}`].image;
+    let imageType = data.certs[`${certType}`].imageType;
+    let message = '<img src="data:'+imageType+';base64, '+imageData+'"/>';
+    if(imageType === 'application/pdf') {
+      message = '<object data="data:'+imageType+';base64, '+imageData+'" style="width: 100%; height: '+screen.height*3/5+'px"/>';
+    }
+    bootbox.prompt({'title': 'Certificate Expires On:'+message, inputType: 'date', size: 'xl', callback: (result) => {
+      if(result === '') {
+        bootbox.confirm("Are you certain this certificate, which should expire, does not?", (result) => {
+          if(result) {
+            $.ajax({
+              url: '../api/v1/participants/'+data.uid+'/certs/'+certType+'/Actions/AcceptCert',
+              contentType: 'application/json',
+              method: 'POST',
+              complete: finishedCertOp
+            });
+          }
+        });
+        return;
+      }
+      let obj = {expiresOn: result};
+      $.ajax({
+        url: '../api/v1/participants/'+data.uid+'/certs/'+certType+'/Actions/AcceptCert',
+        contentType: 'application/json',
+        data: JSON.stringify(obj),
+        method: 'POST',
+        complete: finishedCertOp
+      });
+    }});
     return;
   }
   $.ajax({
@@ -94,21 +121,56 @@ function volName(cell) {
   return data.firstName+' "'+data.burnerName+'" '+data.lastName;
 }
 
-function certType(cell) {
+function certTypeFormatter(cell) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
   return certs[`${certType}`].name;
 }
 
-function certImage(cell) {
+function certImage(cell, formatterParams, onRendered) {
   var data = cell.getRow().getData();
   var certType = Object.keys(data.certs)[0];
   var imagedata = data.certs[`${certType}`].image;
   var imagetype = data.certs[`${certType}`].imageType;
+  let canvas = document.createElement("canvas");
   if(imagetype === 'application/pdf') {
-    return '<object width="300" data="data:'+imagetype+';base64, '+imagedata+'"/>';
+    let pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '//cdn.jsdelivr.net/npm/pdfjs-dist@2.13.216/build/pdf.worker.js';
+    let loadingTask = pdfjsLib.getDocument({data: atob(imagedata)});
+    loadingTask.promise.then(function(pdf) {
+      pdf.getPage(1).then((page) => {
+        let viewport = page.getViewport({scale: 0.5});
+        let context = canvas.getContext('2d');
+        let renderContext = {canvasContext: context, viewport: viewport};
+        if(viewport.width < 500) {
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+        }
+        page.render(renderContext);
+        let fakeCanvas = document.createElement("canvas");
+        let fakeViewport = page.getViewport({scale: 1.5});
+        fakeCanvas.height = fakeViewport.height;
+        fakeCanvas.width = fakeViewport.width;
+        let orientTask = page.render({canvasContext: fakeCanvas.getContext('2d'), viewport: fakeViewport});
+        orientTask.promise.then(() => {
+          const { createWorker } = Tesseract;
+          (async () => {
+            const worker = createWorker();
+            await worker.load();
+            await worker.loadLanguage('eng');
+            await worker.initialize('eng');
+            const { data } = await worker.detect(fakeCanvas);
+            if(data.orientation_degrees !== 0) {
+              //Not sure why but it seems to move down and left about 30px...
+              canvas.style = 'transform:rotate('+data.orientation_degrees+'deg);position:relative;left:30px;top:-30px;';
+            }
+          })();
+        });
+      });
+    });
+    return canvas;
   }
-  return '<img width="300" src="data:'+imagetype+';base64, '+imagedata+'"/>';
+  return '<img width="500" src="data:'+imagetype+';base64, '+imagedata+'"/>';
 }
 
 function fullImage(e, cell) {
@@ -116,22 +178,47 @@ function fullImage(e, cell) {
   var certType = Object.keys(data.certs)[0];
   var imagedata = data.certs[`${certType}`].image;
   var imagetype = data.certs[`${certType}`].imageType;
+  let message = '<img src="data:'+imagetype+';base64, '+imagedata+'"/>';
   if(imagetype === 'application/pdf') {
-    bootbox.alert({size: 'xl', message:'<object data="data:'+imagetype+';base64, '+imagedata+'" style="width: 100%; height: '+screen.height*3/5+'px"/>'});
-    return;
+    message = '<object data="data:'+imagetype+';base64, '+imagedata+'" style="width: 100%; height: '+screen.height*3/5+'px"/>';
   }
-  bootbox.alert({size: 'xl', message:'<img src="data:'+imagetype+';base64, '+imagedata+'"/>'});
+  bootbox.dialog({
+    title: 'Certificate Approval',
+    message: message,
+    onEscape: true,
+    size: 'xl',
+    buttons: {
+      approve: {
+        label: 'Approve Cert',
+        className: 'btn-success',
+        callback: () => {
+          approveCert(e, cell);
+        }
+      },
+      disapprove: {
+        label: 'Disapprove Cert',
+        className: 'btn-danger',
+        callback: () => {
+          disapproveCert(e, cell);
+        }
+      },
+      nothing: {
+        label: 'Do Nothing',
+        className: 'btn-primary',
+      }
+    }
+  });
 }
 
 function initPage() {
   table = new Tabulator('#certs', {
     columns: [
-      {formatter: approveIcon, width:40, align: 'center', cellClick: approveCert},
-      {formatter: disapproveIcon, width:40, align: 'center', cellClick: disapproveCert},
+      {formatter: approveIcon, width:40, hozAlign: 'center', cellClick: approveCert},
+      {formatter: disapproveIcon, width:40, hozAlign: 'center', cellClick: disapproveCert},
       {title: 'Volunteer Name', formatter: volName},
       {title: 'Volunteer Email', field: 'email', formatter: 'link', formatterParams:{urlPrefix: 'mailto://', target: '_blank'}},
-      {title: 'Cert Type', formatter: certType},
-      {title: 'Cert Image', formatter: certImage, width: 300, cellClick: fullImage}
+      {title: 'Cert Type', formatter: certTypeFormatter},
+      {title: 'Cert Image', formatter: certImage, width: 500, cellClick: fullImage}
     ]
   });
   $.ajax({

@@ -22,7 +22,15 @@ function gotShifts(jqXHR) {
   if(!inviteOnly) {
     tableData['total'].shifts = shifts.length;
   }
+  let groupPending = ($('#groupPending').prop('checked') === true);
+  let hideEmptyUnbound = ($('#unbound').prop('checked') === true);
   for(let shift of shifts) {
+    if(shift.enabled === false) {
+      continue;
+    }
+    if(hideEmptyUnbound && shift.unbounded === true && (shift.status === undefined || shift.status === 'unfilled')) {
+      continue;
+    }
     if(inviteOnly) {
       if(shift.whyClass === 'INVITE') {
         continue;
@@ -36,9 +44,17 @@ function gotShifts(jqXHR) {
     var milliseconds = end - start;
     var minutes = milliseconds/(1000*60);
     var hours = (minutes*1.0)/60;
+    if(hours < 0) {
+      console.log(shift);
+    }
     tableData['total'].hours += hours;
     tableData[shift.departmentID].hours += hours;
-    if(shift.status && shift.status === 'filled') {
+    if(groupPending && shift.status && shift.status === 'groupPending') {
+      tableData['total'].filled++;
+      tableData[shift.departmentID].filled++;
+      tableData['total'].filledHours += hours;
+      tableData[shift.departmentID].filledHours += hours;
+    } else if(shift.status && (shift.status === 'filled' || shift.status === 'pending')) {
       tableData['total'].filled++;
       tableData[shift.departmentID].filled++;
       tableData['total'].filledHours += hours;
@@ -56,6 +72,10 @@ function gotShifts(jqXHR) {
     tmp.hours = timeToString(tmp.hours);
     tmp.filledHours = timeToString(tmp.filledHours);
     tmp.unfilledHours = timeToString(tmp.unfilledHours);
+    tmp.percent = Number.parseFloat((tmp.filled/tmp.shifts)*100).toPrecision(4);
+    if(tmp.shifts === 0) {
+      tmp.percent = 0;
+    }
     array.push(tmp);
   }
   table = new Tabulator('#shift_stats', {
@@ -66,7 +86,8 @@ function gotShifts(jqXHR) {
       {title:'Filled Shift Count', field: 'filled', sorter: 'number'},
       {title:'Filled Shift Hours', field: 'filledHours', sorter: 'number'},
       {title:'Unfilled Shift Count', field: 'unfilled', sorter: 'number'},
-      {title:'Unfilled Shift Hours', field: 'unfilledHours', sorter: 'number'}
+      {title:'Unfilled Shift Hours', field: 'unfilledHours', sorter: 'number'},
+      {title:'Percentage Filled', field: 'percent', sorter: 'number'}
     ],
     initialSort:[
       {column: 'hours', dir: 'desc'}
@@ -85,6 +106,10 @@ function hideEmptyShifts() {
 }
 
 function hideInviteOnlyShifts() {
+  eventChanged({target: $('#event')[0]});
+}
+
+function hideEmptyUnboundShifts() {
   eventChanged({target: $('#event')[0]});
 }
 
@@ -109,7 +134,7 @@ function tableToXLSX() {
 }
 
 function eventChanged(e) {
-  for(var dept in tableData) {
+  for(let dept in tableData) {
     tableData[`${dept}`].shifts = 0;
     tableData[`${dept}`].hours = 0;
     tableData[`${dept}`].unfilled = 0;
@@ -124,14 +149,21 @@ function eventChanged(e) {
 }
 
 function processEvents(events) {
+  let filter = $('#showOld')[0].checked;
   var data = [];
   for(let event of events) {
-    if(event['available']) {
+    if(!filter && event['available']) {
+      data.push({id: event['_id']['$oid'], text: event['name']});
+    } else if(filter) {
       data.push({id: event['_id']['$oid'], text: event['name']});
     }
   }
-  var sel2 = $('#event').select2({data: data});
-  sel2.change(eventChanged);
+  if(!$('#event').hasClass("select2-hidden-accessible")) {
+    var sel2 = $('#event').select2({data: data});
+    sel2.change(eventChanged);
+  } else {
+    $('#event').select2({data: data});
+  }
 }
 
 function processDepartments(depts) {
@@ -180,6 +212,19 @@ function checkXLSX() {
   $('.page-header').append('<button type="button" class="btn btn-link" onclick="tableToXLSX();"><i class="fas fa-file-excel"></i></button>');
 }
 
+function refreshEvents(jqXHR) {
+  if(jqXHR.status === 200) {
+    processEvents(jqXHR.responseJSON);
+  }
+}
+
+function showOldEvents() {
+  $.ajax({
+    url: '../api/v1/events',
+    complete: refreshEvents
+  });
+}
+
 function initPage() {
   let promises = [];
   promises.push($.ajax({
@@ -193,6 +238,9 @@ function initPage() {
   setTimeout(checkXLSX, 1);
   $('#hideEmpty').change(hideEmptyShifts);
   $('#hideInviteOnly').change(hideInviteOnlyShifts);
+  $('#showOld').change(showOldEvents);
+  $('#groupPending').change(hideInviteOnlyShifts);
+  $('#unbound').change(hideEmptyUnboundShifts);
 }
 
 $(initPage);

@@ -14,6 +14,11 @@ $page->content['selectors'] = '<label for="event" class="col-sm-2 col-form-label
   </div>
   <div class="w-100"></div>
   <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="showOld">
+    <label class="form-check-label" for="showOld">Show Old Events</label>
+  </div>
+  <div class="w-100"></div>
+  <div class="form-check">
     <input type="checkbox" class="form-check-input" id="hideEmpty">
     <label class="form-check-label" for="hideEmpty">Hide Empty Departments</label>
   </div>
@@ -21,6 +26,16 @@ $page->content['selectors'] = '<label for="event" class="col-sm-2 col-form-label
   <div class="form-check">
     <input type="checkbox" class="form-check-input" id="hideInviteOnly">
     <label class="form-check-label" for="hideInviteOnly">Hide Invite Only Shifts</label>
+  </div>
+  <div class="w-100"></div>
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="groupPending">
+    <label class="form-check-label" for="groupPending">Count Group Pending Shifts as Full</label>
+  </div>
+  <div class="w-100"></div>
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="unbound">
+    <label class="form-check-label" for="unbound">Do not include unfilled unbound shifts</label>
   </div>
 ';
 

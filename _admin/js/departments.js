@@ -192,7 +192,7 @@ function initPage() {
       {formatter: delIcon, width:40, hozAlign: 'center', cellClick: delDepartment},
       {title: 'ID', field: '_id.$id', visible: false},
       {title: 'Department ID', field: 'departmentID', formatter: 'link', formatterParams:{urlPrefix:'roles.php?dept='}},
-      {title: 'Name', field: 'departmentName', editor: 'input'},
+      {title: 'Name', field: 'departmentName', editor: 'input', minWidth: 200},
       {title: 'Public', field: 'public', editor: 'tickCross', formatter: 'tickCross'},
       {title: 'Lead', field: 'lead', editor:'select', editorParams: leadDropDown},
       {title: 'Area', field: 'area', editor:'select', editorParams: areaDropDown, formatter: areaDisplay, sorter: 'alphanum'},

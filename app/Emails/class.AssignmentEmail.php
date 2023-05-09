@@ -1,5 +1,5 @@
 <?php
-namespace Emails;
+namespace Volunteer\Emails;
 
 class AssignmentEmail extends VolunteerEmail
 {

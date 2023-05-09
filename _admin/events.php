@@ -10,10 +10,12 @@ $page->addJS('../js/wizard.js');
 
 $page->content['pageHeader'] = 'Events';
 $page->content['table'] = array('id' => 'events');
+$page->content['selectors'] = '';
 if($page->user && $page->user->isInGroupNamed('VolunteerAdmins'))
 {
-    $page->content['selectors'] = '<button type="button" class="btn btn-primary" onclick="showEventWizard();">New Event</button>';
+    $page->content['selectors'] = '<button type="button" class="btn btn-primary" onclick="showEventWizard();">New Event</button><div class="w-100"></div>';
 }
+$page->content['selectors'] .= '<div class="form-check"><input type="checkbox" class="form-check-input" id="hideOld" checked><label class="form-check-label" for="hideEmpty">Hide Past Events</label></div>';
 $page->content['body'] = '
 <div class="modal fade bd-example-modal-lg" id="eventWizard" tabindex="-1" role="dialog" aria-labelledby="eventWizardTitle" aria-hidden="true" data-backdrop="static" data-complete="newEvent">
   <div class="modal-dialog modal-lg">

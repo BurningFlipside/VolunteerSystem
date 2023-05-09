@@ -6,8 +6,7 @@ function doneShiftCopy(jqXHR) {
     return;
   }
   let str = 'Successfully created '+jqXHR.responseJSON.success+' shifts.';
-  if(jqXHR.responseJSON.fail > 0)
-  {
+  if(jqXHR.responseJSON.fail > 0) {
     str+=' Failed on '+jqXHR.responseJSON.fail+' shifts';
   }
   bootbox.alert(str);
@@ -40,7 +39,7 @@ function gotSrcAndDstEvents(results) {
   let srcLen = getEventLength(src);
   let dstLen = getEventLength(dst);
   if(srcLen !== dstLen) {
-    $('#nextStep').append('<div class="alert alert-danger" role="alert">'+src.name+' and '+dst.name+' are differnt lengths so copy will not work!</div>');
+    $('#nextStep').append('<div class="alert alert-danger" role="alert">'+src.name+' and '+dst.name+' are different lengths so copy will not work!</div>');
   } else {
     let button = $('<button type="button" class="btn btn-primary">Copy Shifts!</button>');
     button.click(doShiftCopy);
@@ -52,6 +51,14 @@ function gotSrcAndDstEvents(results) {
 function srcOrDstChanged() {
   $('#nextStep').empty();
   let promises = [];
+  if($('#src').val() === null) {
+    alert('Source Event not set!');
+    return;
+  }
+  if($('#dst').val() === null) {
+    alert('Destination Event not set!');
+    return;
+  }
   promises.push($.ajax({
     url: '../api/v1/events/'+$('#src').val(),
   }));
@@ -64,11 +71,14 @@ function srcOrDstChanged() {
 function gotEvents(jqXHR) {
   if(jqXHR.status !== 200) {
     console.log(jqXHR);
-    alert('Unable to obtain shift list!');
+    alert('Unable to obtain event list!');
     return;
   }
   let events = jqXHR.responseJSON;
   let eventsWithDeptShifts = this;
+  let now = new Date();
+  $('#src').empty();
+  $('#dst').empty();
   for(let event of events) {
     //Source Events must be in the eventsWithDeptShifts list
     if(eventsWithDeptShifts.includes(event['_id']['$oid'])) {
@@ -77,6 +87,10 @@ function gotEvents(jqXHR) {
         text: event.name
       }));
     } else {
+      let startTime = new Date(event.startTime);
+      if(startTime < now) {
+        continue;
+      }
       $('#dst').append($('<option>', {
         value: event['_id']['$oid'],
         text: event.name
@@ -98,9 +112,10 @@ function gotShifts(jqXHR) {
     eventIDs.add(shift.eventID);
   }
   if(eventIDs.size === 0) {
-    alert('Department has no past events with shifts to copy from!');
+    $('#nextStep').append('<div class="alert alert-danger" role="alert">Department has no past events with shifts to copy from!</div>');
     return;
   }
+  $('#nextStep').empty();
   //Now get all events, past and future
   $.ajax({
     url: '../api/v1/events',
@@ -125,6 +140,9 @@ function gotDepartments(jqXHR) {
     return;
   }
   let depts = jqXHR.responseJSON;
+  depts = depts.sort(function(a, b) {
+    return a.departmentName.localeCompare(b.departmentName);
+  });
   for(let dept of depts) {
     if(dept.isAdmin) {
       $('#department').append($('<option>', {

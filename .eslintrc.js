@@ -15,6 +15,11 @@ module.exports = {
     'ecmaVersion': 'latest'
   },
   'rules': {
+    'block-spacing': 'error',
+    'brace-style': 'error',
+    'camelcase': 'error',
+    'curly': 'error',
+    'eqeqeq': 'error',
     'indent': [
       'error',
       2,
@@ -26,11 +31,14 @@ module.exports = {
       'error',
       'unix'
     ],
+    'no-else-return': 'error',
+    'no-shadow': 'error',
     'quotes': [2, 'single', { 'avoidEscape': true }],
     'semi': [
       'error',
       'always'
     ], 
+    'semi-spacing': 'error',
     'no-useless-escape': 'off'
   }
 };

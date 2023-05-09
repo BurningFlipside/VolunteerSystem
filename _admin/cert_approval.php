@@ -7,6 +7,8 @@ $page->setTemplateName('admin-table-new.html');
 
 $page->addWellKnownJS(JS_BOOTBOX);
 $page->addJS('../js/wizard.js');
+$page->addJS('https://cdn.jsdelivr.net/npm/pdfjs-dist@2.13.216/build/pdf.min.js');
+$page->addJS('https://unpkg.com/tesseract.js@2.1.5/dist/tesseract.min.js');
 
 $page->content['pageHeader'] = 'Certification Approval';
 $page->content['table'] = array('id' => 'certs');

@@ -1,4 +1,9 @@
 <?php
+namespace Volunteer;
+
+use \Flipside\Data\Filter as DataFilter;
+use \Exception as Exception;
+
 class VolunteerObject
 {
     protected $tableName;
@@ -13,7 +18,7 @@ class VolunteerObject
         if($dbData === null)
         {
             $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', $tableName);
-            $filter = new \Flipside\Data\Filter($index.' eq '.$id);
+            $filter = new DataFilter($index.' eq '.$id);
             $objs = $dataTable->read($filter);
             if(empty($objs))
             {
@@ -35,11 +40,16 @@ class VolunteerObject
 
     public function getDataFilter()
     {
-        return new \Flipside\Data\Filter($this->index.' eq '.$this->id);
+        return new DataFilter($this->index.' eq '.$this->id);
     }
 
     public function __get($propName)
     {
         return $this->dbData[$propName];
+    }
+
+    public function getId() : string
+    {
+        return $this->id;
     }
 }

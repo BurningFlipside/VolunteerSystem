@@ -1,5 +1,5 @@
 <?php
-namespace Emails;
+namespace Volunteer\Emails;
 
 class PendingRejectedEmail extends VolunteerEmail
 {

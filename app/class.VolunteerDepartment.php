@@ -1,4 +1,8 @@
 <?php
+namespace Volunteer;
+
+use \Flipside\Data\Filter as DataFilter;
+
 class VolunteerDepartment extends VolunteerObject
 {
     public function __construct($departmentID, $dbData = null)
@@ -10,7 +14,7 @@ class VolunteerDepartment extends VolunteerObject
     {
         $leadTitle = $this->dbData['lead'];
         $auth = \Flipside\AuthProvider::getInstance();
-        $users = $auth->getUsersByFilter(new \Flipside\Data\Filter('title eq '.$leadTitle), array('mail'));
+        $users = $auth->getUsersByFilter(new DataFilter('title eq '.$leadTitle), array('mail'));
         if(empty($users))
         {
             return null;
@@ -23,20 +27,20 @@ class VolunteerDepartment extends VolunteerObject
         return $users;
     }
 
-    public static function getPrivateDepartments()
+    public static function getPrivateDepartments() : array
     {
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
-        $filter = new \Flipside\Data\Filter('public eq false');
-        $depts = $dataTable->read($filter);
+        $filter = new DataFilter('public eq false');
+        $departments = $dataTable->read($filter);
         $res = array();
-        if(empty($depts))
+        if(empty($departments))
         {
             return $res;
         }
-        $count = count($depts);
+        $count = count($departments);
         for($i = 0; $i < $count; $i++)
         {
-            array_push($res, $depts[$i]['departmentID']);
+            array_push($res, $departments[$i]['departmentID']);
         }
         return $res;
     }

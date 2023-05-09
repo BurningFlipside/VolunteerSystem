@@ -1,5 +1,5 @@
 <?php
-namespace Schedules;
+namespace Volunteer\Schedules;
 
 trait ShiftSchedule
 {
@@ -63,9 +63,9 @@ trait ShiftSchedule
 
     public function daySort($a, $b)
     {
-        $a_date = $this->getStringBetween($a, '(', ')');
-        $b_date = $this->getStringBetween($b, '(', ')'); 
-        return strcasecmp($a_date, $b_date);
+        $aDate = $this->getStringBetween($a, '(', ')');
+        $bDate = $this->getStringBetween($b, '(', ')'); 
+        return strcasecmp($aDate, $bDate);
     }
 
     public function groupSort($a, $b)

@@ -3,8 +3,7 @@ function gotShifts(jqXHR) {
   if(jqXHR.status === 401) {
     location.reload();
     return;
-  }
-  else if(jqXHR.status !== 200) {
+  } else if(jqXHR.status !== 200) {
     alert('Unable to get shifts!');
     console.log(jqXHR);
     return;

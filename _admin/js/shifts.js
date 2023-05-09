@@ -41,8 +41,8 @@ function createShift(e) {
   });
 }
 
-function createCopies(e) {
-  var shift = e.data;
+function createCopies(event) {
+  var shift = event.data;
   var copies = shift.copies;
   delete shift.copies;
   var promises = [];
@@ -74,6 +74,10 @@ function gotDepartmentRoles(jqXHR) {
   var options = this;
   var inputs = options.inputs;
   var array = jqXHR.responseJSON;
+  if(array.length === 0) {
+    alert('Department has no roles. Please create at least one role before attempting to create a shift!');
+    return;
+  }
   for(let input of inputs) {
     if(input.id === 'roleID') {
       input.options = [];
@@ -88,10 +92,15 @@ function gotDepartmentRoles(jqXHR) {
 function gotGroupDepartmentRoles(jqXHR) {
   var mySelect = $('#groupAddRole');
   var array = jqXHR.responseJSON;
+  if(array.length === 0) {
+    alert('Department has no roles. Please create at least one role before attempting to create a shift!');
+    return;
+  }
   for(let role of array) {
     var newOption = new Option(role.display_name, role.short_name, false, false);
     mySelect.append(newOption);
   }
+  $('#groupWizard').modal('show');
 }
 
 function addNewShift(elem) {
@@ -188,7 +197,6 @@ function addNewGroup(elem) {
     url: '../api/v1/departments/'+href+'/roles',
     complete: gotGroupDepartmentRoles
   });
-  $('#groupWizard').modal('show');
 }
 
 function groupEventChanged(elem) {
@@ -251,8 +259,7 @@ function deleteShift(e) {
             method: 'POST',
             complete: shiftDeleted
           });
-        }
-        else {
+        } else {
           $.ajax({
             url: '../api/v1/shifts/'+e.data['_id']['$oid'],
             method: 'DELETE',
@@ -327,13 +334,11 @@ function filterSinglesAndGroups(element) {
   if(element.groupID === undefined) {
     return true;
   }
-  else {
-    if(this[element.groupID] === undefined) {
-      this[element.groupID] = [];
-    }
-    this[element.groupID].push(element);
-    return false;
+  if(this[element.groupID] === undefined) {
+    this[element.groupID] = [];
   }
+  this[element.groupID].push(element);
+  return false;
 }
 
 function getGroupName(group) {
@@ -399,8 +404,7 @@ function doGroup(e) {
       data: JSON.stringify(obj),
       complete: groupDone
     });
-  }
-  else if(data.group === 'single') {
+  } else if(data.group === 'single') {
     //Create a new group...
     var array = [];
     array.push(data.shiftID);
@@ -413,8 +417,7 @@ function doGroup(e) {
       complete: groupDone
     });
     return;
-  }
-  else {
+  } else {
     if(data.oldGroupID !== undefined) {
       replaceGroupID(data.oldGroupID, data.groupID);
       return;
@@ -435,8 +438,7 @@ function groupTypeChange(e) {
   if(e.target.value === 'single') {
     $('#shiftID').removeAttr('disabled');
     $('#groupID').attr('disabled', true);
-  }
-  else {
+  } else {
     $('#groupID').removeAttr('disabled');
     $('#shiftID').attr('disabled', true);
   }
@@ -462,8 +464,7 @@ function gotShiftsToGroup(jqXHR) {
   if(groupCount === 0) {
     groupOptions.disabled = true;
     groupSelect.disabled = true;
-  }
-  else {
+  } else {
     groupOptions.checked = true;
     groupSelect.options = [];
     for(var groupID in groups) {
@@ -476,12 +477,10 @@ function gotShiftsToGroup(jqXHR) {
   if(singles.length === 0) {
     singleOptions.disabled = true;
     singleSelect.disabled = true;
-  }
-  else {
+  } else {
     if(groupCount === 0) {
       singleOptions.checked = true;
-    }
-    else {
+    } else {
       singleSelect.disabled = true;
     }
     singleSelect.options = [];
@@ -517,7 +516,7 @@ function gotShiftsToGroup(jqXHR) {
   flipDialog.dialog(dialogOptions);
 }
 
-function groupShift(e) {
+function doGroupShift(e) {
   $.ajax({
     url: '../api/v1/shifts?$filter=departmentID eq '+e.data.departmentID+' and startTime eq '+e.data.startTime+' and endTime eq '+e.data.endTime,
     complete: gotShiftsToGroup,
@@ -543,7 +542,7 @@ function isEquivalent(a, b) {
   
   // If number of properties is different,
   // objects are not equivalent
-  if (aProps.length != bProps.length) {
+  if (aProps.length !== bProps.length) {
     return false;
   }
 
@@ -559,62 +558,74 @@ function isEquivalent(a, b) {
   return true;
 }
 
-function saveGroup(e) {
-  var shifts = e.data.shifts;
-  var roles = {};
+function saveGroup(event) {
+  var shifts = event.data.shifts;
+  let roleList = {};
   for(let shift of shifts) {
-    shift.department = e.data.department;
-    shift.departmentID = e.data.departmentID;
-    shift.earlyLate = e.data.earlyLate;
-    shift.enabled = e.data.enabled;
-    shift.approvalNeeded = e.data.approvalNeeded;
-    shift.endTime = e.data.endTime;
-    shift.name = e.data.name;
-    shift.startTime = e.data.startTime;
-    shift.eventID = e.data.eventID;
-    shift.unbounded = e.data.unbounded;
-    shift.minShifts = e.data.minShifts;
-    if(roles[shift.roleID] === undefined) {
-      roles[shift.roleID] = 0;
+    shift.department = event.data.department;
+    shift.departmentID = event.data.departmentID;
+    shift.earlyLate = event.data.earlyLate;
+    shift.enabled = event.data.enabled;
+    shift.approvalNeeded = event.data.approvalNeeded;
+    shift.endTime = event.data.endTime;
+    shift.name = event.data.name;
+    shift.startTime = event.data.startTime;
+    shift.eventID = event.data.eventID;
+    shift.unbounded = event.data.unbounded;
+    shift.minShifts = event.data.minShifts;
+    if(roleList[shift.roleID] === undefined) {
+      roleList[shift.roleID] = 0;
     }
-    roles[shift.roleID]++;
+    roleList[shift.roleID]++;
   }
-  delete e.data.department;
-  delete e.data.departmentID;
-  delete e.data.earlyLate;
-  delete e.data.enabled;
-  delete e.data.approvalNeeded;
-  delete e.data.endTime;
-  delete e.data.groupID;
-  delete e.data.name;
-  delete e.data.startTime;
-  delete e.data.eventID;
-  delete e.data.shifts;
-  delete e.data.unbounded;
-  delete e.data.minShifts;
-  for(let role in e.data) {
-    e.data[`${role}`] = e.data[`${role}`]*1;
+  delete event.data.department;
+  delete event.data.departmentID;
+  delete event.data.earlyLate;
+  delete event.data.enabled;
+  delete event.data.approvalNeeded;
+  delete event.data.endTime;
+  delete event.data.groupID;
+  delete event.data.name;
+  delete event.data.startTime;
+  delete event.data.eventID;
+  delete event.data.shifts;
+  delete event.data.unbounded;
+  delete event.data.minShifts;
+  for(let role in event.data) {
+    event.data[`${role}`] = event.data[`${role}`]*1;
   }
-  if(!isEquivalent(e.data, roles)) {
+  if(!isEquivalent(event.data, roleList)) {
     //TODO Create more copies of the role...
-    for(let role in roles) {
-      e.data[`${role}`] = e.data[`${role}`] - roles[`${role}`];
-      if(e.data[`${role}`] === 0) {
-        delete e.data[`${role}`];
+    for(let role in roleList) {
+      event.data[`${role}`] = event.data[`${role}`] - roleList[`${role}`];
+      if(event.data[`${role}`] === 0) {
+        delete event.data[`${role}`];
       }
-      if(e.data[`${role}`] > 0) {
-        while(e.data[`${role}`] > 0) {
+      if(event.data[`${role}`] > 0) {
+        while(event.data[`${role}`] > 0) {
           var newShift = Object.assign({}, shifts[0]);
+          delete newShift['_id'];
+          if(newShift.participant !== undefined) {
+            delete newShift.participant;
+          }
+          if(newShift.volunteer !== undefined) {
+            delete newShift.volunteer;
+          }
+          delete newShift.status;
+          delete newShift.why;
+          if(newShift.whyClass !== undefined) {
+            delete newShift.whyClass;
+          }
           newShift.roleID = role;
           shifts.push(newShift);
-          e.data[`${role}`]--;
+          event.data[`${role}`]--;
         }
       } else {
-        while(e.data[`${role}`] < 0) {
+        while(event.data[`${role}`] < 0) {
           for(let shift of shifts) {
             if(shift.roleID === role) {
               shift.DELETE = true;
-              e.data[`${role}`]++;
+              event.data[`${role}`]++;
               break;
             }
           }
@@ -659,9 +670,7 @@ function getDepartmentName(departmentID) {
   if(departments[`${departmentID}`] !== undefined) {
     return departments[`${departmentID}`].departmentName;
   }
-  else {
-    return departmentID;
-  }
+  return departmentID;
 }
 
 function retryEvents() {
@@ -695,32 +704,41 @@ function shiftAssigned(jqXHR) {
     } else if(jqXHR.responseJSON !== undefined) {
       alert(jqXHR.responseJSON.message);
       return;
-    } else {
-      console.log(jqXHR);
-      alert('Unable to assign shift!');
-      return;
     }
+    console.log(jqXHR);
+    alert('Unable to assign shift!');
+    return;
   }
   location.reload();
 }
 
+function finishAssignShift(e) {
+  let shiftID = e.data.id;
+  let obj = {id: shiftID, email: e.data.assignUser};
+  $.ajax({
+    url: '../api/v1/shifts/'+shiftID+'/Actions/Assign',
+    method: 'POST',
+    complete: shiftAssigned,
+    contentType: 'application/json',
+    data: JSON.stringify({email: e.data.assignUser}),
+    context: obj
+  });
+}
+
 function assignShift(e) {
   let shiftID = e.data['_id']['$oid'];
-  let obj = {id: shiftID};
-  bootbox.prompt("Enter the user's email to assign the shift to", function(result){ 
-    if(result === null || result === '') {
-      return;
-    }
-    obj.email = result;
-    $.ajax({
-      url: '../api/v1/shifts/'+shiftID+'/Actions/Assign',
-      method: 'POST',
-      complete: shiftAssigned,
-      contentType: 'application/json',
-      data: JSON.stringify({email: result}),
-      context: obj
-    }); 
-  });
+  let dialogOptions = {
+    id: 'assignShift',
+    title: 'Assign Shift',
+    data: {id: shiftID},
+    inputs: [
+      {label: 'User', type: 'text', id: 'assignUser', keyUp: searchUsers}
+    ],
+    buttons: [
+      {text: 'Assign', callback: finishAssignShift}
+    ]
+  };
+  flipDialog.dialog(dialogOptions);
 }
 
 function gotShiftToEdit(jqXHR) {
@@ -775,23 +793,56 @@ function gotShiftToEdit(jqXHR) {
     ],
     buttons: [
       {text: 'Delete Shift', callback: deleteShift},
-      {text: 'Add to Shift Set', callback: groupShift, disabled: !groupable},
+      {text: 'Add to Shift Set', callback: doGroupShift, disabled: !groupable},
       {text: 'Save Shift', callback: saveShift}
     ]
   };
+  let promises = [];
   if(shift.status === 'filled' || shift.status === 'pending') {
     dialogOptions.alerts = [
       {type: 'warning', text: 'Shift is already filled!'}
     ];
+    if(shift.needEEApproval) {
+      dialogOptions.alerts.push({type: 'info', text: 'Shift requires Early Entry approval.'});
+    }
     dialogOptions.inputs.push({label: 'Participant', type: 'text', id: 'participant', value: shift.participant, disabled: true});
+    
     dialogOptions.buttons.push({text: 'Empty Shift', callback: emptyShift});
+    promises.push($.ajax({
+      url: '../api/v1/participants/'+shift.participant
+    }));
   } else {
     dialogOptions.buttons.push({text: 'Assign Shift', callback: assignShift});
   }
-  $.ajax({
-    url: '../api/v1/departments/'+shift.departmentID+'/roles',
-    complete: gotDepartmentRoles,
-    context: dialogOptions
+  promises.push($.ajax({
+    url: '../api/v1/departments/'+shift.departmentID+'/roles'
+  }));
+  Promise.allSettled(promises).then((results) => {
+    console.log(Object.assign({}, results));
+    if(results.length > 1) {
+      if(results[0].status === 'fulfilled') {
+        let partResults = results.shift().value;
+        let name = partResults.firstName+' "'+partResults.burnerName+'" '+partResults.lastName;
+        if(partResults.burnerName.trim().length === 0 || partResults.firstName === partResults.burnerName) {
+          name = partResults.firstName+' '+partResults.lastName;
+        }
+        dialogOptions.inputs.push({label: 'Participant Name', type: 'text', id: 'participant_name', value: name, disabled: true});
+        dialogOptions.inputs.push({label: 'Participant Email', type: 'text', id: 'participant_email', value: partResults.email, disabled: true});
+      } else {
+        results.shift();
+      }
+    }
+    let roleResult = results.shift().value;
+    console.log(roleResult);
+    for(let input of dialogOptions.inputs) {
+      if(input.id === 'roleID') {
+        input.options = [];
+        for(let role of roleResult) {
+          input.options.push({value: role.short_name, text: role.display_name});
+        }
+      }
+    }
+    flipDialog.dialog(dialogOptions);
   });
 }
 
@@ -800,6 +851,28 @@ function removeGroupSignup(e) {
     url: '../api/v1/shifts/Actions/RemoveGroupSignupLink',
     contentType: 'application/json',
     data: JSON.stringify(e.data),
+    type: 'POST',
+    dataType: 'json',
+    complete: doneCreatingShift
+  });
+}
+
+function generateGroupSignup(e) {
+  let obj = {};
+  for(let shift of e.data.shifts) {
+    if(shift.status === 'pending' || shift.status === 'filled') {
+      continue;
+    }
+    if(obj['roles.'+shift.roleID] === undefined) {
+      obj['roles.'+shift.roleID] = 1;
+    } else {
+      obj['roles.'+shift.roleID]++;
+    }
+  }
+  $.ajax({
+    url: '../api/v1/shifts/'+e.data.shifts[0]['_id']['$oid']+'/Actions/GenerateGroupLink',
+    contentType: 'application/json',
+    data: JSON.stringify(obj),
     type: 'POST',
     dataType: 'json',
     complete: doneCreatingShift
@@ -825,14 +898,14 @@ function gotGroupToEdit(jqXHR) {
   }
   var group = {shifts: shifts};
   var roleText = '';
-  var roles = {};
+  var roleList = {};
   var taken = false;
   var groupLink = false;
   for(let shift of shifts) {
-    if(roles[shift.roleID] === undefined) {
-      roles[shift.roleID] = 0;
+    if(roleList[shift.roleID] === undefined) {
+      roleList[shift.roleID] = 0;
     }
-    roles[shift.roleID]++;
+    roleList[shift.roleID]++;
     if(shift.status === 'filled' || shift.status === 'pending') {
       taken = true;
     }
@@ -840,8 +913,8 @@ function gotGroupToEdit(jqXHR) {
       groupLink = true;
     }
   }
-  for(var role in roles) {
-    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roles[`${role}`]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+getRoleName(role)+'</span></div></div>';
+  for(var role in roleList) {
+    roleText+='<div class="input-group"><input type="number" class="form-control" id="'+role+'" name="'+role+'" value="'+roleList[`${role}`]+'"/><div class="input-group-append"><span class="input-group-text" id="basic-addon2">'+getRoleName(role)+'</span></div></div>';
   }
   var dialogOptions = {
     title: 'Edit Shift Set',
@@ -869,7 +942,7 @@ function gotGroupToEdit(jqXHR) {
     ],
     buttons: [
       {text: 'Delete Shift Set', callback: deleteShift},
-      {text: 'Add Shift/Merge Set', callback: groupShift},
+      {text: 'Add Shift/Merge Set', callback: doGroupShift},
       {text: 'Save Shift Set', callback: saveGroup}
     ]
   };
@@ -897,6 +970,8 @@ function gotGroupToEdit(jqXHR) {
       }
     }
     dialogOptions.buttons.push({text: 'Remove Group Signup', callback: removeGroupSignup});
+  } else {
+    dialogOptions.buttons.push({text: 'Generate Group Signup', callback: generateGroupSignup});
   }
   flipDialog.dialog(dialogOptions);
 }
@@ -926,6 +1001,7 @@ function sortEvents(a, b) {
 }
 
 function gotShifts(jqXHR) {
+  let roleID = getParameterByName('role');
   if(jqXHR.status !== 200) {
     alert('Unable to obtain shifts');
     console.log(jqXHR);
@@ -945,6 +1021,7 @@ function gotShifts(jqXHR) {
     var filledCount = 0;
     var pendingCount = 0;
     var emptyCount = 0;
+    let found = false;
     for(let groupShift of group) {
       if(groupShift.status === 'filled') {
         filledCount++;
@@ -953,8 +1030,14 @@ function gotShifts(jqXHR) {
       } else {
         emptyCount++;
       }
+      if(roleID !== null && groupShift.roleID === roleID) {
+        found = true;
+      }
     }
-    var badge = '';
+    if(roleID !== null && !found) {
+      continue;
+    }
+    let badge = '';
     if(filledCount > 0) {
       badge += '<span class="badge badge-warning">Filled <span class="badge badge-light">'+filledCount+'</span></span>';
     }
@@ -968,6 +1051,9 @@ function gotShifts(jqXHR) {
   }
   singles.sort(sortEvents);
   for(let single of singles) {
+    if(roleID !== null && single.roleID !== roleID) {
+      continue;
+    }
     let shiftName = '';
     if(single.name !== undefined && single.name.length > 0) {
       shiftName = single.name+': '+getRoleName(single.roleID);
@@ -989,19 +1075,28 @@ function gotShifts(jqXHR) {
   }
 }
 
-function processEvents(events) {
+function processEvents(eventToProcess) {
+  if(!Array.isArray(eventToProcess)) {
+    Sentry.withScope(scope => {
+      scope.setExtra('eventToProcess', eventToProcess);
+      scope.setLevel('info');
+      Sentry.captureMessage('Failed to obtain events to process '+eventToProcess);
+    });
+    alert('Failed to obtain events...');
+    return;
+  }
   if(getParameterByName('showOld') === null) {
-    events = events.filter(function(evt) {
+    eventToProcess = eventToProcess.filter(function(evt) {
       return evt.why !== 'Event is in the past';
     });
   }
-  events.sort(function(a, b){
+  eventToProcess.sort(function(a, b){
     var aDate = new Date(a.startTime);
     var bDate = new Date(b.startTime);
     return aDate.getTime() - bDate.getTime();
   });
   var ef = $('#eventFilter');
-  for(let event of events) {
+  for(let event of eventToProcess) {
     var option = $('<option value="'+event['_id']['$oid']+'">'+event.name+'</option>');
     ef.append(option);
   }
@@ -1009,10 +1104,11 @@ function processEvents(events) {
   if(faveEvent !== null) {
     ef.val(faveEvent);
   }
-  return events;
+  return eventToProcess;
 }
 
 function processDepartments(array) {
+  let deptID = getParameterByName('dept');
   array.sort(function(a, b) {
     return a.departmentName.localeCompare(b.departmentName);
   });
@@ -1022,6 +1118,11 @@ function processDepartments(array) {
   var count = 0;
   var accordian = $('#accordion');
   for(let dept of array) {
+    if(deptID !== null) {
+      if(dept.departmentID !== deptID) {
+        continue;
+      }
+    }
     count++;
     departments[dept.departmentID] = dept;
     accordian.append('<div class="card"><div class="card-header" id="heading'+dept.departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+dept.departmentID+'" aria-expanded="true" aria-controls="collapse'+dept.departmentID+'">'+dept.departmentName+'</button></h2></div><div id="collapse'+dept.departmentID+'" class="collapse show" aria-labelledby="heading'+dept.departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+dept.departmentID+'List"><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
@@ -1039,15 +1140,12 @@ function processDepartments(array) {
     uri += '?$filter=eventID eq '+eventID+' and status ';
     if(filled === '1') {
       uri += 'eq filled';
-    }
-    else if(filled === '2') {
+    } else if(filled === '2') {
       uri += 'eq pending';
-    }
-    else {
+    } else {
       uri += 'ne filled and status ne pending';
     }
-  }
-  else if(eventID !== null) {
+  } else if(eventID !== null) {
     uri += '?$filter=eventID eq '+eventID;
   }
   $.ajax({
@@ -1056,8 +1154,7 @@ function processDepartments(array) {
   });
   if(window.location.hash !== '') {
     accordian.find(':not(#collapse'+window.location.hash.substr(1)+')').removeClass('show');
-  }
-  else if (count > 2) {
+  } else if (count > 2) {
     accordian.find('.show').removeClass('show');
   }
 }
@@ -1075,6 +1172,21 @@ function gotInitialData(results) {
   var deptResult = results.shift();
   var roleResult = results.shift();
   var obj = {};
+  if(eventResult.status !== 'fulfilled' || deptResult.status !== 'fulfilled' || roleResult.status !== 'fulfilled') {
+    if(eventResult.reason.status === 401) {
+      //User is just not logged in. Return silently...
+      return;
+    }
+    Sentry.withScope(scope => {
+      scope.setExtra('eventResult', eventResult);
+      scope.setExtra('deptResult', deptResult);
+      scope.setExtra('roleResult', roleResult);
+      scope.setLevel('info');
+      Sentry.captureMessage('Failed to obtain data to create shift page');
+    });
+    alert('Unable to obtain required data!');
+    return;
+  }
   events = obj.events = processEvents(eventResult.value);
   obj.depts = processDepartments(deptResult.value);
   roles = obj.roles = processRoles(roleResult.value);
@@ -1085,8 +1197,7 @@ function gotInitialData(results) {
       url: '../api/v1/shifts/'+shiftID,
       complete: gotShiftToEdit
     });
-  }
-  else if(groupID !== null) {
+  } else if(groupID !== null) {
     $.ajax({
       url: '../api/v1/shifts?$filter=groupID eq '+groupID,
       complete: gotGroupToEdit
@@ -1134,8 +1245,7 @@ function setBoundaryTimes(e) {
 function unboundedChanged(e) {
   if(e.target.checked) {
     $('#minShifts').removeAttr('disabled');
-  }
-  else {
+  } else {
     $('#minShifts').attr('disabled', true);
   }
 }

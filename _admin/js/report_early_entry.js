@@ -20,17 +20,25 @@ function gotReport(jqXHR) {
   var data = jqXHR.responseJSON;
   var tbody = $('#eeTable tbody');
   tbody.empty();
-  for(let vol in data) {
+  for(let vol of data) {
     let eeTxt = eeValueToString(vol.earlyLate);
-    tbody.append('<tr><td>'+vol.name+'</td><td>'+vol.email+'</td><td>'+vol.dept+'</td><td>'+vol.role+'</td><td>'+eeTxt+'</td><td><i>Pending</i></td></tr>');
+    tbody.append('<tr><td>'+vol.name+'</td><td>'+vol.email+'</td><td>'+vol.dept+'</td><td>'+vol.role+'</td><td>'+eeTxt+'</td><td>'+vol.ticket+'</td></tr>');
   }
 }
 
 function getShifts() {
   let obj = {};
-  var ee = $('#earlyLate').val();
+  let ee = $('#earlyLate').val();
   if(ee !== '*') {
     obj.earlyLate = ee;
+  }
+  let dept = $('#dept').val();
+  if(dept !== undefined) {
+    obj.department = dept;
+  }
+  let includePending = $('#showPending')[0].checked;
+  if(includePending === true) {
+    obj.includePending = includePending;
   }
   $.ajax({
     url: '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport',
@@ -63,11 +71,31 @@ function eeChanged() {
   }
 }
 
+function pendingChanged() {
+  if($('#event').val() !== null) {
+    getShifts();
+  }
+}
+
+function departmentChanged() {
+  if($('#event').val() !== null) {
+    getShifts();
+  }
+}
+
 function generateCSV() {
   if($('#event').val() === null) {
     alert('Select an event first!');
   }
-  window.location = '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport?$format=csv';
+  let append = '';
+  if($('#showPending')[0].checked) {
+    append += 'includePending=true&';
+  }
+  let dept = $('#dept').val();
+  if(dept !== undefined) {
+    append += 'department='+dept+'&'
+  }
+  window.location = '../api/v1/events/'+$('#event').val()+'/Actions/GetEEShiftReport?'+append+'$format=csv';
 }
 
 function initPage() {
@@ -86,8 +114,25 @@ function initPage() {
       }
     }
   });
+  $('#dept').select2({
+    ajax: {
+      url: '../api/v1/departments',
+      processResults: function(data) {
+        var res = [];
+        data.sort((a,b) => {
+          return a.departmentName.localeCompare(b.departmentName);
+        });
+        for(let dept of data) {
+          res.push({id: dept.departmentID, text: dept.departmentName});
+        }
+        return {results: res};
+      }
+    }
+  });
   $('#event').change(eventChanged);
   $('#earlyLate').change(eeChanged);
+  $('#showPending').change(pendingChanged);
+  $('#dept').change(departmentChanged)
 }
 
 $(initPage);

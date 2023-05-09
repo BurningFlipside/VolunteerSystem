@@ -3,12 +3,16 @@
 //error_reporting(E_ALL);
 require_once('class.VolunteerAdminPage.php');
 $page = new VolunteerAdminPage('Volunteer System Admin');
+$page->addWellKnownJS(JS_BOOTBOX);
 
 $page->body .= '
 <div class="row">
   <div class="col-lg-12">
     <h1 class="page-header">Copy Shifts from Prior Event</h1>
   </div>
+</div>
+<div class="row">
+  <div class="alert alert-info" role="alert">In order to copy shifts from one year to the next you need to have not created any shifts for the target event.</div>
 </div>
 <div class="row">
   <label for="department" class="col-sm-2 col-form-label">Department:</label>

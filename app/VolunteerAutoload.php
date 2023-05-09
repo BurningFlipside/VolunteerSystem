@@ -8,19 +8,25 @@ else if(file_exists(__DIR__ . '/../../../common/Autoload.php'))
     require(__DIR__ . '/../../../common/Autoload.php');
 }
 
-function VolunteerAutoload($classname)
+function VolunteerAutoload($className)
 {
-    $classname = str_replace('/', '\\', $classname);
-    $classname = ltrim($classname, '\\');
+    $className = str_replace('/', '\\', $className);
+    $className = ltrim($className, '\\');
     $filename  = '';
     $namespace = '';
-    if($lastNsPos = strrpos($classname, '\\'))
+    $lastNsPos = strrpos($className, '\\');
+    if($lastNsPos)
     {
-        $namespace = substr($classname, 0, $lastNsPos);
-        $classname = substr($classname, $lastNsPos + 1);
+        $namespace = substr($className, 0, $lastNsPos);
+        $className = substr($className, $lastNsPos + 1);
         $filename  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace).DIRECTORY_SEPARATOR;
     }
-    $filename = __DIR__.DIRECTORY_SEPARATOR.$filename.'class.'.$classname.'.php';
+    $namespaces = explode('/', $filename);
+    if($namespaces[0] === 'Volunteer')
+    {
+        $filename = substr($filename, 10);
+    }
+    $filename = __DIR__.DIRECTORY_SEPARATOR.$filename.'class.'.$className.'.php';
     if(is_readable($filename))
     {
         require $filename;

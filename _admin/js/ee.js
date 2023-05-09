@@ -4,6 +4,9 @@ var table;
 
 function eventChanged(e) {
   var eventID = e.target.value;
+  if(table === null) {
+    return;
+  }
   table.setFilter(function(data) {
     for(let shift of data.shifts) {
       if(shift.eventID === eventID) {
@@ -16,9 +19,12 @@ function eventChanged(e) {
 
 function deptChanged(e) {
   var deptID = e.target.value;
+  if(table === null) {
+    return;
+  }
   table.setFilter(function(data) {
     for(let shift of data.shifts) {
-      if(shift.departmentID == deptID) {
+      if(shift.departmentID === deptID) {
         return true;
       }
     }
@@ -113,7 +119,27 @@ function showShifts(e, cell) {
 }
 
 function approveDone(jqXHR) {
-  console.log(jqXHR);
+  if(jqXHR.status !== 200) {
+    console.log(jqXHR);
+    Sentry.withScope(scope => {
+      scope.setExtra('jqXHR', jqXHR);
+      scope.setLevel('info');
+      Sentry.captureMessage('EE approval got back '+jqXHR.status);
+    });
+    switch(jqXHR.status) {
+      case 401:
+        alert('Unable to approve EE because you are not allowed to approve that type.');
+        break;
+      case 404:
+        alert('Unable to approve EE because the user could not be found.');
+        break;
+      default:
+        alert('Unable to approve EE due to internal error.');
+        break;
+    }
+    return;
+  }
+  location.reload();
 }
 
 function reallyApprove(obj) {
@@ -130,7 +156,7 @@ function gotTicketStatusForConfirm(jqXHR) {
   let data = this;
   if(jqXHR.status !== 200) {
     bootbox.confirm({
-      message: 'There was an error obtaining the current ticket status! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?',
+      message: 'There was an error obtaining the current ticket status! Are you sure you want to approve early entry (It might not migrate to the ticket system)?',
       buttons: {
         confirm: {
           label: 'Yes'
@@ -145,8 +171,7 @@ function gotTicketStatusForConfirm(jqXHR) {
         }
       }
     });
-  }
-  else if(jqXHR.responseJSON.ticket !== true) {
+  } else if(jqXHR.responseJSON.ticket !== true) {
     bootbox.confirm({
       message: 'We could not find a ticket for this user! Are you sure you want to approve early entry (It might not migrate tot the ticket system)?',
       buttons: {
@@ -163,8 +188,7 @@ function gotTicketStatusForConfirm(jqXHR) {
         }
       }
     });
-  }
-  else {
+  } else {
     reallyApprove(data);
   }
 }
@@ -172,8 +196,8 @@ function gotTicketStatusForConfirm(jqXHR) {
 function approve(type, uid, ee) {
   var obj = {};
   obj.event = $('#eventFilter').val();
-  if(obj.event === null) {
-    alert('More than one event has early entry/late stay! Please select and event first!');
+  if(obj.event === null || obj.event === '*') {
+    alert('More than one event has early entry/late stay! Please select an event first!');
     return;
   }
   obj.approvalType = type;
@@ -190,7 +214,7 @@ function dispprove(type, uid, ee) {
   var obj = {};
   obj.event = $('#eventFilter').val();
   if(obj.event === null) {
-    alert('More than one event has early entry/late stay! Please select and event first!');
+    alert('More than one event has early entry/late stay! Please select an event first!');
     return;
   }
   obj.approvalType = type;
@@ -223,7 +247,13 @@ function afApprovalDisplay(cell) {
   if(data.AF === true) {
     return '<p class="text-success">Approved!</p>';
   }
-  if($('body').data('af') === 1) {
+  let overrideAF = false;
+  for(let shift of data.shifts) {
+    if(shift.departmentID === 'AAR') {
+      overrideAF = true;
+    }
+  }
+  if(($('body').data('af') === 1) || overrideAF) {
     var msg = '<button type="button" class="btn btn-success" onclick="approve(\'af\',\''+data.id+'\', '+data.eeTypeID+');"><i class="fas fa-thumbs-up"></i></button>';
     msg += '<button type="button" class="btn btn-danger" onclick="disapprove(\'af\',\''+data.id+'\', '+data.eeTypeID+');"><i class="fas fa-thumbs-down"></i></button>';
     return msg;
@@ -289,12 +319,38 @@ function gotInitialData(results) {
   obj.depts = processDepts(deptResult.value);
   obj.vols = processParticipants(participantResults.value);
   obj.roles = processRoles(roleResult.value);
+  //Cleanup the uid's in the eelists
+  for(let eventID in obj.events) {
+    let event = obj.events[`${eventID}`];
+    for(let eeType in event.eeLists) {
+      let eeList = event.eeLists[parseInt(eeType, 10)];
+      for(let uid in eeList) {
+        if(uid.indexOf('+') !== -1) {
+          //This uid might have had a space in it...
+          if(obj.vols[`${uid}`] === undefined) {
+            let rep = uid.replace('+', ' ');
+            if(obj.vols[`${rep}`] !== undefined) {
+              eeList[`${rep}`] = eeList[`${uid}`];
+              delete eeList[`${uid}`];
+            }
+          }
+        } else if(obj.vols[`${uid}`] === undefined) {
+          let rep = decodeURIComponent(uid);
+          if(obj.vols[`${rep}`] !== undefined) {
+            eeList[`${rep}`] = eeList[`${uid}`];
+            delete eeList[`${uid}`];
+          }
+        }
+      }
+    }
+  }
   for(let shift of shiftResults.value) {
-    if(shift.participant === '') {
+    if(shift.participant === '' || shift.participant === undefined) {
       continue;
     }
     if(obj.vols[shift.participant] === undefined) {
       alert('Could not locate volunteer '+shift.participant);
+      console.log(shift);
       continue;
     }
     if(obj.vols[shift.participant].shifts === undefined) {
@@ -307,7 +363,11 @@ function gotInitialData(results) {
     var vol = obj.vols[`${uid}`];
     if(vol.shifts !== undefined) {
       var row = {id: uid, name: vol.firstName+' "'+vol.burnerName+'" '+vol.lastName, eeType: '', shifts: vol.shifts};
+      if(vol.burnerName.trim().length === 0 || vol.firstName === vol.burnerName) {
+        row.name = vol.firstName+' '+vol.lastName;
+      }
       var bestEE = -1;
+      let lateStay = false;
       for(var id in obj.events) {
         var event = obj.events[`${id}`];
         if(event.eeLists !== undefined) {
@@ -320,9 +380,15 @@ function gotInitialData(results) {
               row.AAR = list[`${uid}`].AAR;
               row.AF = list[`${uid}`].AF;
               row.Lead = list[`${uid}`].Lead;
+              if(parseInt(eeType, 10) === -2) {
+                lateStay = true;
+              }
             }
           }
         }
+      }
+      if(bestEE === -1 && lateStay) {
+        bestEE = -2;
       }
       switch(bestEE) {
         case 2:
@@ -334,6 +400,8 @@ function gotInitialData(results) {
         case 0:
           row.eeType = 'Wednesday Afternoon';
           break;
+        case -2:
+          row.eeType = 'Late Stay';
       }
       row.eeTypeID = bestEE;
       rows.push(row);
@@ -362,8 +430,7 @@ function initPage() {
     promises.push($.ajax({
       url: '../api/v1/events',
     }));
-  }
-  else {
+  } else {
     $('#eventFilter').hide();
     $('[for=eventFilter]').hide();
     promises.push($.ajax({
@@ -377,21 +444,28 @@ function initPage() {
     promises.push($.ajax({
       url: '../api/v1/roles',
     }));
-  }
-  else {
+  } else {
     promises.push($.ajax({
-      url: '../api/v1/departments$filter=departmentID eq '+deptId,
+      url: '../api/v1/departments?$filter=departmentID eq \''+deptId+'\'',
     }));
     promises.push($.ajax({
       url: '../api/v1/departments/'+deptId+'/roles',
     }));
+    $('#deptFilter').hide();
+    $('[for=deptFilter]').hide();
   }
   promises.push($.ajax({
-    url: '../api/v1/participants'
+    url: '../api/v1/participants?$select=firstName,lastName,burnerName,uid'
   }));
-  promises.push($.ajax({
-    url: '../api/v1/shifts?$filter=needEEApproval eq true&futureOnly=true'
-  }));
+  if(deptId === null) {
+    promises.push($.ajax({
+      url: '../api/v1/shifts?$filter=needEEApproval eq true&futureOnly=true'
+    }));
+  } else {
+    promises.push($.ajax({
+      url: '../api/v1/shifts?$filter=needEEApproval eq true and departmentID eq '+deptId+'&futureOnly=true'
+    }));
+  }
   Promise.allSettled(promises).then(gotInitialData);
 }
 

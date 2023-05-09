@@ -1,5 +1,5 @@
 <?php
-namespace Schedules;
+namespace Volunteer\Schedules;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -15,11 +15,13 @@ class GridSchedule
     protected $department;
     protected $shifts;
     protected $ssheat;
+    protected $includeCampNames;
 
-    public function __construct($department, $shifts)
+    public function __construct($department, $shifts, $includeCampNames = false)
     {
         $this->department = $department;
         $this->shifts = $shifts;
+        $this->includeCampNames = $includeCampNames;
         $this->ssheat = $this->createSpreadSheet();
     }
 
@@ -67,7 +69,24 @@ class GridSchedule
     {
         if(isset($shift['participant']))
         {
-            $sheat->setCellValueByColumnAndRow($col, $row, $this->getParticipantDiplayName($shift['participant']));
+            try
+            {
+                $profile = new \VolunteerProfile($shift['participant']);
+                if($this->includeCampNames)
+                {
+                    $richText = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
+                    $richText->createText($profile->getDisplayName('paperName').' ');
+                    $campName = $richText->createTextRun($profile->campName);
+                    $campName->getFont()->setItalic(true);
+                    $sheat->setCellValueByColumnAndRow($col, $row, $richText);
+                    return;
+                }
+                $sheat->setCellValueByColumnAndRow($col, $row, $profile->getDisplayName('paperName'));
+            }
+            catch(\Exception $e)
+            {
+                $sheat->setCellValueByColumnAndRow($col, $row, $shift['participant']);
+            }
         }
     }
 
@@ -171,6 +190,7 @@ class GridSchedule
             $mergeCount = $hourCount;
         }
         $days = array_keys($days);
+        usort($days, array($this, 'daySorter'));
         $cellIndex = 2;
         while($mergeCount)
         {
@@ -188,12 +208,16 @@ class GridSchedule
         }
         $i = 0;
         $rows = array();
+        /**
+         * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+         */
         foreach($roles as $role=>$hour)
         {
             $sheat->setCellValueByColumnAndRow(1, 4 + $i, $this->getRoleNameFromID($role));
             array_push($rows, $role);
             $overlaps = array();
-            for($j = 0; $j < count($roles2[$role]) - 1; $j++)
+            $roleCount = count($roles2[$role]);
+            for($j = 0; $j < $roleCount - 1; $j++)
             {
                 $currRole = $roles2[$role][$j];
                 $nextRole = $roles2[$role][$j + 1];
@@ -241,6 +265,15 @@ class GridSchedule
         $this->grayOutUnused($hourCount, $rowCount, $sheat);
         $sheat->getColumnDimension('A')->setAutoSize(true);
         return $ssheat;
+    }
+
+    public function daySorter($a, $b)
+    {
+        preg_match('#\((.*?)\)#', $a, $match);
+        $dtA = new \DateTime($match[1]);
+        preg_match('#\((.*?)\)#', $b, $match);
+        $dtB = new \DateTime($match[1]);
+        return $dtA->getTimestamp()-$dtB->getTimestamp();
     }
 
     public function getBuffer($type)

@@ -7,9 +7,11 @@ $page->setTemplateName('admin-table-new.html');
 
 $page->addWellKnownJS(JS_BOOTBOX);
 $page->addJS('../js/wizard.js');
+$page->addJS('//cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js');
 
 $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');
 $certText = '';
+$certEditText = '';
 $certs = $dataTable->read();
 if($certs !== false)
 {
@@ -19,6 +21,8 @@ if($certs !== false)
         $cert = $certs[$i];
         $certText .= '<label for="requirements.'.$cert['certID'].'" class="col-sm-3 col-form-label">'.$cert['name'].':</label>
           <div class="col-sm-2"><input class="form-control" type="checkbox" name="requirements.'.$cert['certID'].'" id="requirements.'.$cert['certID'].'" disabled/></div>';
+        $certEditText .= '<label for="edit_requirements.'.$cert['certID'].'" class="col-sm-3 col-form-label">'.$cert['name'].':</label>
+        <div class="col-sm-2"><input class="form-control" type="checkbox" name="edit_requirements.'.$cert['certID'].'" id="edit_requirements.'.$cert['certID'].'" disabled/></div>';
     }
 }
 
