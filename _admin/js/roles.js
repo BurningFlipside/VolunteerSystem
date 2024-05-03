@@ -1,5 +1,5 @@
-/*global $, bootbox, Tabulator, getParameterByName, addOptiontoSelect*/
-/* exported groupsAllowedUpdated, newRole, onEmailListUpdated, publiclyVisibleUpdated, roleNameUpdated, showRoleWizard */
+/*global $, bootbox, Tabulator, getParameterByName, addOptiontoSelect, gapi, apiKey, clientId, scope, discoveryUri, driveDiscoverUri, google, flipDialog, Papa, getNameForUser, searchUsers*/
+/* exported groupsAllowedUpdated, newRole, onEmailListUpdated, publiclyVisibleUpdated, roleNameUpdated, showRoleWizard, gApiLoaded, gisLoaded */
 var deptId;
 var table;
 
@@ -21,6 +21,7 @@ function initGoogle() {
 
 function gisLoaded() {
   tokenClient = google.accounts.oauth2.initTokenClient({
+    // eslint-disable-next-line camelcase
     client_id: clientId,
     scope: scope,
     callback: '', // defined later
@@ -105,7 +106,7 @@ function loadDataFromSpreadSheet(sheetId, event) {
         }
       });
     }
-  })
+  });
 }
 
 function importFromGoogle(ev) {
@@ -137,7 +138,7 @@ function importFromGoogle(ev) {
     } catch(err) {
       bootbox.alert('Unable to obtain any files from Google Drive! '+err);
     }
-  }
+  };
   if (gapi.client.getToken() === null) {
     // Prompt the user to select a Google Account and ask for consent to share their data
     // when establishing a new session.
@@ -453,7 +454,11 @@ function gotEmailSuccess3(value, email, resolve) {
 function gotEmailFailure2(email, resolve) {
   let obj = {'emails': [email]};
   let intPromise = $.ajax({url: '../api/v1/participants/Actions/HasProfile', method: 'POST', data: JSON.stringify(obj), contentType: 'application/json'});
-  intPromise.then((value) => {gotEmailSuccess3(value, email, resolve)}).catch(() => {gotEmailFailure3(email, resolve)});
+  intPromise.then((value) => {
+    gotEmailSuccess3(value, email, resolve);
+  }).catch(() => {
+    gotEmailFailure3(email, resolve);
+  });
 }
 
 function gotEmailSuccess2(value, email, resolve) {
@@ -466,7 +471,11 @@ function gotEmailSuccess2(value, email, resolve) {
 
 function gotEmailFailure(email, resolve) {
   let intPromise = $.ajax({url: '../api/v1/participants?$filter=substringof(email,\''+email+'\')'});
-  intPromise.then((value) => {gotEmailSuccess2(value, email, resolve)}).catch(() => {gotEmailFailure2(email, resolve)});
+  intPromise.then((value) => {
+    gotEmailSuccess2(value, email, resolve);
+  }).catch(() => {
+    gotEmailFailure2(email, resolve);
+  });
 }
 
 function gotEmailSuccess(value, email, resolve) {
@@ -480,7 +489,11 @@ function gotEmailSuccess(value, email, resolve) {
 function getParticipantByEmail(email) {
   return new Promise((resolve) => {
     let intPromise = $.ajax({url: '../api/v1/participants?$filter=email eq \''+email+'\''});
-    intPromise.then((value) => {return gotEmailSuccess(value, email, resolve)}).catch(() => {gotEmailFailure(email, resolve)});
+    intPromise.then((value) => {
+      return gotEmailSuccess(value, email, resolve);
+    }).catch(() => {
+      gotEmailFailure(email, resolve);
+    });
   });
 }
 
@@ -609,18 +622,15 @@ function emailRoleCapable(e) {
       }
     }
   });
-  if(signupLink.length === 0)
-  {
+  if(signupLink.length === 0) {
     $('#signupLink')[0].checked = false;
     $('#signupLink')[0].disabled = true;
   }
-  if(systemLink.length === 0)
-  {
+  if(systemLink.length === 0) {
     $('#systemLink')[0].checked = false;
     $('#systemLink')[0].disabled = true;
   }
-  if(signupLink2.length === 0)
-  {
+  if(signupLink2.length === 0) {
     $('#signupLink2')[0].checked = false;
     $('#signupLink2')[0].disabled = true;
   }
@@ -700,7 +710,7 @@ function processResults(txt) {
       values.push({value: field, text: field});
     }
     bootbox.prompt({
-      title: "This looks like a CSV file. Which column contains the email addresses?",
+      title: 'This looks like a CSV file. Which column contains the email addresses?',
       inputType: 'select',
       inputOptions: values,
       callback: function(result) {
@@ -711,11 +721,10 @@ function processResults(txt) {
       }
     });
     return;
-  } else {
-    for(let emailArr of data.data) {
-      emails.push(emailArr[0]);
-    }  
-  }
+  } 
+  for(let emailArr of data.data) {
+    emails.push(emailArr[0]);
+  }  
   processNewEmails(emails);
 }
 
@@ -746,7 +755,7 @@ function showDialog(emails, roleId, extraAlerts) {
       let status = {};
       let misCasedEmail = false;
       let duplicateEmails = false;
-      let table = $('<table style="width: 100%;">');
+      let dialogTable = $('<table style="width: 100%;">');
       table.append('<tr><th>Email</th><th>Status</th><th>Name</th><th>Action</th></tr>');
       for(let result of results) {
         result = result.value;
@@ -772,8 +781,7 @@ function showDialog(emails, roleId, extraAlerts) {
                   addEmailToList(newEmails, result.email);
                   break;
                 case 'delete':
-                  let index = newEmails.indexOf(result.email);
-                  newEmails.splice(index, 1);
+                  newEmails.splice(newEmails.indexOf(result.email), 1);
                   console.log(newEmails);
                   break;
               }
@@ -816,8 +824,7 @@ function showDialog(emails, roleId, extraAlerts) {
                   addEmailToList(newEmails, result.email);
                   break;
                 case 'delete':
-                  let index = newEmails.indexOf(result.email);
-                  newEmails.splice(index, 1);
+                  newEmails.splice(newEmails.indexOf(result.email), 1);
                   console.log(newEmails);
                   break;
               }
@@ -825,7 +832,7 @@ function showDialog(emails, roleId, extraAlerts) {
             row.append('<td>'+result.email+'</td><td style="background-color:'+statusColor+';">'+statusStr+'</td><td>'+name+'</td>');
             cell.append(select);
             row.append(cell);
-            table.append(row);
+            dialogTable.append(row);
             status[`${result.email}`] = result.status;
             break;
         }
