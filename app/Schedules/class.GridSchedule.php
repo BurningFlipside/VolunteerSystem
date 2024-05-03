@@ -25,7 +25,7 @@ class GridSchedule
         $this->ssheat = $this->createSpreadSheet();
     }
 
-    protected function isVolunteerAdmin()
+    protected function isVolunteerAdmin($request)
     {
         return true;
     }
@@ -71,7 +71,7 @@ class GridSchedule
         {
             try
             {
-                $profile = new \VolunteerProfile($shift['participant']);
+                $profile = new \Volunteer\VolunteerProfile($shift['participant']);
                 if($this->includeCampNames)
                 {
                     $richText = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
