@@ -41,7 +41,7 @@ function eventNameHelper(info) {
     if(deptName === undefined) {
       deptName = getDeptName(info.event.extendedProps.departmentID);
     }
-    return {html: '<a href="'+info.event.url+'">'+deptName+": "+info.event.extendedProps.name+'</a>'};
+    return {html: '<a href="'+info.event.url+'">'+deptName+': '+info.event.extendedProps.name+'</a>'};
   }
 }
 
@@ -213,7 +213,6 @@ function gotShifts(jqXHR) {
   for(let dept of depts) {
     deptHasShifts[dept.id] = false;
   }
-  console.log(deptHasShifts);
   var shifts = jqXHR.responseJSON;
   if(shifts.length === 0) {
     add_notification($('#content'), 'This event does not have any shifts at this time. Check back later or contact your lead!');
@@ -281,27 +280,29 @@ function gotShifts(jqXHR) {
   if(window.innerWidth <= 1024) {
     $('#calendar .fc-center h2').css('font-size', '1.0em');
   }
-  let departmentData = localStorage.getItem('Departments');
-  let departmentArray = [];
-  if(departmentData !== null && departmentData !== '') {
-    departmentArray = departmentData.split(',');
-    $('#departments').val(departmentArray);
-    addNonStandardViewAlert();
-  }
-  let deptsToInclude = [];
-  for(var dept in deptHasShifts) {
-    if(departmentArray.includes(dept)) {
+  if(getParameterByName('department') === null) {
+    let departmentData = localStorage.getItem('Departments');
+    let departmentArray = [];
+    if(departmentData !== null && departmentData !== '') {
+      departmentArray = departmentData.split(',');
+      $('#departments').val(departmentArray);
+      addNonStandardViewAlert();
+    }
+    let deptsToInclude = [];
+    for(var dept in deptHasShifts) {
+      if(departmentArray.includes(dept)) {
+        deptsToInclude.push(dept);
+        continue;
+      }
+      if(deptHasShifts[`${dept}`] === false) {
+        $('#departments').find("option[value='"+dept+"']").attr('disabled', true);
+        continue;
+      }
       deptsToInclude.push(dept);
-      continue;
     }
-    if(deptHasShifts[`${dept}`] === false) {
-      $('#departments').find("option[value='"+dept+"']").attr('disabled', true);
-      continue;
-    }
-    deptsToInclude.push(dept);
+    $('#departments').val(deptsToInclude).trigger('change');
+    $('#departments').change(deptChanged);
   }
-  $('#departments').val(deptsToInclude).trigger('change');
-  $('#departments').change(deptChanged);
   filterEvents();
 }
 
