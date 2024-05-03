@@ -177,6 +177,18 @@ class VolunteerShift extends VolunteerObject
                 return $this->getParticipantName('paperName');
             case 'participant':
                 return $this->getParticipant();
+            case 'groupID':
+                if(isset($this->dbData['groupID']))
+                {
+                    return $this->dbData['groupID'];
+                }
+                return '';
+            case 'unbounded':
+                if(isset($this->dbData['unbounded']))
+                {
+                    return $this->dbData['unbounded'];
+                }
+                return false;
             default:
                 return $this->dbData[$propName];
         }
