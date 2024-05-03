@@ -45,6 +45,8 @@ function processEvents(data) {
   let ids = Object.keys(events);
   if(ids.length === 1) {
     eventSelect.val(ids[0]);
+  } else {
+    console.log("More than 1 EE Event?", ids);
   }
   eventSelect.data('events', events);
   eventSelect.change(eventChanged);
