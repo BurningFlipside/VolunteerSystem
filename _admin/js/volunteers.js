@@ -55,7 +55,7 @@ function initPage() {
     'MXXXL': "Men's Extra Extra Extra Large",
   };
   new Tabulator('#vols', {
-    ajaxURL: '../api/v1/participants',
+    ajaxURL: '../api/v1/participants?$select=uid,email,firstName,lastName,burnerName,shirtSize,critVol,certs.ics100.status,certs.ics200.status,certs.bls.status',
     columns:[
       {title:'User ID', field: 'uid', formatter: 'link', formatterParams:{urlPrefix:'vol.php?id='}, visible: true},
       {title:'Email', field: 'email', formatter: 'link', formatterParams:{urlPrefix:'mailto:'}},
