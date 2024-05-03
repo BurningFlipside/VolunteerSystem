@@ -1,6 +1,21 @@
 function gotInitialData(results) {
   let shiftResult = results.shift();
   let roleResult = results.shift();
+  if(shiftResult.value === undefined) {
+    if(shiftResult.reason !== undefined && shiftResult.reason.status === 401) {
+      //Not logged in...
+      return;
+    }
+    Sentry.withScope(scope => {
+      scope.setExtra('shiftResult', shiftResult);
+      scope.setExtra('roleResult', roleResult);
+      scope.setLevel('info');
+      Sentry.captureMessage('Failed to get shifts on guided shift page');
+    });
+    alert('Unable to get shifts for the department. Please try again later.');
+    console.log(shiftResult);
+    return;
+  }
   let availableShifts = shiftResult.value.filter((value) => {
     if(value.whyClass === 'MINE') {
       return true;
