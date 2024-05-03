@@ -383,7 +383,11 @@ class ShiftAPI extends VolunteerAPI
             for($i = 0; $i < $count; $i++)
             {
                 $dept = new VolunteerDepartment($overlaps[$i]->departmentID);
-                $leads = array_merge($leads, $dept->getLeadEmails());
+                $emails = $dept->getLeadEmails();
+                if($emails !== null)
+                {
+                    $leads = array_merge($leads, $emails);
+                }
                 $overlaps[$i]->status = 'pending';
                 $tmp = new DataFilter('_id eq '.$overlaps[$i]->{'_id'});
                 $res = $dataTable->update($tmp, $overlaps[$i]);
@@ -393,7 +397,11 @@ class ShiftAPI extends VolunteerAPI
                 }
             }
             $dept = new VolunteerDepartment($entity['departmentID']);
-            $leads = array_merge($leads, $dept->getLeadEmails());
+            $emails = $dept->getLeadEmails();
+            if($emails !== null)
+            {
+                $leads = array_merge($leads, $emails);
+            }
             $leads = array_unique($leads);
             $ret = $this->doSignup($this->user->uid, 'pending', $entity, $filter, $dataTable);
             $profile = new VolunteerProfile($this->user->uid);
@@ -658,6 +666,7 @@ class ShiftAPI extends VolunteerAPI
                 $entities[$i]['status'] = 'filled';
                 $entities[$i]['signupLink'] = $uuid;
                 $entities[$i]['groupLinkCreated'] = $time;
+                $entities[$i]['groupLinkCreatedBy'] = $this->user->mail;
                 $entities[$i]['signupOn'] = $time;
             }
             else if(isset($roles[$entities[$i]['roleID']]))
@@ -665,6 +674,7 @@ class ShiftAPI extends VolunteerAPI
                 $entities[$i]['status'] = 'groupPending';
                 $entities[$i]['signupLink'] = $uuid;
                 $entities[$i]['groupLinkCreated'] = $time;
+                $entities[$i]['groupLinkCreatedBy'] = $this->user->mail;
                 $roles[$entities[$i]['roleID']]--;
                 if($roles[$entities[$i]['roleID']] === 0)
                 {
