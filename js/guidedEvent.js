@@ -35,8 +35,13 @@ function initPage() {
 }
 
 $(() => {
-  $('body').on('fvs:ready', function() {
+  if($('body').data('profile') === undefined) {
+    $('body').on('fvs:ready', function() {
+      initPage();
+    });
+  } else {
+    //FVS already inited before this js loaded
     initPage();
-  });
+  }
 });
 /* vim: set tabstop=2 shiftwidth=2 expandtab: */
