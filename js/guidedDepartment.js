@@ -2,6 +2,10 @@ function gotInitialData(results) {
   let shiftResult = results.shift();
   let departmentResult = results.shift();
   if(shiftResult.status !== 'fulfilled') {
+    if(shiftResult.reason !== undefined && shiftResult.reason.status === 401) {
+      //Not logged in...
+      return;
+    }
     console.log(shiftResult);
     alert('Unable to get shifts for event!');
     return;
