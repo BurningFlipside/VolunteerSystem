@@ -19,6 +19,7 @@ $page->addJS('//cdn.ckeditor.com/4.7.0/full/adapters/jquery.js');
       <option value="roleSingUpLink">Role Sign-up With Existing Volunteer Profile</option>
       <option value="roleSingUpLink2">Role Sign-up With Existing Flipside Profile</option>
       <option value="roleSystemLink">Role Sign-up Without Any Existing Account</option>
+      <option value="verboseGroupSignupSource">Verbose - Group Link Created</option>
     </select>
   </div>
 </div>

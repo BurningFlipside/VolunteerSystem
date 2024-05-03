@@ -196,7 +196,8 @@ function initPage() {
       {title: 'Public', field: 'public', editor: 'tickCross', formatter: 'tickCross'},
       {title: 'Lead', field: 'lead', editor:'select', editorParams: leadDropDown},
       {title: 'Area', field: 'area', editor:'select', editorParams: areaDropDown, formatter: areaDisplay, sorter: 'alphanum'},
-      {title: 'Other Admins', field: 'others', editor:'input'}
+      {title: 'Other Admins', field: 'others', editor:'input'},
+      {title: 'Verbose data email', field: 'verboseDataEmail', editor:'input'},
     ],
     cellEdited: dataChanged,
     initialSort:[

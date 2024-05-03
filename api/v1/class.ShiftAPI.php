@@ -17,6 +17,7 @@ use Volunteer\Emails\AssignmentEmail;
 use Volunteer\Emails\PendingRejectedEmail;
 use Volunteer\Emails\ShiftEmail;
 use Volunteer\Emails\TwoShiftsAtOnceEmail;
+use Volunteer\Emails\VerboseEmail;
 
 class ShiftAPI extends VolunteerAPI
 {
@@ -653,6 +654,7 @@ class ShiftAPI extends VolunteerAPI
         $count = count($entities);
         $uuid = $this->genUUID();
         $time = date('c');
+        $consumedRoles = array();
         for($i = 0; $i < $count; $i++)
         {
             if(isset($entities[$i]['status']) && ($entities[$i]['status'] === 'filled' || $entities[$i]['status'] === 'pending'))
@@ -668,6 +670,7 @@ class ShiftAPI extends VolunteerAPI
                 $entities[$i]['groupLinkCreated'] = $time;
                 $entities[$i]['groupLinkCreatedBy'] = $this->user->mail;
                 $entities[$i]['signupOn'] = $time;
+                array_push($consumedRoles, $entities[$i]['roleID']);
             }
             else if(isset($roles[$entities[$i]['roleID']]))
             {
@@ -680,6 +683,7 @@ class ShiftAPI extends VolunteerAPI
                 {
                     unset($roles[$entities[$i]['roleID']]);
                 }
+                array_push($consumedRoles, $entities[$i]['roleID']);
             }
             else
             {
@@ -707,6 +711,12 @@ class ShiftAPI extends VolunteerAPI
             {
                 throw new Exception('Not able to save shift '.$entities[$i]['_id']);
             }
+        }
+        $dept = new VolunteerDepartment($entity['departmentID']);
+        if(filter_var($dept->verboseDataEmail, FILTER_VALIDATE_EMAIL))
+        {
+            $email = new VerboseEmail($dept, $this->user->mail, 'verboseGroupSignupSource', array('{$roles}'=>implode(', ',$consumedRoles), '{$uuid}'=>$uuid));
+            $this->sendEmail($email);
         }
         return $response->withJSON(array('uuid' => $uuid));
     }

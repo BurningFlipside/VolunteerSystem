@@ -26,6 +26,21 @@ class VolunteerDepartment extends VolunteerObject
         }
         return $users;
     }
+    
+    public function __get($propName)
+    {
+        switch($propName)
+        {
+            case 'verboseDataEmail':
+                if(isset($this->dbData['verboseDataEmail']))
+                {
+                    return $this->dbData['verboseDataEmail'];
+                }
+                return '';
+            default:
+                return parent::__get($propName);
+        }
+    }
 
     public static function getPrivateDepartments() : array
     {
