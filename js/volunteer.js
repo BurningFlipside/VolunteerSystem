@@ -48,7 +48,6 @@ function gotMyProfile(jqXHR) {
     return;
   }
   let profile = jqXHR.responseJSON;
-  console.log(profile);
   $('body').data('profile', profile);
   $('body').trigger('fvs:ready');
 }
@@ -99,7 +98,7 @@ function updateDisplayName(elem) {
 
 function initVolPage() {
   $.ajax({
-    url: 'api/v1/participants/me',
+    url: 'api/v1/participants/me?$select=campName,webName,paperName,burnerName,firstName,lastName,email,uid,shiftSize,critVol,ticketCode',
     complete: gotMyProfile
   });
   $('[data-toggle="tooltip"]').tooltip();
