@@ -48,6 +48,8 @@ function gotMyProfile(jqXHR) {
     return;
   }
   let profile = jqXHR.responseJSON;
+  document.body.dataset.profile = JSON.stringify(profile);
+  document.body.dispatchEvent(new Event('fvs:ready'));
   $('body').data('profile', profile);
   $('body').trigger('fvs:ready');
 }

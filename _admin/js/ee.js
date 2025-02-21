@@ -420,7 +420,9 @@ function gotInitialData(results) {
       {title: 'Has Ticket', formatter: hasTicketDisplay}
     ]
   });
-  table.setData(rows);
+  table.on('tableBuilt', ()=>{
+    table.setData(rows);
+  });
   $('body').data('backend', obj);
 }
 

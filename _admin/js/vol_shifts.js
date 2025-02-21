@@ -1,13 +1,12 @@
 /*global $*/
-function gotShifts(jqXHR) {
-  if(jqXHR.status !== 200) {
-    return;
-  }
-  var table = $('#shiftTable tbody');
-  table.empty();
-  var data = jqXHR.responseJSON;
-  var participants = {};
-  for(let shift of data) {
+function getParticipantLink(cell) {
+  return 'vol.php?id='+encodeURIComponent(cell.getValue());
+}
+
+function addTableData(table, shifts) {
+  table.clearData();
+  let participants = {};
+  for(let shift of shifts) {
     if(shift.participant !== undefined && shift.participant !== '') {
       if(participants[shift.participant] === undefined) {
         participants[shift.participant] = 1;
@@ -16,33 +15,65 @@ function gotShifts(jqXHR) {
       }
     }
   }
-  var min = $('#minShifts').val()*1;
-  var max = $('#maxShifts').val()*1;
+  let min = document.getElementById('minShifts').value*1;
+  let max = document.getElementById('maxShifts').value*1;
   if(max === 0) {
-    max = 9999;
+    max = Number.MAX_SAFE_INTEGER;
   }
-  for(var uid in participants) {
+  let data = [];
+  for(let uid in participants) {
     if(participants[`${uid}`] >= min && participants[`${uid}`] <= max) {
-      table.append('<tr><td>'+uid+'</td><td>'+participants[`${uid}`]+'</td></tr>');
+      data.push({uid: uid, shifts: participants[`${uid}`]});
     }
   }
+  table.setData(data);
 }
 
 function getShifts() {
-  var selectedRoles = $('#roles').select2('data');
-  var filter = '';
+  let filter = [];
+  let departmentSelect = document.getElementById('department');
+  if(departmentSelect.value !== '') {
+    filter.push('departmentID eq \''+departmentSelect.value+'\'');
+  }
+  let roleSelect = document.getElementById('roles');
+  let selectedRoles = Array.from(roleSelect.options).filter((option) => {
+    return option.selected;
+  });
   if(selectedRoles.length > 0) {
-    filter = '?$filter=';
+    let roleStr = '(';
     for(let role of selectedRoles) {
-      filter+='roleID eq '+role.id;
-      filter+=' or ';
+      roleStr+='roleID eq '+role.value;
+      roleStr+=' or ';
     }
     //Remove last or...
-    filter = filter.slice(0, -4);
+    roleStr = roleStr.slice(0, -4);
+    roleStr += ')';
+    filter.push(roleStr);
   }
-  $.ajax({
-    url: '../api/v1/events/'+$('#event').val()+'/shifts'+filter,
-    complete: gotShifts
+  if(filter.length > 0) {
+    filter = filter.join(' and ');
+    filter = '?$filter='+filter;
+  }
+  fetch('../api/v1/events/'+document.getElementById('event').value+'/shifts'+filter).then((response) => {
+    response.json().then((data) => {
+      let tables = Tabulator.findTable('#shiftTable');
+      if(tables === false || tables.length === 0) {
+        let table = new Tabulator('#shiftTable', {
+          columns: [
+            {title:'Username', field: 'uid', formatter: 'link', formatterParams:{url: getParticipantLink},},
+            {title:'Number of Shifts', field: 'shifts', sorter:'number'}
+          ],
+          initialSort: [
+            {column: 'shifts', dir: 'desc'}
+          ]
+        });
+        table.on('tableBuilt', () => {
+          addTableData(table, data);
+        });
+        return;
+      }
+      addTableData(tables[0], data);
+    });
   });
 }
 
@@ -58,24 +89,19 @@ function rolesChanged() {
   getShifts();
 }
 
-function gotRoles(jqXHR) {
-  if(jqXHR.status !== 200) {
-    return;
-  }
-  var data = jqXHR.responseJSON;
-  $('#roles').empty();
-  for(let role of data) {
-    var newOption = new Option(role.display_name, role.short_name, true, true);
-    $('#roles').append(newOption);
-  }
-  $('#roles').trigger('change');
-}
-
 function departmentSelected(e) {
-  var value = e.target.value;
-  $.ajax({
-    url: '../api/v1/departments/'+value+'/roles',
-    complete: gotRoles
+  let departmentID = e.target.value;
+  fetch('../api/v1/departments/'+departmentID+'/roles').then((response) => {
+    response.json().then((data) => {
+      let rolesSelect = document.getElementById('roles');
+      rolesSelect.options.length = 0;
+      rolesSelect.add(new Option(''));
+      for(let role of data) {
+        let option = new Option(role.display_name, role.short_name);
+        rolesSelect.add(option);
+      }
+      getShifts();
+    });
   });
 }
 
@@ -84,44 +110,53 @@ function eventSelected() {
 }
 
 function initPage() {
-  $('#event').select2({
-    ajax: {
-      url: '../api/v1/events',
-      processResults: function(data) {
-        var res = [];
-        data.sort((a,b) => {
-          return a.name.localeCompare(b.name);
-        });
-        for(let event of data) {
-          res.push({id: event['_id']['$oid'], text: event.name});
-        }
-        return {results: res};
-      }
+  if(NiceSelect === undefined) {
+    window.setTimeout(initPage, 100);
+    return;
+  }
+  fetch('../api/v1/events').then((response) => {
+    if(response.httpStatusCode === 401) {
+      return;
     }
-  });
-  $('#department').select2({
-    ajax: {
-      url: '../api/v1/departments',
-      processResults: function(data) {
-        var res = [];
-        data.sort((a,b) => {
-          return a.departmentName.localeCompare(b.departmentName);
-        });
-        for(let dept of data) {
-          if(dept.isAdmin) {
-            res.push({id: dept.departmentID, text: dept.departmentName});
-          }
-        }
-        return {results: res};
+    response.json().then((data) => {
+      let eventSelect = document.getElementById('event');
+      data.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      });
+      for(let event of data) {
+        let option = new Option(event.name, event['_id']['$oid'], eventSelect.options.length === 0);
+        eventSelect.add(option);
       }
-    }
+      let options = {searchable: true};
+      NiceSelect.bind(eventSelect, options);
+      eventSelect.addEventListener('change', eventSelected);
+    })
   });
-  $('#roles').select2();
-  $('#event').change(eventSelected);
-  $('#department').change(departmentSelected);
-  $('#roles').change(rolesChanged);
-  $('#minShifts').change(minShiftsChanged);
-  $('#maxShifts').change(maxShiftsChanged);
+  fetch('../api/v1/departments').then((response) => {
+    if(response.httpStatusCode === 401) {
+      return;
+    }
+    response.json().then((data) => {
+      let deptSelect = document.getElementById('department');
+      data.sort((a, b) => {
+        return a.departmentName.localeCompare(b.departmentName);
+      });
+      deptSelect.add(new Option(''));
+      for(let dept of data) {
+        if(!dept.isAdmin) {
+          continue;
+        }
+        let option = new Option(dept.departmentName, dept.departmentID, deptSelect.options.length === 0);
+        deptSelect.add(option);
+      }
+      let options = {searchable: true};
+      NiceSelect.bind(deptSelect, options);
+      deptSelect.addEventListener('change', departmentSelected);
+    })
+  });
+  document.getElementById('roles').addEventListener('change', rolesChanged);
+  document.getElementById('minShifts').addEventListener('change', minShiftsChanged);
+  document.getElementById('maxShifts').addEventListener('change', maxShiftsChanged);
 }
 
-$(initPage);
+window.onload = initPage;

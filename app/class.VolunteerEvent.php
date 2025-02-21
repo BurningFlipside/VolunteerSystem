@@ -127,5 +127,37 @@ class VolunteerEvent extends VolunteerObject
         }
         return $ret;
     }
+
+    public function __get($propName)
+    {
+        switch($propName)
+        {
+            case 'startTime':
+                return new \DateTime($this->dbData['startTime']);
+            case 'endTime':
+                return new \DateTime($this->dbData['endTime']);
+            default:
+                return parent::__get($propName);
+        }
+    }
+
+    public function getDateForDays()
+    {
+        $ret = array();
+        $start = new \DateTime($this->dbData['startTime']);
+        $end = new \DateTime($this->dbData['endTime']);
+        $interval = new \DateInterval('P1D');
+        $period = new \DatePeriod($start, $interval, $end);
+        foreach($period as $date)
+        {
+            $name = $date->format('l');
+            if(isset($ret[$name]))   
+            {
+                $name .= 'Next';
+            }
+            $ret[$name] = \DateTimeImmutable::createFromInterface($date->setTime(0,0));
+        }
+        return $ret;
+    }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */

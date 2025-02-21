@@ -22,6 +22,7 @@ class ParticipantAPI extends VolunteerAPI
     {
         parent::setup($app);
         $app->get('/me/shifts[/]', array($this, 'getMyShifts'));
+        $app->get('/{uid}/shifts[/]', array($this, 'getSomeoneElsesShifts'));
         $app->get('/{uid}/certs[/]', array($this, 'getCerts'));
         $app->post('/{uid}/certs/{certId}[/]', array($this, 'uploadCert'));
         $app->post('/{uid}/certs/{certId}/Actions/RejectCert', array($this, 'rejectCert'));
@@ -196,6 +197,72 @@ class ParticipantAPI extends VolunteerAPI
     {
         $this->validateLoggedIn($request);
         $uid = $this->user->uid;
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
+        $filter = new DataFilter("participant eq '$uid'");
+        $shifts = $dataTable->read($filter);
+        $oldDt = new DateTime('-6 months');
+        $filteredShifts = array();
+        $count = count($shifts);
+        for($i = 0; $i < $count; $i++)
+        {
+            $myEndTime = new DateTime($shifts[$i]['endTime']);
+            if($myEndTime < $oldDt)
+            {
+                continue;
+            }
+            array_push($filteredShifts, $shifts[$i]);
+        }
+        $shifts = $filteredShifts;
+        $format = $request->getAttribute('format', false);
+        if($format === false || $format === 'text/calendar')
+        {
+            $text = "BEGIN:VCALENDAR\r\n";
+            $text .= "VERSION:2.0\r\n";
+            $text .= "PRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\n";
+            $count = count($shifts);
+            for($i = 0; $i < $count; $i++)
+            {
+                $text .= "BEGIN:VEVENT\r\n";
+                $text .= "UID:".$this->user->mail."\r\n";
+                $dateTime = new DateTime($shifts[$i]['startTime']);
+                $dateTime->setTimezone(new DateTimeZone('UTC'));
+                $text .= "DTSTAMP:".$dateTime->format('Ymd\THis\Z')."\r\n";
+                $text .= "DTSTART:".$dateTime->format('Ymd\THis\Z')."\r\n";
+                $dateTime = new DateTime($shifts[$i]['endTime']);
+                $dateTime->setTimezone(new DateTimeZone('UTC'));
+                $text .= "DTEND:".$dateTime->format('Ymd\THis\Z')."\r\n";
+                $text .= "SUMMARY:".$shifts[$i]['roleID'].' '.$shifts[$i]['name']."\r\n";
+                $text .= "END:VEVENT\r\n";
+            }
+            $text .= "END:VCALENDAR\r\n";
+            $response = $response->withHeader('Content-type', 'text/calendar');
+            $response = $response->withHeader('Content-Disposition', 'attachment; filename="MyShifts.ics"');
+            $body = $response->getBody();
+            $body->write($text);
+            return $response;
+        }
+        else if($format === 'application/pdf')
+        {
+            $pdf = new SimpleSchedulePDF('My', $shifts);
+            $response = $response->withHeader('Content-Type', 'application/pdf');
+            $response->getBody()->write($pdf->toPDFBuffer());
+            return $response;
+        }
+        else if($format === 'json')
+        {
+            return $response->withJSON($shifts);
+        }
+        throw new Exception('Unknown format '.$format);
+    }
+
+    public function getSomeoneElsesShifts($request, $response, $args)
+    {
+        $this->validateLoggedIn($request);
+        $uid = $args['uid'];
+        if(!$this->isVolunteerAdmin($request))
+        {
+            return $response->withStatus(401);
+        }
         $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'shifts');
         $filter = new DataFilter("participant eq '$uid'");
         $shifts = $dataTable->read($filter);
@@ -455,7 +522,12 @@ class ParticipantAPI extends VolunteerAPI
                 return $tickets;
             }
         }
-        return $ticketTable->read(new DataFilter("email eq '$email' and year eq $year"));
+        $ret = $ticketTable->read(new DataFilter("email eq '$email' and year eq $year"));
+        if($ret === false)
+        {
+            return array();
+        }
+        return $ret;
     }
 
     function bulkTicketStatus($request, $response)

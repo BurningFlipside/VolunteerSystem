@@ -32,7 +32,17 @@ trait ShiftSchedule
 
     public function shiftTimeSort($a, $b)
     {
-        $interval = $a['startTime']->diff($b['startTime']);
+        $aDateTime = $a['startTime'];
+        if(is_string($a['startTime']))
+        {
+            $aDateTime = new \DateTime($a['startTime']);
+        }
+        $bDateTime = $b['startTime'];
+        if(is_string($b['startTime']))
+        {
+            $bDateTime = new \DateTime($b['startTime']);
+        }
+        $interval = $aDateTime->diff($bDateTime);
         if($interval->invert === 0)
         {
             if($interval->h || $interval->i)

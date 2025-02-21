@@ -1,4 +1,5 @@
-/* exported addOptiontoSelect, getNameForUser, searchUsers */
+/* exported addOptiontoSelect, getNameForUser, searchUsers, isGoogleConnected */
+/* global $ */
 function addOptiontoSelect(select, value, text, selected) {
   var opt = document.createElement('option');
   opt.value = value;
@@ -33,7 +34,7 @@ function showPossibles(jqXHR) {
       child[0].innerHTML += '<strong>uid:</strong> '+data[i].uid+' <strong>email:</strong> '+data[i].email+' <strong>name:</strong> '+getNameForUser(data[i]);
       child[0].innerHTML += '<input type="hidden" value="'+data[i].email+'">';
       child.click((e) => {
-        this.value = e.currentTarget.getElementsByTagName("input")[0].value;
+        this.value = e.currentTarget.getElementsByTagName('input')[0].value;
         div.empty();
       });
       div.append(child);
@@ -57,4 +58,19 @@ function searchUsers(e) {
       complete: showPossibles
     });
   }
+}
+
+function isGoogleConnected(callback) {
+  fetch('../api/v1/google/loginStatus')
+    .then((response) => {
+      if(response.status === 200) {
+        return response.json();
+      }
+      return false;
+    })
+    .then((data) => {
+      if(data.loggedIn) {
+        callback();
+      }
+    });
 }

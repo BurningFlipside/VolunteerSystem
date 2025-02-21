@@ -39,8 +39,12 @@ function showCertPresent(cell) {
   return tick;
 }
 
+function getParticipantLink(cell) {
+  return 'vol.php?id='+encodeURIComponent(cell.getValue());
+}
+
 function initPage() {
-  var tShirts = {
+  const tShirts = {
     'WS': "Women's Small",
     'WM': "Women's Medium",
     'MS': "Men's Small",
@@ -54,15 +58,19 @@ function initPage() {
     'MXXL': "Men's Extra Extra Large",
     'MXXXL': "Men's Extra Extra Extra Large",
   };
-  new Tabulator('#vols', {
+  let tableElem = document.getElementById('vols');
+  let parent = tableElem.parentElement;
+  let table = new Tabulator('#vols', {
     ajaxURL: '../api/v1/participants?$select=uid,email,firstName,lastName,burnerName,shirtSize,critVol,certs.ics100.status,certs.ics200.status,certs.bls.status',
+    pagination: true,
+    paginationSize: 25,
     columns:[
-      {title:'User ID', field: 'uid', formatter: 'link', formatterParams:{urlPrefix:'vol.php?id='}, visible: true},
+      {title:'User ID', field: 'uid', formatter: 'link', formatterParams:{url: getParticipantLink}, visible: true},
       {title:'Email', field: 'email', formatter: 'link', formatterParams:{urlPrefix:'mailto:'}},
       {title:'First Name', field: 'firstName'},
       {title:'Last Name', field: 'lastName'},
       {title:'Burner Name', field: 'burnerName'},
-      {title:'T-Shirt Size', field: 'shirtSize', editor: 'select', formatter: 'lookup', editorParams: {values: tShirts}, formatterParams: tShirts},
+      {title:'T-Shirt Size', field: 'shirtSize', editor: 'list', formatter: 'lookup', editorParams: {values: tShirts}, formatterParams: tShirts},
       {title:'Critical Volunteer', field: 'critVol', editor: 'tickCross', formatter: 'tickCross'},
       {title:'ICS 100', field: 'certs.ics100', formatter: showCertPresent},
       {title:'ICS 200', field: 'certs.ics200', formatter: showCertPresent}
@@ -72,6 +80,35 @@ function initPage() {
       {column: 'uid', dir: 'asc'}
     ]
   });
+  table.on('tableBuilt', () => {
+    table.setData();
+  });
+  let node = document.createElement('div');
+  node.style.float = 'right';
+  node.style.textAlign = 'right';
+  node.className = 'col-sm-12';
+  node.innerText = 'Search:';
+  let search = document.createElement('input');
+  search.type = 'text';
+  search.style.border = '1px solid #aaa';
+  search.style.borderRadius = '5px';
+  search.style.padding = '2px';
+  node.appendChild(search);
+  parent.insertBefore(node, tableElem);
+  search.addEventListener('input', ()=> {
+    table.clearFilter();
+    if(search.value !== '') {
+      table.setFilter((data) => {
+        let inputData = search.value.toLowerCase();
+        let uid = data.uid.toLowerCase().includes(inputData);
+        let email = data.email.toLowerCase().includes(inputData);
+        let first = data.firstName === undefined ? false : data.firstName.toLowerCase().includes(inputData);
+        let last = data.lastName === undefined ? false : data.lastName.toLowerCase().includes(inputData);
+        let burner = data.burnerName.toLowerCase().includes(inputData);
+        return uid || email || first || last || burner;
+      });
+    }
+  });
 }
 
-$(initPage);
+window.onload = initPage;

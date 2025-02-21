@@ -1,3 +1,4 @@
+/* globals getParameterByName */
 function getCertName(certType, certs) {
   for(let cert of certs) {
     if(cert.certID === certType) {
@@ -96,14 +97,18 @@ function gotEvents(jqXHR) {
   for(event of jqXHR.responseJSON) {
     events[event['_id']['$oid']] = event;
   }
+  let id = getParameterByName('id');
   let table = new Tabulator('#shifts', {
-    ajaxURL: '../api/v1/shifts?$filter=participant eq '+getParameterByName('id'),
+    ajaxURL: '../api/v1/shifts?$filter=participant eq '+encodeURIComponent(id),
     columns:[
       {title: 'ID', field: '_id.$oid', visible: false},
       {title: 'Event', field: 'eventID', formatter: showEventName, formatterParams: events},
       {title: 'Department', field: 'department', formatter: getDepartmentName},
       {title: 'Shift Name', field: 'name', formatter: getShiftName}
     ]
+  });
+  table.on('tableBuilt', () => {
+    table.setData();
   });
 }
 
@@ -128,7 +133,7 @@ function initPage() {
     return;
   }
   $.ajax({
-    url: '../api/v1/participants/'+id,
+    url: '../api/v1/participants/'+encodeURIComponent(id),
     complete: gotParticipant
   });
   $.ajax({
@@ -137,4 +142,4 @@ function initPage() {
   });
 }
 
-$(initPage)
+window.onload = initPage;

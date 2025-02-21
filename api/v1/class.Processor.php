@@ -260,6 +260,10 @@ trait Processor
      */
     protected function processShift($entry, $request)
     {
+        if(!isset($entry['departmentID']) || !isset($entry['roleID']))
+        {
+            return $entry;
+        }
         static $profile = null;
         static $eeAvailable = false;
         static $canDoRole = array();

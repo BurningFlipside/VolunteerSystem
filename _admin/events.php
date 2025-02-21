@@ -61,7 +61,7 @@ $page->content['body'] = '
               <div class="row">
                 <label for="private" class="col-sm-2 col-form-label">Private Event:</label>
                 <div class="col-sm-2">
-                  <input class="form-control" type="checkbox" name="private" id="private" onChange="privateEventChange(this);"/>
+                  <input class="form-check-input" type="checkbox" name="private" id="private" onChange="privateEventChange(this);"/>
                 </div>
                 <div class="w-100"></div>
                 <div class="col-sm-12">
@@ -77,7 +77,7 @@ $page->content['body'] = '
                 <div class="w-100"></div>
                 <label for="private" class="col-sm-2 col-form-label">Send Invites:</label>
                 <div class="col-sm-2">
-                  <input class="form-control" type="checkbox" name="invites" id="invites" disabled/>
+                  <input class="form-check-input" type="checkbox" name="invites" id="invites" disabled/>
                 </div>
               </div>
             </div>

@@ -1,47 +1,76 @@
-function gotEvents(jqXHR) {
-  if(jqXHR.status !== 200) {
-    if(jqXHR.status === 401) {
-      return;
-    }
-    console.log(jqXHR);
-    alert('Unable to get events please contact your lead for assistance!');
-    return;
-  }
-  let events = jqXHR.responseJSON;
-  events.sort(function(a, b) {
-    var aDate = new Date(a.startTime);
-    var bDate = new Date(b.startTime);
+function gotEvents(events) {
+  let availableEvents = events.filter((event) => {
+    return event.available && event.hasShifts;
+  });
+  availableEvents.sort(function(a, b) {
+    let aDate = new Date(a.startTime);
+    let bDate = new Date(b.startTime);
     return aDate.getTime() - bDate.getTime();
   });
-  let div = $('#events');
-  for(let event of events) {
-    if(event.available && event.hasShifts) {
-      let buttonDiv = $('<div class="card" style="cursor: pointer;" data-eventID="'+event['_id']['$oid']+'"><div class="card-body"><div class="row"><div class="col-11">'+event.name+'<br/><i>'+new Date(event.startTime)+' until '+new Date(event.endTime)+'</i></div><div class="col-1 align-self-center"><i class="fas fa-chevron-right"></i></div></div></div></div>');
-      div.append(buttonDiv);
-      buttonDiv.on('click', gotoEventPage);
-    }
+  const div = document.getElementById('events');
+  for(const event of availableEvents) {
+    let buttonDiv = document.createElement('div');
+    buttonDiv.className = 'card';
+    buttonDiv.style.cursor = 'pointer';
+    buttonDiv.dataset['eventID'] = event['_id']['$oid'];
+
+    let cardBody = document.createElement('div');
+    cardBody.className = 'card-body';
+
+    let row = document.createElement('div');
+    row.className = 'row';
+
+    let buttonTextDiv = document.createElement('div');
+    buttonTextDiv.className = 'col-11';
+    buttonTextDiv.innerHTML = `${event.name}<br/><i>${new Date(event.startTime)} until ${new Date(event.endTime)}</i>`;
+
+    let buttonIconDiv = document.createElement('div');
+    buttonIconDiv.className = 'col-1 align-self-center';
+    buttonIconDiv.innerHTML = '<i class="fas fa-chevron-right"></i>';
+
+    row.appendChild(buttonTextDiv);
+    row.appendChild(buttonIconDiv);
+    cardBody.appendChild(row);
+    buttonDiv.appendChild(cardBody);
+    div.appendChild(buttonDiv);
+    
+    buttonDiv.addEventListener('click', gotoEventPage);
   }
 }
 
-function gotoEventPage(ev) {
-  location.href = 'guidedDepartment.php?eventID='+ev.currentTarget.dataset.eventid;
+function gotoEventPage() {
+  location.href = `guidedDepartment.php?eventID=${this.dataset.eventID}`;
 }
 
 function initPage() {
-  $.ajax({
-    url: 'api/v1/events',
-    complete: gotEvents
+  fetch('api/v1/events').then((response) => {
+    if(!response.ok) {
+      if(response.status === 401) {
+        // We are logged out, just do nothing the underlying framework will
+        // handle the redirect to the login page.
+        return;
+      }
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  }).then(gotEvents).catch((error) => {
+    let content = document.getElementById('content');
+    content.innerHTML += '<div class="container text-center h3">Unable to load event data.</div>';
+    console.error('There has been a problem with your fetch operation:', error);
   });
 }
 
-$(() => {
-  if($('body').data('profile') === undefined) {
-    $('body').on('fvs:ready', function() {
-      initPage();
-    });
-  } else {
-    //FVS already inited before this js loaded
-    initPage();
+// Wait's for the FVS to respond ready, this waits until they have
+// a profile to work with.
+function waitForFVSReady() {
+  if(!document.body.dataset.profile) {
+    console.log('Waiting for profile...');
+    document.body.addEventListener('fvs:ready', initPage);
+    return;
   }
-});
+  //FVS already initialized before this js loaded
+  initPage();
+}
+
+window.onload = waitForFVSReady;
 /* vim: set tabstop=2 shiftwidth=2 expandtab: */

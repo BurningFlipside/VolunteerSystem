@@ -90,6 +90,9 @@ function gotInitialData(results) {
       {title: 'Volunteer', field: 'participant'}
     ]
   });
+  table.on('tableBuilt', ()=>{
+    table.setData();
+  });
 }
 
 function deptFilterChanged(e) {

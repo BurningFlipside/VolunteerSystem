@@ -1,17 +1,19 @@
 /* global $*/
 
 function dataChanged() {
-  //TODO get base from current site
-  let base = 'https://secure.burningflipside.com/fvs/';
-  let event = $('#event').val();
-  if(event === null) {
-    $('#link').val(base);
+  //Get base (parent directory) from current site
+  let base = location.href.substring(0, location.href.lastIndexOf('/'));
+  base = base.substring(0, base.lastIndexOf('/')+1);
+  let event = document.getElementById('event').value;
+  let linkBox = document.getElementById('link');
+  if(event === null || event === '') {
+    linkBox.value = base;
     return;
   }
   base += '?event='+event;
-  let dept = $('#dept').val();
-  if(dept === null) {
-    $('#link').val(base);
+  let dept = document.getElementById('dept').value;
+  if(dept === null || dept === '') {
+    linkBox.value = base;
     return;
   }
   base += '&department='+dept;
@@ -45,49 +47,55 @@ function deptChanged(e) {
 }
 
 function initPage() {
-  $('#event').select2({
-    ajax: {
-      url: '../api/v1/events',
-      processResults: function(data) {
-        var res = [];
-        data.sort((a,b) => {
-          return a.name.localeCompare(b.name);
-        });
-        for(let event of data) {
-          if(event.available) {
-            if(event.alias !== undefined && event.alias !== '') {
-              res.push({id: event.alias, text: event.name});
-            } else {
-              res.push({id: event['_id']['$oid'], text: event.name});
-            }
-          }
-        }
-        return {results: res};
-      }
+  fetch('../api/v1/events').then((response) => {
+    if(response.httpStatusCode === 401) {
+      return;
     }
+    response.json().then((data) => {
+      let eventSelect = document.getElementById('event');
+      data = data.filter((event) => {
+        return event.available;
+      });
+      data.sort((a, b) => {
+        let aStart = new Date(a.startTime);
+        let bStart = new Date(b.startTime);
+        return aStart - bStart;
+      });
+      eventSelect.add(new Option(''));
+      for(let event of data) {
+        let opt = new Option(event.name, event['_id']['$oid']);
+        if(event.alias !== undefined && event.alias !== '') {
+          opt.value = event.alias;
+        }
+        eventSelect.add(opt);
+      }
+      eventSelect.addEventListener('change', dataChanged);
+    });
   });
-  $('#dept').select2({
-    ajax: {
-      url: '../api/v1/departments',
-      processResults: function(data) {
-        var res = [];
-        data.sort((a,b) => {
-          return a.departmentName.localeCompare(b.departmentName);
-        });
-        for(let dept of data) {
-          if(dept.isAdmin) {
-            res.push({id: dept.departmentID, text: dept.departmentName});
-          }
-        }
-        return {results: res};
-      }
+  fetch('../api/v1/departments').then((response) => {
+    if(response.httpStatusCode === 401) {
+      return;
     }
+    response.json().then((data) => {
+      let deptSelect = document.getElementById('dept');
+      data = data.filter((department) => {
+        return department.isAdmin;
+      });
+      data.sort((a, b) => {
+        return a.departmentName.localeCompare(b.departmentName);
+      });
+      for(let dept of data) {
+        if(dept.isAdmin) {
+          let opt = new Option(dept.departmentName, dept.departmentID);
+          deptSelect.add(opt);
+        }
+      }
+      deptSelect.addEventListener('change', deptChanged);
+    });
   });
   $('#role').select2();
-  $('#event').change(dataChanged);
-  $('#dept').change(deptChanged);
   $('#role').change(dataChanged);
   dataChanged();
 }
 
-$(initPage);
+window.onload = initPage;

@@ -39,7 +39,7 @@ function gotVols(jqXHR) {
     vol.shiftCount = 0;
     participants[vol.uid] = vol;
   }
-  let event = $('#event').val();
+  let event = document.getElementById('event').value;
   if(event !== null) {
     $.ajax({
       url: '../api/v1/events/'+event+'/shifts',
@@ -56,7 +56,13 @@ function gotVols(jqXHR) {
 }
 
 function getVols() {
-  let certs = $('#certs').val();
+  let certSelect = document.getElementById('certs');
+  let certs = Array.from(certSelect.selectedOptions).reduce((arr, option)=>{
+    if(option.selected) {
+      arr.push(option.value);
+    }
+    return arr;
+  }, []);
   if(certs.includes('none')) {
     $.ajax({
       url: '../api/v1/participants',
@@ -92,36 +98,40 @@ function gotCerts(jqXHR) {
   data.sort((a,b) => {
     return a.name.localeCompare(b.name);
   });
+  let certSelect = document.getElementById('certs');
   for(let cert of data) {
     let opt = new Option(cert.name, cert.certID, true, true);
-    $('#certs').append(opt);
+    certSelect.add(opt);
   }
-  $('#certs').trigger('change');
-  $('#certs').change(certChanged);
+  certSelect.addEventListener('change', certChanged);
+  certChanged();
 }
 
 function initPage() {
-  $('#event').select2({
-    ajax: {
-      url: '../api/v1/events',
-      processResults: function(data) {
-        var res = [];
-        data.sort((a,b) => {
-          return a.name.localeCompare(b.name);
-        });
-        for(let event of data) {
-          res.push({id: event['_id']['$oid'], text: event.name});
-        }
-        return {results: res};
-      }
+  fetch('../api/v1/events').then((response) => {
+    if(response.httpStatusCode === 401) {
+      return;
     }
+    response.json().then((data) => {
+      let eventSelect = document.getElementById('event');
+      data.sort((a, b) => {
+        let aStart = new Date(a.startTime);
+        let bStart = new Date(b.startTime);
+        return aStart - bStart;
+      });
+      eventSelect.add(new Option(''));
+      for(let event of data) {
+        let opt = new Option(event.name, event['_id']['$oid']);
+        eventSelect.add(opt);
+      }
+      eventSelect.addEventListener('change', eventChanged);
+    });
   });
   $.ajax({
     url: '../api/v1/certs',
     complete: gotCerts
   });
   $('#certs').select2();
-  $('#event').change(eventChanged);
 }
 
-$(initPage);
+window.onload = initPage;

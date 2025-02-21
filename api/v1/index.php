@@ -11,6 +11,7 @@ require_once('class.ShiftAPI.php');
 require_once('class.ParticipantAPI.php');
 require_once('class.CertificationAPI.php');
 require_once('class.TextAPI.php');
+require_once('GoogleAPI.php');
 
 $site = new \Flipside\Http\WebSite();
 $site->registerAPI('/events', new EventAPI());
@@ -20,6 +21,7 @@ $site->registerAPI('/shifts', new ShiftAPI());
 $site->registerAPI('/participants', new ParticipantAPI());
 $site->registerAPI('/certs', new CertificationAPI());
 $site->registerAPI('/longText', new TextAPI());
+$site->registerAPI('/google', new GoogleAPI());
 /*
 $app = new FlipREST();
 $app->get('(/)', 'getRoot');

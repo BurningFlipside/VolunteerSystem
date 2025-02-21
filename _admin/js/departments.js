@@ -1,13 +1,5 @@
 /* global $, bootbox, Tabulator*/
 /* exported newDepartment */
-function editDone(jqXHR) {
-  if(jqXHR.status !== 200) {
-    console.log(jqXHR);
-    alert('Unable to edit value!');
-    return;
-  }
-}
-
 function addDone(jqXHR) {
   if(jqXHR.status === 200) {
     location.reload();
@@ -25,18 +17,18 @@ function valueChanged(value, field, id) {
     current = current[`${propParts[i]}`] = {}; // eslint-disable-line security/detect-object-injection
   }
   current[propParts[propParts.length-1]] = value;
-  $.ajax({
-    url: '../api/v1/departments/'+id,
+  fetch('../api/v1/departments/'+id, {
     method: 'PATCH',
-    data: JSON.stringify(obj),
-    contentType: 'application/json',
-    dataType: 'json',
-    complete: editDone
+    body: JSON.stringify(obj),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }).then((response) => {
+    if(!response.ok) {
+      alert('Unable to edit value');
+      console.log(response);
+    }
   });
-}
-
-function dataChanged(cell) {
-  valueChanged(cell.getValue(), cell.getColumn().getField(), cell.getRow().getData()['departmentID']);
 }
 
 function leadDropDown() {
@@ -63,6 +55,21 @@ function areaDropDown() {
     values[area.short_name] = area.name;
   }
   return {values:values};
+}
+
+function leadDisplay(cell) {
+  let value = cell.getValue();
+  let cache = window.localStorage.getItem('FlipsideLeadCache');
+  if(cache === undefined || !cache || cache === 'undefined') {
+    return value;
+  }
+  let leads = JSON.parse(cache);
+  for(let lead of leads) {
+    if(lead.short_name === value) {
+      return lead.name;
+    }
+  }
+  return value;
 }
 
 function areaDisplay(cell) {
@@ -181,7 +188,7 @@ function initPage() {
   if(!cache || cache === 'undefined' || !cache2 || cache2 === 'undefined') {
     refreshCache();
   }
-  new Tabulator('#depts', {
+  let table = new Tabulator('#depts', {
     ajaxURL: '../api/v1/departments',
     ajaxResponse: function(url, params, response) {
       return response.filter(function(element) {
@@ -194,16 +201,21 @@ function initPage() {
       {title: 'Department ID', field: 'departmentID', formatter: 'link', formatterParams:{urlPrefix:'roles.php?dept='}},
       {title: 'Name', field: 'departmentName', editor: 'input', minWidth: 200},
       {title: 'Public', field: 'public', editor: 'tickCross', formatter: 'tickCross'},
-      {title: 'Lead', field: 'lead', editor:'select', editorParams: leadDropDown},
-      {title: 'Area', field: 'area', editor:'select', editorParams: areaDropDown, formatter: areaDisplay, sorter: 'alphanum'},
+      {title: 'Lead', field: 'lead', editor:'list', editorParams: leadDropDown, formatter: leadDisplay},
+      {title: 'Area', field: 'area', editor:'list', editorParams: areaDropDown, formatter: areaDisplay, sorter: 'alphanum'},
       {title: 'Other Admins', field: 'others', editor:'input'},
       {title: 'Verbose data email', field: 'verboseDataEmail', editor:'input'},
     ],
-    cellEdited: dataChanged,
     initialSort:[
       {column: 'departmentName', dir: 'asc'},
       {column: 'area', dir: 'asc'}
     ]
+  });
+  table.on('tableBuilt', () => {
+    table.setData();
+  });
+  table.on('cellEdited', (cell) => {
+    valueChanged(cell.getValue(), cell.getColumn().getField(), cell.getRow().getData()['departmentID']);
   });
 }
 

@@ -1,11 +1,7 @@
 /*global $*/
-function gotShifts(jqXHR) {
-  if(jqXHR.status !== 200) {
-    return;
-  }
-  var data = jqXHR.responseJSON;
-  var participants = {};
-  var unfilled = 0;
+function gotShifts(data) {
+  let participants = {};
+  let unfilled = 0;
   for(let shift of data) {
     if(shift.participant !== undefined && shift.participant !== '') {
       if(participants[shift.participant] === undefined) {
@@ -17,8 +13,8 @@ function gotShifts(jqXHR) {
       unfilled++;
     }
   }
-  var promises = [];
-  var sizes = {
+  let promises = [];
+  let sizes = {
     'WS': 0,
     'WM': 0,
     'MS': 0,
@@ -32,12 +28,13 @@ function gotShifts(jqXHR) {
     'MXXL': 0,
     'MXXXL': 0
   };
+  let minShifts = document.getElementById('minShifts').value;
   for(let participant in participants) {
-    if(participants[`${participant}`] >= $('#minShifts').val()) {
+    if(participants[`${participant}`] >= minShifts) {
       promises.push($.ajax({url: '../api/v1/participants/'+encodeURIComponent(participant)}));
     }
   }
-  unfilled = unfilled / $('#minShifts').val();
+  unfilled = unfilled / minShifts;
   Promise.allSettled(promises).then((resData) => {
     for(let participant of resData) {
       if(participant.status === 'fulfilled') {
@@ -99,69 +96,85 @@ function rolesChanged() {
   }
   //Remove last or...
   filter = filter.slice(0, -4);
-  $.ajax({
-    url: '../api/v1/events/'+$('#event').val()+'/shifts?'+filter,
-    complete: gotShifts
+  filter += ')';
+  //BUGBUG I currently don't handle () in mongodb queries so this needs to get all the shifts then filter for the event on the client
+  fetch('../api/v1/shifts?'+filter).then((response) => {
+    response.json().then((data) => {
+      let eventID = document.getElementById('event').value;
+      data = data.filter((shift) => {
+        return shift.eventID === eventID;
+      });
+      gotShifts(data);
+    });
   });
-}
-
-function gotRoles(jqXHR) {
-  if(jqXHR.status !== 200) {
-    return;
-  }
-  var data = jqXHR.responseJSON;
-  for(let role of data) {
-    var newOption = new Option(role.display_name, role.short_name, true, true);
-    $('#roles').append(newOption);
-  }
-  $('#roles').trigger('change');
 }
 
 function departmentSelected(e) {
-  var value = e.target.value;
-  $.ajax({
-    url: '../api/v1/departments/'+value+'/roles',
-    complete: gotRoles
+  let departmentID = e.target.value;
+  fetch('../api/v1/departments/'+departmentID+'/roles').then((response) => {
+    response.json().then((data) => {
+      let roleSelect = document.getElementById('roles');
+      roleSelect.options.length = 0;
+      for(let role of data) {
+        let option = new Option(role.display_name, role.short_name, true, true);
+        roleSelect.add(option);
+      }
+      rolesChanged();
+    });
   });
+}
+
+function eventChanged(e) {
+  let eventID = e.target.value;
+  let departmentSelect = document.getElementById('department');
+  if(departmentSelect.value !== '') {
+    rolesChanged();
+  }
 }
 
 function initPage() {
-  $('#event').select2({
-    ajax: {
-      url: '../api/v1/events',
-      processResults: function(data) {
-        var res = [];
-        data.sort((a,b) => {
-          return a.name.localeCompare(b.name);
-        });
-        for(let event of data) {
-          res.push({id: event['_id']['$oid'], text: event.name});
-        }
-        return {results: res};
-      }
+  fetch('../api/v1/events').then((response) => {
+    if(response.httpStatusCode === 401) {
+      return;
     }
-  });
-  $('#department').select2({
-    ajax: {
-      url: '../api/v1/departments',
-      processResults: function(data) {
-        var res = [];
-        data.sort((a,b) => {
-          return a.departmentName.localeCompare(b.departmentName);
-        });
-        for(let dept of data) {
-          if(dept.isAdmin) {
-            res.push({id: dept.departmentID, text: dept.departmentName});
-          }
-        }
-        return {results: res};
+    response.json().then((data) => {
+      data = data.filter((event) => {
+        return event.available;
+      });
+      data.sort((a,b) => {
+        return a.name.localeCompare(b.name);
+      });
+      let eventSelect = document.getElementById('event');
+      eventSelect.add(new Option(''));
+      for(let event of data) {
+        let option = new Option(event.name, event['_id']['$oid'], eventSelect.options.length === 0);
+        eventSelect.add(option);
       }
-    }
+      eventSelect.addEventListener('change', eventChanged);
+    });
   });
-  $('#roles').select2();
-  $('#department').change(departmentSelected);
-  $('#roles').change(rolesChanged);
-  $('#minShifts').change(minShiftsChanged);
+  fetch('../api/v1/departments').then((response) => {
+    if(response.httpStatusCode === 401) {
+      return;
+    }
+    response.json().then((data) => {
+      data = data.filter((dept) => {
+        return dept.isAdmin;
+      });
+      data.sort((a,b) => {
+        return a.departmentName.localeCompare(b.departmentName);
+      });
+      let deptSelect = document.getElementById('department');
+      deptSelect.add(new Option(''));
+      for(let dept of data) {
+        let option = new Option(dept.departmentName, dept.departmentID, deptSelect.options.length === 0);
+        deptSelect.add(option);
+      }
+      deptSelect.addEventListener('change', departmentSelected);
+    });
+  });
+  document.getElementById('roles').addEventListener('change', rolesChanged);
+  document.getElementById('minShifts').addEventListener('change', minShiftsChanged);
 }
 
-$(initPage);
+window.onload = initPage;

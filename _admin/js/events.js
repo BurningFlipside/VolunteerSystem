@@ -35,6 +35,7 @@ function valueChanged(value, field, id) {
 }
 
 function dataChanged(cell) {
+  console.log(cell);
   valueChanged(cell.getValue(), cell.getColumn().getField(), cell.getRow().getData()['_id']['$oid']);
 }
 
@@ -45,19 +46,6 @@ function privateEventChange(target) {
   } else {
     $('#volList').attr('disabled', true);
     $('#invites').attr('disabled', true);
-  }
-}
-
-function gotDepartments(jqXHR) {
-  if(jqXHR.status !== 200) {
-    console.log(jqXHR);
-    alert('Unable to get department list!');
-    return;
-  }
-  var array = jqXHR.responseJSON;
-  var deptList = $('#deptList');
-  for(let dept of array) {
-    deptList.append('<div class="col-sm-2"><input class="form-control" type="checkbox" name="dept_'+dept.departmentID+'" id="dept_'+dept.departmentID+'"></div><div class="col-sm-10">'+dept.departmentName+'</div>');
   }
 }
 
@@ -169,7 +157,7 @@ function hideOldEvents(data) {
 }
 
 function hideOldChanged(e) {
-  let table = Tabulator.prototype.findTable('#events')[0];
+  let table = Tabulator.findTable('#events')[0];
   if(!e.target.checked) {
     table.clearFilter();
     return;
@@ -181,8 +169,8 @@ function initPage() {
   let table = new Tabulator('#events', {
     ajaxURL: '../api/v1/events',
     columns:[
-      {formatter: delIcon, width:40, align: 'center', cellClick: delEvent},
-      {formatter: editIcon, width:40, align: 'center', cellClick: editEvent},
+      {formatter: delIcon, width:40, hozAlign: 'center', cellClick: delEvent},
+      {formatter: editIcon, width:40, hozAlign: 'center', cellClick: editEvent},
       {title: 'ID', field: '_id.$oid', visible: false},
       {title: 'Name', field: 'name', editor: 'input'},
       {title: 'Start Date/Time', field: 'startTime', formatter: dateTimeView},
@@ -192,15 +180,25 @@ function initPage() {
       {title: 'Department List', field: 'departments', editor: 'input'},
       {title: 'Tickets Needed', field: 'tickets', formatter: 'tickCross'},
       {title: 'Alias', field: 'alias', editor: 'input'}
-    ],
-    cellEdited: dataChanged
+    ]
   });
-  table.setFilter(hideOldEvents);
-  $.ajax({
-    url: '../api/v1/departments',
-    complete: gotDepartments
+  table.on('cellEdited', dataChanged);
+  table.on('tableBuilt', () => {
+    table.setData();
+    table.setFilter(hideOldEvents);
   });
-  $('#hideOld').change(hideOldChanged);
+  fetch('../api/v1/departments').then((response) => {
+    if(response.httpStatusCode === 401) {
+      return;
+    }
+    response.json().then((data) => {
+      let departmentList = document.getElementById('deptList');
+      for(let dept of data) {
+        departmentList.innerHTML += '<div class="col-sm-2"><input class="form-control" type="checkbox" name="dept_'+dept.departmentID+'" id="dept_'+dept.departmentID+'"></div><div class="col-sm-10">'+dept.departmentName+'</div>';
+      }
+    });
+  });
+  document.getElementById('hideOld').addEventListener('change', hideOldChanged);
 }
 
-$(initPage);
+window.onload = initPage;

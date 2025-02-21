@@ -1,101 +1,74 @@
-/*global $, bootbox, Tabulator, getParameterByName, addOptiontoSelect, gapi, apiKey, clientId, scope, discoveryUri, driveDiscoverUri, google, flipDialog, Papa, getNameForUser, searchUsers*/
+/*global $, bootbox, Tabulator, getParameterByName, addOptiontoSelect, flipDialog, Papa, getNameForUser, searchUsers*/
 /* exported groupsAllowedUpdated, newRole, onEmailListUpdated, publiclyVisibleUpdated, roleNameUpdated, showRoleWizard, gApiLoaded, gisLoaded */
 var deptId;
 var table;
-
-let tokenClient;
-
-function gApiLoaded() {
-  gapi.load('client', initGoogle);
-}
-
-function initGoogle() {
-  gapi.client.init({
-    'apiKey': apiKey,
-    'discoverDocs': [discoveryUri, driveDiscoverUri],
-  }).then(() => {
-    gapi.client.load(discoveryUri);
-    gapi.client.load(driveDiscoverUri);
-  });
-}
-
-function gisLoaded() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    // eslint-disable-next-line camelcase
-    client_id: clientId,
-    scope: scope,
-    callback: '', // defined later
-  });
-}
 
 function loadDataFromColumn(sheetId, tabId, columnNumber, otherColumns, event) {
   // TODO allow rules for another column to be created
   const ACharCode = 65;
   let columnName = String.fromCharCode(ACharCode + columnNumber);
-  gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: tabId+'!'+columnName+'2:'+columnName+'1000',
-  }).then((response) => {
-    let emails = [];
-    for(let i = 0; i < response.result.values.length; i++) {
-      if(response.result.values[i].length === 0) {
-        continue;
+  fetch('/fvs/api/v1/google/spreadsheets/'+sheetId+'/'+tabId+'/*/'+columnName).then((response) => {
+    response.json().then((data) => {
+      let emails = [];
+      // Skip the first row, it's the header
+      for(let i = 1; i < data.length; i++) {
+        if(data[i].length === 0) {
+          continue;
+        }
+        emails.push(data[i][0]);
       }
-      emails.push(response.result.values[i][0]);
-    }
-    showDialog(event.data.emailList, event.data.editEmailId, []).then(() => {
-      processNewEmails(emails, event.data.editEmailId);
+      showDialog2(event.data.emailList, event.data.editEmailId, [], true).then(() => {
+        processNewEmails(emails, event.data.editEmailId);
+      });
     });
   });
 }
 
 function loadDataFromSubSheet(sheetId, tabId, event) {
-  gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: tabId+'!A1:Z1',
-  }).then((response) => {
-    console.log(response.result.values);
-    let headers = response.result.values[0];
-    if(headers.length === 1) {
-      loadDataFromColumn(sheetId, tabId, 0, [], event);
-      return;
-    }
-    let inputOptions = [];
-    for(let header of headers) {
-      inputOptions.push({text: header, value: header});
-    }
-    bootbox.prompt({
-      title: 'Which column contains emails?',
-      inputType: 'select',
-      inputOptions: inputOptions,
-      callback: (result) => {
-        if(result === null) {
-          return;
-        }
-        const indexOf = headers.indexOf(result);
-        if(indexOf > -1) {
-          headers.splice(indexOf, 1);
-        }
-        loadDataFromColumn(sheetId, tabId, indexOf, headers, event);
+  // Get the first row to determine if there is only one column and get column headers
+  fetch('/fvs/api/v1/google/spreadsheets/'+sheetId+'/'+tabId+'/1').then((response) => {
+    response.json().then((data) => {
+      let headers = data[0];
+      if(headers.length === 1) {
+        loadDataFromColumn(sheetId, tabId, 0, [], event);
+        return;
       }
+      let inputOptions = [];
+      for(let header of headers) {
+        inputOptions.push({text: header, value: header});
+      }
+      bootbox.prompt({
+        title: 'Which column contains emails?',
+        inputType: 'select',
+        inputOptions: inputOptions,
+        callback: (result) => {
+          if(result === null) {
+            return;
+          }
+          const indexOf = headers.indexOf(result);
+          if(indexOf > -1) {
+            headers.splice(indexOf, 1);
+          }
+          loadDataFromColumn(sheetId, tabId, indexOf, headers, event);
+        }
+      });
     });
   });
 }
 
 function loadDataFromSpreadSheet(sheetId, event) {
-  gapi.client.sheets.spreadsheets.get({
-    spreadsheetId: sheetId
-  }).then((response) => {
-    if(response.result.sheets.length === 1) {
-      let sheetName = response.result.sheets[0].properties.title;
-      loadDataFromSubSheet(sheetId, sheetName, event);
-    } else {
+  fetch('/fvs/api/v1/google/spreadsheets/'+sheetId).then((response) => {
+    response.json().then((data) => {
       let inputOptions = [];
-      for(let sheet of response.result.sheets) {
-        inputOptions.push({text: sheet.properties.title, value: sheet.properties.title});
+      for(let tab of data.sheets) {
+        inputOptions.push({text: tab.properties.title, value: tab.properties.title});
+      }
+      if(inputOptions.length === 1) {
+        loadDataFromSubSheet(sheetId, inputOptions[0].value, event);
+        return;
       }
       bootbox.prompt({
-        title: 'Which sheet would you like to read?',
+        title: 'Which tab would you like to read?',
         inputType: 'select',
         inputOptions: inputOptions,
         callback: (result) => {
@@ -105,48 +78,30 @@ function loadDataFromSpreadSheet(sheetId, event) {
           loadDataFromSubSheet(sheetId, result, event);
         }
       });
-    }
+    });
   });
 }
 
 function importFromGoogle(ev) {
-  tokenClient.callback = (resp) => {
-    if (resp.error !== undefined) {
-      throw (resp);
-    }
-    try {
-      gapi.client.drive.files.list({
-        q: 'mimeType="application/vnd.google-apps.spreadsheet" and trashed = false',
-        fields: 'files(id, name)',
-      }).then((response) => {
-        let inputOptions = [];
-        for(let file of response.result.files) {
-          inputOptions.push({text: file.name, value: file.id});
-        }
-        bootbox.prompt({
-          title: 'Which spreadsheet would you like to read?',
-          inputType: 'select',
-          inputOptions: inputOptions,
-          callback: (result) => {
-            if(result === null) {
-              return;
-            }
-            loadDataFromSpreadSheet(result, ev);
+  fetch('/fvs/api/v1/google/spreadsheets').then((response) => {
+    response.json().then((data) => {
+      let inputOptions = [];
+      for(let sheet of data) {
+        inputOptions.push({text: sheet.name, value: sheet.id});
+      }
+      bootbox.prompt({
+        title: 'Which spreadsheet would you like to read?',
+        inputType: 'select',
+        inputOptions: inputOptions,
+        callback: (result) => {
+          if(result === null) {
+            return;
           }
-        });
+          loadDataFromSpreadSheet(result, ev);
+        }
       });
-    } catch(err) {
-      bootbox.alert('Unable to obtain any files from Google Drive! '+err);
-    }
-  };
-  if (gapi.client.getToken() === null) {
-    // Prompt the user to select a Google Account and ask for consent to share their data
-    // when establishing a new session.
-    tokenClient.requestAccessToken({prompt: 'consent'});
-  } else {
-    // Skip display of account chooser and consent dialog for an existing session.
-    tokenClient.requestAccessToken({prompt: ''});
-  }
+    });
+  });
 }
 
 function roleNameUpdated() {
@@ -660,8 +615,7 @@ function processNewEmails(emails, id) {
   if(id !== undefined) {
     roleId = id;
   }
-  console.log(roleId);
-  let tableData = Tabulator.prototype.findTable('#roles')[0].getData();
+  let tableData = Tabulator.findTable('#roles')[0].getData();
   let roleData = null;
   for(let row of tableData) {
     if(row.short_name === roleId) {
@@ -744,19 +698,115 @@ function dropIn(e) {
 }
 
 function showDialog(emails, roleId, extraAlerts) {
+  fetch('/fvs/api/v1/google/loginStatus').then((response) => {
+    response.json().then((data) => {
+      if(data.loggedIn) {
+        showDialog2(emails, roleId, extraAlerts, true);
+        return;
+      }
+      showDialog2(emails, roleId, extraAlerts, false);
+    });
+  });
+}
+
+function createTableForDialog(results) {
+  let dialogTable = $('<table style="width: 100%;">');
+  dialogTable.append('<tr><th></th><th>Email</th><th>Status</th><th>Name</th><th>Actions</th></tr>');
+  let misCasedEmail = false;
+  let duplicateEmails = false;
+  let newEmails = [];
+  for(let result of results) {
+    result = result.value;
+    if(result.email.length === 0) {
+      continue;
+    }
+    let statusStr = 'Unknown Email';
+    let statusColor = 'red';
+    let name = '';
+    let row = $('<tr>');
+    let select = null;
+    let text = '';
+    switch(result.status) {
+      case 0:
+        statusStr = 'Good';
+        statusColor = 'green';
+        name = getNameForUser(result.value[0]);
+        if(addEmailToList(newEmails, result.email) === false) {
+          duplicateEmails = true;
+        }
+        break;
+      case 1:
+        misCasedEmail = true;
+        statusStr = 'Miscased';
+        statusColor = 'yellow';
+        name = getNameForUser(result.value[0]);
+        if(addEmailToList(newEmails, result.email) === false) {
+          duplicateEmails = true;
+        }
+        text = '<i>Auto Fix Email Casing</i>';
+        break;
+      case 3:
+        statusStr = 'Has Profile';
+        statusColor = 'yellow';
+        text = '<i>This user has a Flipside Profile but has never signed in to the volunteer system.</i>';
+        if(addEmailToList(newEmails, result.email) === false) {
+          duplicateEmails = true;
+        }
+        break;
+      default:
+        if(addEmailToList(newEmails, result.email) === false) {
+          duplicateEmails = true;
+        }
+        break;
+    }
+    let controlCell = $('<td>');
+    let removeButton = $('<button class="btn btn-link">');
+    removeButton.html('<i class="fas fa-times"></i>').prop('title', 'Remove User from Role');
+    controlCell.append(removeButton);
+    let myEmail = result.email;
+    let thisRow = row;
+    removeButton.click(() => {
+      newEmails.splice(newEmails.indexOf(myEmail), 1);
+      thisRow.remove();
+    });
+    let emailCell = $('<td>').text(result.email);
+    let statusCell = $('<td>').css('background-color', statusColor).text(statusStr);
+    let nameCell = $('<td>').text(name);
+    let actionCell = $('<td>');
+    if(select === null) {
+      actionCell.append(text);
+    } else {
+      actionCell.append(select);
+    }
+    row.append(controlCell).append(emailCell).append(statusCell).append(nameCell).append(actionCell);
+    dialogTable.append(row);
+  }
+  return {table: dialogTable, misCasedEmail: misCasedEmail, duplicateEmails: duplicateEmails, newEmails: newEmails};
+}
+
+function showDialog2(emails, roleId, extraAlerts, googleLoggedIn) {
   let promises = [];
   for(let email of emails) {
     email = email.trim();
+    if(email.length === 0) {
+      continue;
+    }
     promises.push(getParticipantByEmail(email));
+  }
+  if(promises.length === 0) {
+    promises.push(Promise.resolve({email: '', value: [], status: 2}));
   }
   return new Promise((resolve) => {
     Promise.allSettled(promises).then((results) => {
+      let res = createTableForDialog(results);
+      let dialogTable = res.table;
+      /*
       let newEmails = [];
       let status = {};
       let misCasedEmail = false;
       let duplicateEmails = false;
       let dialogTable = $('<table style="width: 100%;">');
-      table.append('<tr><th>Email</th><th>Status</th><th>Name</th><th>Action</th></tr>');
+      dialogTable.append('<tr><th>Email</th><th>Status</th><th>Name</th><th>Action</th></tr>');
       for(let result of results) {
         result = result.value;
         let statusStr = 'Unknown Email';
@@ -789,7 +839,7 @@ function showDialog(emails, roleId, extraAlerts) {
             row.append('<td>'+result.email+'</td><td style="background-color:'+statusColor+';">'+statusStr+'</td><td>'+name+'</td>');
             cell.append(select);
             row.append(cell);
-            table.append(row);
+            dialogTable.append(row);
             status[`${result.email}`] = 0;
             break;
           case 1:
@@ -800,7 +850,7 @@ function showDialog(emails, roleId, extraAlerts) {
             if(addEmailToList(newEmails, result.value[0].email) === false) {
               duplicateEmails = true;
             }
-            table.append('<tr><td>'+result.email+'</td><td style="background-color:'+statusColor+';">'+statusStr+'</td><td>'+name+'</td><td><i>Auto Fix Email Casing</i></td></tr>');
+            dialogTable.append('<tr><td>'+result.email+'</td><td style="background-color:'+statusColor+';">'+statusStr+'</td><td>'+name+'</td><td><i>Auto Fix Email Casing</i></td></tr>');
             status[`${result.email}`] = 1;
             break;
           case 3:
@@ -809,7 +859,7 @@ function showDialog(emails, roleId, extraAlerts) {
             if(addEmailToList(newEmails, result.email) === false) {
               duplicateEmails = true;
             }
-            table.append('<tr><td>'+result.email+'</td><td style="background-color:'+statusColor+';">'+statusStr+'</td><td>'+name+'</td><td><i>This user has a Flipside Profile but has never signed in to the volunteer system.</i></td></tr>');
+            dialogTable.append('<tr><td>'+result.email+'</td><td style="background-color:'+statusColor+';">'+statusStr+'</td><td>'+name+'</td><td><i>This user has a Flipside Profile but has never signed in to the volunteer system.</i></td></tr>');
             status[`${result.email}`] = 3;
             break;
           default:
@@ -836,30 +886,32 @@ function showDialog(emails, roleId, extraAlerts) {
             status[`${result.email}`] = result.status;
             break;
         }
-      }
+      }*/
       let alerts = [{type: 'info', text: 'You can drop a file containing a list of emails into this dialog to add more users in bulk.'}, ...extraAlerts];
-      if(misCasedEmail) {
+      if(res.misCasedEmail) {
         alerts.push({type: 'warning', text: 'You have at least one email whose case does not match the system. Hitting save will fix this.'});
       }
-      if(duplicateEmails) {
+      if(res.duplicateEmails) {
         alerts.push({type: 'warning', text: 'You have at least one duplicate email address. Hitting save will fix this.'});
       }
       let dialogOptions = {
         id: 'editEmail',
         title: 'Edit Restricted Email List',
-        data: {roleId: roleId, emailList: newEmails, emailStatus: status},
+        data: {roleId: roleId, emailList: res.newEmails, emailStatus: status},
         alerts: alerts,
         inputs: [
           {type: 'hidden', id: 'editEmailId', value: roleId},
-          {type: 'html', text: table},
+          {type: 'html', text: dialogTable},
           {label: 'Add User From System', type: 'text', id: 'addUser', keyUp: searchUsers}
         ],
         buttons: [
           {text: 'Save', callback: saveEmailEdits},
           {text: 'Email', callback: emailRoleCapable},
-          {text: 'Import Emails from Google Sheet', callback: importFromGoogle}
         ]
       };
+      if(googleLoggedIn) {
+        dialogOptions.buttons.push({text: '<i class="fab fa-google-drive"></i> Import Emails from Google Sheet', callback: importFromGoogle});
+      }
       flipDialog.dialog(dialogOptions).then(() => {
         resolve();
       });
@@ -947,7 +999,10 @@ function gotCerts(jqXHR) {
     columns: cols,
     cellEdited: dataChanged
   });
+  table.on('tableBuilt', () => {
+    table.setData();
+  });
 }
 
-$(initPage);
+window.onload = initPage;
 /* vim: set tabstop=2 shiftwidth=2 expandtab: */

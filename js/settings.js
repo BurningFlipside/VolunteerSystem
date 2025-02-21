@@ -1,35 +1,53 @@
 /* global $, bootbox */
 /* exported linkTicket, saveData */
-function gotUser(jqXHR) {
-  if(jqXHR.status !== 200) {
-    return;
+function gotUser(data) {
+  console.log(data);
+  const burnerName = document.getElementById('burnerName');
+  if(burnerName) {
+    burnerName.value = data.burnerName;
   }
-  var data = jqXHR.responseJSON;
-  $('#burnerName').val(data.burnerName);
-  $('#myCampName').val(data.campName);
-  $('#firstName').val(data.firstName);
-  $('#lastName').val(data.lastName);
-  $('#myPaperName').val(data.paperName);
-  $('#myWebName').val(data.webName);
-  $('#myShirtSize').val(data.shirtSize);
+  const campName = document.getElementById('myCampName');
+  if(campName) {
+    campName.value = data.campName;
+  }
+  const firstName = document.getElementById('firstName');
+  if(firstName) {
+    firstName.value = data.firstName;
+  }
+  const lastName = document.getElementById('lastName');
+  if(lastName) {
+    lastName.value = data.lastName;
+  }
+  const paperName = document.getElementById('myPaperName');
+  if(paperName) {
+    paperName.value = data.paperName;
+  }
+  const webName = document.getElementById('myWebName');
+  if(webName) {
+    webName.value = data.webName;
+  }
+  const shirtSize = document.getElementById('myShirtSize');
+  if(shirtSize) {
+    shirtSize.value = data.shirtSize;
+  }
   webNameChange();
   paperNameChange();
 }
 
-function gotMyCerts(jqXHR) {
-  if(jqXHR.status !== 200) {
-    return;
-  }
-  var data = jqXHR.responseJSON;
-  for(var key in data) {
-    var icon = $('#'+key);
-    var upload = $('#'+key+'_Upload');
-    switch(data[`${key}`].status) {
+function gotMyCerts(data) {
+  for(const key in data) {
+    const icon = document.getElementById(key);
+    const upload = document.getElementById(`${key}_Upload`);
+    const status = data[key].status;
+    if(!icon || !upload) {
+      continue;
+    }
+    switch(status) {
       case 'pending':
-        icon.html('<i class="fas fa-exclamation-triangle text-warning" title="Your certification is pending review"></i>');
+        icon.innerHTML = '<i class="fas fa-exclamation-triangle text-warning" title="Your certification is pending review"></i>';
         break;
       case 'current':
-        icon.html('<i class="fas fa-check text-success" title="Your certification is current"></i>');
+        icon.innerHTML = '<i class="fas fa-check text-success" title="Your certification is current"></i>';
         upload.remove();
         break;
     }
@@ -37,29 +55,45 @@ function gotMyCerts(jqXHR) {
 }
 
 function getMyCerts() {
-  $.ajax({
-    url: 'api/v1/participants/me/certs',
-    complete: gotMyCerts
+  fetch('api/v1/participants/me/certs').then((response) => {
+    if(response.status === 401) {
+      return;
+    }
+    if(response.ok) {
+      return response.json();
+    }
+    throw new Error('Unable to fetch user certs');
+  }).then(gotMyCerts).catch((error) => {
+    console.error('Unable to fetch user certs', error);
   });
 }
 
-function gotCerts(jqXHR) {
-  if(jqXHR.status !== 200) {
+function gotCerts(data) {
+  const certDiv = document.getElementById('certs');
+  if(!certDiv) {
     return;
   }
-  var data = jqXHR.responseJSON;
-  var html = $('#certs');
   for(let cert of data) {
-    var title = $('<div class="col-sm-3"/>');
-    var icon = $('<div class="col-sm-3" id="'+cert.certID+'"><i class="fas fa-times text-danger"></i></div>');
-    var upload = $('<div class="col-sm-6"></div>');
-    var input = $('<input type="file" class="form-control-file" id="'+cert.certID+'_Upload" title="Upload an image of your certificate" accept="image/*, application/pdf"/>');
-    title.html(cert.name);
-    upload.append(input);
-    html.append(title);
-    html.append(icon);
-    html.append(upload);
-    input.change(certUpload);
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'col-sm-3';
+    titleDiv.innerHTML = cert.name;
+    certDiv.appendChild(titleDiv);
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'col-sm-3';
+    iconDiv.id = cert.certID;
+    iconDiv.innerHTML = '<i class="fas fa-times text-danger"></i>';
+    certDiv.appendChild(iconDiv);
+    const uploadDiv = document.createElement('div');
+    uploadDiv.className = 'col-sm-6';
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.className = 'form-control-file';
+    input.id = `${cert.certID}_Upload`;
+    input.title = 'Upload an image of your certificate';
+    input.accept = 'image/*, application/pdf';
+    input.addEventListener('change', certUpload);
+    uploadDiv.appendChild(input);
+    certDiv.appendChild(uploadDiv);
   }
   getMyCerts();
 }
@@ -104,21 +138,39 @@ function certUpload(e) {
 }
 
 function webNameChange() {
-  var val = $('#myWebName').val();
-  var name = getName(val);
-  $('#webDisplay').html(name); 
+  const webName = document.getElementById('myWebName');
+  if(webName) {
+    const value = webName.value;
+    const name = getName(value);
+    const webDisplay = document.getElementById('webDisplay');
+    if(webDisplay) {
+      webDisplay.innerHTML = name;
+    }
+  }
 }
 
 function paperNameChange() {
-  var val = $('#myPaperName').val();
-  var name = getName(val);
-  $('#paperDisplay').html(name);
+  const paperName = document.getElementById('myPaperName');
+  if(paperName) {
+    const value = paperName.value;
+    const name = getName(value);
+    const paperDisplay = document.getElementById('paperDisplay');
+    if(paperDisplay) {
+      paperDisplay.innerHTML = name;
+    }
+  }
 }
 
 function getName(type) {
-  var first = $('#firstName').val();
-  var last = $('#lastName').val();
-  var burner = $('#burnerName').val();
+  const firstElem = document.getElementById('firstName');
+  const lastElem = document.getElementById('lastName');
+  const burnerElem = document.getElementById('burnerName');
+  if(!firstElem || !lastElem || !burnerElem) {
+    return '';
+  }
+  const first = firstElem.value;
+  const last = lastElem.value;
+  const burner = burnerElem.value;
   switch(type) {
     case 'anonymous':
       return '<i>Anonymous</i>';
@@ -176,13 +228,27 @@ function linkTicket() {
 }
 
 function initPage() {
-  $.ajax({
-    url: 'api/v1/participants/me',
-    complete: gotUser
+  fetch('api/v1/participants/me').then((response) => {
+    if(response.status === 401) {
+      return;
+    }
+    if(response.ok) {
+      return response.json();
+    }
+    throw new Error('Unable to fetch user data');
+  }).then(gotUser).catch((error) => {
+    console.error('Unable to fetch user data', error);
   });
-  $.ajax({
-    url: 'api/v1/certs',
-    complete: gotCerts
+  fetch('api/v1/certs').then((response) => {
+    if(response.status === 401) {
+      return;
+    }
+    if(response.ok) {
+      return response.json();
+    }
+    throw new Error('Unable to fetch certs');
+  }).then(gotCerts).catch((error) => {
+    console.error('Unable to fetch certs', error);
   });
   $.ajax({
     url: 'api/v1/participants/me/ticketStatus',
@@ -190,4 +256,4 @@ function initPage() {
   });
 }
 
-$(initPage);
+window.addEventListener('load', initPage);

@@ -4,6 +4,8 @@
 require_once('class.VolunteerAdminPage.php');
 $page = new VolunteerAdminPage('Volunteer System Admin');
 $page->addWellKnownJS(JS_BOOTBOX);
+$page->addJS('./js/extern/nice-select2.js');
+$page->addCSS('./js/extern/nice-select2.css');
 
 $page->body .= '
 <div class="row">
@@ -18,12 +20,14 @@ $page->body .= '
   </div>
   <label for="department" class="col-sm-2 col-form-label">Department:</label>
   <div class="col-sm-10">
-    <select name="department" id="department" class="form-control"></select>
+    <select name="department" id="department" class="form-control">
+      <option value=""></option>
+    </select>
   </div>
 </div>
 <div class="row">
-  <ul>
-    <li>Simple Schedule: <button type="button" class="btn btn-link" id="simplePDF"><i class="far fa-file-pdf"></i>PDF</button>
+  <ul id="list">
+    <li id="simple">Simple Schedule: <button type="button" class="btn btn-link" id="simplePDF"><i class="far fa-file-pdf"></i>PDF</button>
     </li>
     <li>Schedule Grid: <button type="button" class="btn btn-link" id="gridXLSX"><i class="far fa-file-excel"></i>XLSX</button> <button type="button" class="btn btn-link" id="gridPDF"><i class="far fa-file-pdf"></i>PDF</button>
     </li>

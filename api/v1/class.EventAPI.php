@@ -62,6 +62,10 @@ class EventAPI extends VolunteerAPI
     public function processEntry($entry, $request)
     {
         $entry['available'] = true;
+        if(!isset($entry['endTime']))
+        {
+            return $entry;
+        }
         $endTime = new DateTime($entry['endTime']);
         $now = new DateTime();
         if($endTime < $now)
@@ -78,7 +82,7 @@ class EventAPI extends VolunteerAPI
                 $entry['volList'][$i] = trim($entry['volList'][$i]);
             }
         }
-        if($entry['private'] && !in_array($this->user->mail, $entry['volList']))
+        if(isset($entry['private']) && $entry['private'] && !in_array($this->user->mail, $entry['volList']))
         {
             $entry['available'] = false;
             $entry['why'] = 'Event is private and you are not invited';

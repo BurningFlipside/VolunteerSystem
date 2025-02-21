@@ -5,7 +5,7 @@ window.flipDialog.dialog = function(options) {
   if(options.id !== undefined) {
     dialog = $('<div class="modal fade show" id="'+options.id+'" aria-modal="true"><div class="modal-dialog modal-lg"><div class="modal-content"></div></div></div>');
   }
-  dialog.find('.modal-content').append('<div class="modal-header"><h4 class="modal-title">'+options.title+'</h4><button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button></div>');
+  dialog.find('.modal-content').append('<div class="modal-header"><h4 class="modal-title">'+options.title+'</h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="close"></button></div>');
   dialog.find('.modal-content').append('<div class="modal-body"><div class-"containter-fluid"><div class="row"></div></div></div>');
   var body = dialog.find('.modal-content .row');
   if(options.alerts !== undefined) {
@@ -71,7 +71,11 @@ window.flipDialog.dialog = function(options) {
       inputEnt.keyup(input.keyUp);
       delete input.keyUp;
     }
-    inputEnt.attr('class', 'form-control');
+    if(inputEnt.attr('type') === 'checkbox' || inputEnt.attr('type') === 'radio') {
+      inputEnt.attr('class', 'form-check-input');
+    } else {
+      inputEnt.attr('class', 'form-control');
+    }
     for(var attr in input) {
       inputEnt.attr(attr, input[`${attr}`]);
     }

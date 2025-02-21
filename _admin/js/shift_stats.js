@@ -1,7 +1,6 @@
 /*global $, Tabulator*/
 /* exported tableToCSV, tableToXLSX*/
 var tableData = {};
-var table;
 
 function timeToString(time) {
   if(time % 1 === 0) {
@@ -12,18 +11,13 @@ function timeToString(time) {
   return hours+':'+mins;
 }
 
-function gotShifts(jqXHR) {
-  if(jqXHR.status !== 200) {
-    alert('Unable to get events!');
-    return;
-  }
-  var shifts = jqXHR.responseJSON;
-  let inviteOnly = ($('#hideInviteOnly').prop('checked') === true);
+function gotShifts(shifts) {
+  let inviteOnly = document.getElementById('hideInviteOnly').checked;
   if(!inviteOnly) {
     tableData['total'].shifts = shifts.length;
   }
-  let groupPending = ($('#groupPending').prop('checked') === true);
-  let hideEmptyUnbound = ($('#unbound').prop('checked') === true);
+  let groupPending = document.getElementById('groupPending').checked;
+  let hideEmptyUnbound = document.getElementById('unbound').checked;
   for(let shift of shifts) {
     if(shift.enabled === false) {
       continue;
@@ -39,11 +33,11 @@ function gotShifts(jqXHR) {
       }
     }
     tableData[shift.departmentID].shifts++;
-    var start = new Date(shift.startTime);
-    var end = new Date(shift.endTime);
-    var milliseconds = end - start;
-    var minutes = milliseconds/(1000*60);
-    var hours = (minutes*1.0)/60;
+    let start = new Date(shift.startTime);
+    let end = new Date(shift.endTime);
+    let milliseconds = end - start;
+    let minutes = milliseconds/(1000*60);
+    let hours = (minutes*1.0)/60;
     if(hours < 0) {
       console.log(shift);
     }
@@ -66,8 +60,8 @@ function gotShifts(jqXHR) {
       tableData[shift.departmentID].unfilledHours += hours;
     }
   }
-  var array = [];
-  for(var key in tableData) {
+  let array = [];
+  for(let key in tableData) {
     let tmp = tableData[`${key}`];
     tmp.hours = timeToString(tmp.hours);
     tmp.filledHours = timeToString(tmp.filledHours);
@@ -78,7 +72,12 @@ function gotShifts(jqXHR) {
     }
     array.push(tmp);
   }
-  table = new Tabulator('#shift_stats', {
+  let tables = Tabulator.findTable('#shift_stats');
+  if(tables !== false && tables.length !== 0) {
+    tables[0].setData(array);
+    return;
+  }
+  let table = new Tabulator('#shift_stats', {
     columns: [
       {title:'Name', field: 'name'},
       {title:'Shift Count', field: 'shifts', sorter: 'number'},
@@ -93,11 +92,14 @@ function gotShifts(jqXHR) {
       {column: 'hours', dir: 'desc'}
     ]
   });
-  table.setData(array);
+  table.on('tableBuilt', () => {
+    table.setData(array);
+  });
 }
 
-function hideEmptyShifts() {
-  let hide = ($('#hideEmpty').prop('checked') === true);
+function hideEmptyShifts(ev) {
+  let hide = ev.target.checked;
+  let table = Tabulator.findTable('#shift_stats')[0];
   if(hide) {
     table.addFilter('shifts', '>', '0');
   } else {
@@ -106,31 +108,23 @@ function hideEmptyShifts() {
 }
 
 function hideInviteOnlyShifts() {
-  eventChanged({target: $('#event')[0]});
+  eventChanged({target: document.getElementById('event')});
 }
 
 function hideEmptyUnboundShifts() {
-  eventChanged({target: $('#event')[0]});
+  eventChanged({target: document.getElementById('event')});
 }
 
 function tableToCSV() {
-  let csv = ['Name, Shift Count, Total Hours, Filled Shift Count, Filled Shift Hours, Unfilled Shift Count, Unfilled Shift Hours'];
-  for(var dept in tableData) {
-    csv.push(dept+', '+tableData[`${dept}`].shifts+', '+tableData[`${dept}`].hours+', '+tableData[`${dept}`].filled+', '+tableData[`${dept}`].filledHours+', '+tableData[`${dept}`].unfilled+', '+tableData[`${dept}`].unfilledHours);
-  }
-  csv = csv.join('\n');
-  let csvFile = new Blob([csv], {type: 'text/csv'});
-  let link = document.createElement('a');
-  link.download = 'shift_stats.csv';
-  link.href = window.URL.createObjectURL(csvFile);
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  let table = Tabulator.findTable('#shift_stats')[0];
+  table.download('csv', 'shift_stats.csv');
 }
 
 function tableToXLSX() {
-  table.download('xlsx', 'shift_stats.xlsx', {sheetName: $('#event option:selected')[0].text});
+  let eventDropDown = document.getElementById('event');
+  let eventName = eventDropDown.options[eventDropDown.selectedIndex].text;
+  let table = Tabulator.findTable('#shift_stats')[0];
+  table.download('xlsx', 'shift_stats.xlsx', {sheetName: eventName});
 }
 
 function eventChanged(e) {
@@ -142,27 +136,31 @@ function eventChanged(e) {
     tableData[`${dept}`].filled = 0;
     tableData[`${dept}`].filledHours = 0;
   }
-  $.ajax({
-    url: '../api/v1/events/'+e.target.value+'/shifts',
-    complete: gotShifts
-  });
+  fetch('../api/v1/events/'+e.target.value+'/shifts').then((response) => {
+    response.json().then((events) => {
+      gotShifts(events);
+    });
+  })
 }
 
 function processEvents(events) {
-  let filter = $('#showOld')[0].checked;
-  var data = [];
+  let eventSelect = document.getElementById('event');
+  let filter = document.getElementById('showOld').checked;
+  eventSelect.options.length = 0;
   for(let event of events) {
     if(!filter && event['available']) {
-      data.push({id: event['_id']['$oid'], text: event['name']});
+      let option = new Option(event['name'], event['_id']['$oid'], eventSelect.options.length === 0);
+      eventSelect.add(option);
     } else if(filter) {
-      data.push({id: event['_id']['$oid'], text: event['name']});
+      let option = new Option(event['name'], event['_id']['$oid'], eventSelect.options.length === 0);
+      eventSelect.add(option);
     }
   }
-  if(!$('#event').hasClass("select2-hidden-accessible")) {
-    var sel2 = $('#event').select2({data: data});
-    sel2.change(eventChanged);
+  if(processEvents.dropDown === undefined) {
+    let options = {searchable: true};
+    processEvents.dropDown = NiceSelect.bind(eventSelect, options);
   } else {
-    $('#event').select2({data: data});
+    processEvents.dropDown.update();
   }
 }
 
@@ -176,32 +174,11 @@ function processDepartments(depts) {
 }
 
 function gotInitialData(results) {
-  var eventResult = results.shift();
-  var deptResult = results.shift();
-  var obj = {};
-  obj.events = processEvents(eventResult.value);
-  obj.depts = processDepartments(deptResult.value);
-  eventChanged({target: $('#event')[0]});
-}
-
-function retrySelect2() {
-  if($('#departments').select2 !== undefined) {
-    this.resolve(true);
-  }
-  if(this.count > 10) {
-    this.reject(false);
-  }
-  this.count++;
-  var boundRetry = retrySelect2.bind(this);
-  setTimeout(boundRetry, 100);
-}
-
-function waitForSelect2(resolve, reject) {
-  if($('#departments').select2 !== undefined) {
-    resolve(true);
-  }
-  var boundRetry = retrySelect2.bind({resolve: resolve, reject: reject, count: 0});
-  setTimeout(boundRetry, 100);
+  let eventResult = results.shift();
+  let deptResult = results.shift();
+  processEvents(eventResult.value);
+  processDepartments(deptResult.value);
+  eventChanged({target: document.getElementById('event')});
 }
 
 function checkXLSX() {
@@ -209,7 +186,15 @@ function checkXLSX() {
     setTimeout(checkXLSX, 100);
     return;
   }
-  $('.page-header').append('<button type="button" class="btn btn-link" onclick="tableToXLSX();"><i class="fas fa-file-excel"></i></button>');
+  let header = document.getElementsByClassName('page-header');
+  if(header !== false && header.length > 0) {
+    let button = document.createElement('button');
+    button.className = 'btn btn-link';
+    button.innerHTML = '<i class="fas fa-file-excel"></i>';
+    button.title = 'Export to Excel';
+    button.onclick = tableToXLSX;
+    header[0].appendChild(button);
+  }
 }
 
 function refreshEvents(jqXHR) {
@@ -226,21 +211,30 @@ function showOldEvents() {
 }
 
 function initPage() {
+  if(NiceSelect === undefined) {
+    window.setTimeout(initPage, 100);
+    return;
+  }
   let promises = [];
-  promises.push($.ajax({
-    url: '../api/v1/events'
+  promises.push(fetch('../api/v1/events').then((response) => {
+    if(response.httpStatus === 401) {
+      return [];
+    }
+    return response.json();
   }));
-  promises.push($.ajax({
-    url: '../api/v1/departments'
+  promises.push(fetch('../api/v1/departments').then((response) => {
+    if(response.httpStatus === 401) {
+      return [];
+    }
+    return response.json();
   }));
-  promises.push(new Promise(waitForSelect2));
   Promise.allSettled(promises).then(gotInitialData);
   setTimeout(checkXLSX, 1);
-  $('#hideEmpty').change(hideEmptyShifts);
-  $('#hideInviteOnly').change(hideInviteOnlyShifts);
-  $('#showOld').change(showOldEvents);
-  $('#groupPending').change(hideInviteOnlyShifts);
-  $('#unbound').change(hideEmptyUnboundShifts);
+  document.getElementById('hideEmpty').addEventListener('change', hideEmptyShifts);
+  document.getElementById('hideInviteOnly').addEventListener('change', hideInviteOnlyShifts);
+  document.getElementById('showOld').addEventListener('change', showOldEvents);
+  document.getElementById('groupPending').addEventListener('change', hideInviteOnlyShifts);
+  document.getElementById('unbound').addEventListener('change', hideEmptyUnboundShifts);
 }
 
-$(initPage);
+window.onload = initPage;

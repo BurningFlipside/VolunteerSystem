@@ -809,7 +809,7 @@ function gotShiftToEdit(jqXHR) {
     
     dialogOptions.buttons.push({text: 'Empty Shift', callback: emptyShift});
     promises.push($.ajax({
-      url: '../api/v1/participants/'+shift.participant
+      url: '../api/v1/participants/'+encodeURIComponent(shift.participant)
     }));
   } else {
     dialogOptions.buttons.push({text: 'Assign Shift', callback: assignShift});
@@ -818,7 +818,6 @@ function gotShiftToEdit(jqXHR) {
     url: '../api/v1/departments/'+shift.departmentID+'/roles'
   }));
   Promise.allSettled(promises).then((results) => {
-    console.log(Object.assign({}, results));
     if(results.length > 1) {
       if(results[0].status === 'fulfilled') {
         let partResults = results.shift().value;
@@ -833,7 +832,6 @@ function gotShiftToEdit(jqXHR) {
       }
     }
     let roleResult = results.shift().value;
-    console.log(roleResult);
     for(let input of dialogOptions.inputs) {
       if(input.id === 'roleID') {
         input.options = [];
@@ -1125,7 +1123,7 @@ function processDepartments(array) {
     }
     count++;
     departments[dept.departmentID] = dept;
-    accordian.append('<div class="card"><div class="card-header" id="heading'+dept.departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse'+dept.departmentID+'" aria-expanded="true" aria-controls="collapse'+dept.departmentID+'">'+dept.departmentName+'</button></h2></div><div id="collapse'+dept.departmentID+'" class="collapse show" aria-labelledby="heading'+dept.departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+dept.departmentID+'List"><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
+    accordian.append('<div class="card"><div class="card-header" id="heading'+dept.departmentID+'"><h2 class="mb-0"><button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#collapse'+dept.departmentID+'" aria-expanded="true" aria-controls="collapse'+dept.departmentID+'">'+dept.departmentName+'</button></h2></div><div id="collapse'+dept.departmentID+'" class="collapse show" aria-labelledby="heading'+dept.departmentID+'" data-parent="#accordion"><div class="card-body"><div class="list-group" id="'+dept.departmentID+'List"><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewShift(this);"><i class="fas fa-plus"></i> Add new shift</a><a href="#'+dept.departmentID+'" class="list-group-item list-group-item-action" onclick="return addNewGroup(this);"><i class="far fa-plus-square"></i> Add new shift set</a></div></div></div></div>');
   }
   var eventID = getParameterByName('event');
   if(eventID === null) {

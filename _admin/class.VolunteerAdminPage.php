@@ -96,6 +96,7 @@ class VolunteerAdminPage extends \Flipside\Http\FlipAdminPage
         $this->content['header']['sidebar']['Shifts'] = array('icon' => 'fa-tshirt', 'menu' => $shiftsMenu);
         $this->content['header']['sidebar']['Volunteers'] = array('icon' => 'fa-user', 'url' => 'volunteers.php');
         $this->content['header']['sidebar']['Certification Approval '.$certBadge] = array('icon' => 'fa-stamp', 'url' => 'cert_approval.php');
+        $this->content['header']['sidebar']['Google Operations'] = array('icon' => 'fa-google', 'iconClass' => 'fab', 'url' => 'google.php');
         $this->content['header']['sidebar']['Reports'] = array('icon' => 'fa-chart-bar', 'menu' => $chartsMenu);
         $this->content['header']['sidebar']['Link Generator'] = array('icon' => 'fa-link', 'url' => 'link.php');
         $this->content['header']['sidebar']['Contact'] = array('icon' => 'fa-envelope', 'url' => 'contact.php');

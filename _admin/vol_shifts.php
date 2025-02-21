@@ -3,6 +3,9 @@
 //error_reporting(E_ALL);
 require_once('class.VolunteerAdminPage.php');
 $page = new VolunteerAdminPage('Volunteer System Admin');
+$page->addJS('./js/extern/nice-select2.js');
+$page->addCSS('./js/extern/nice-select2.css');
+$page->setTemplateName('admin-table-new.html');
 
 $page->body .= '
 <div class="row">

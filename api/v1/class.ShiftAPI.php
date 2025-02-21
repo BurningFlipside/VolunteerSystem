@@ -132,6 +132,14 @@ class ShiftAPI extends VolunteerAPI
 
     protected function processEntry($entry, $request)
     {
+        if(isset($entry['participant_email']) && strlen($entry['participant_email']) > 0)
+        {
+            unset($entry['participant_email']);
+        }
+        if(isset($entry['participant_name']) && strlen($entry['participant_name']) > 0)
+        {
+            unset($entry['participant_name']);
+        }
         return $this->processShift($entry, $request);
     }
 

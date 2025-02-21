@@ -4,62 +4,61 @@ $page = new VolunteerPage('Burning Flipside - Flipside Volunteer System');
 $page->addJS('js/index.js');
 
 $page->body .= '
-<div class="alert alert-primary" role="alert">
-  There is a new guided signup process if you are having issues with this one. You can find it <a href="guidedEvent.php" class="alert-link">here</a>.
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-</div>
-<div class="row">
-  <label for="event" class="col-sm-2 col-form-label">Event</label>
-  <div class="col-sm-10">
-    <select class="form-control" id="event"></select>
+Hi! Welcome to the Flipside Volunteer System. As you may know, Flipside is not just an event, but a thriving year round community. This means that we have many different volunteer opportunities available.
+What would you like to do today?
+<div class="container text-center">
+  <div class="row">
+    <div class="col">
+      <div class="card" onclick="location.href=\'guidedEvent.php\';" style="cursor:pointer;">
+        <div class="card-body">
+          <h5 class="card-title">Guided Volunteer Sign-Up</h5>
+          <p class="card-text">Use a guided process to sign up for one or more volunteer shifts.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" onclick="location.href=\'timeline.php\';" style="cursor:pointer;">
+        <div class="card-body">
+          <h5 class="card-title">Timeline Volunteer Sign-Up</h5>
+          <p class="card-text">Use a timeline of all volunteer shifts to sign up for one or more volunteer shifts.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" onclick="location.href=\'manage.php\';" style="cursor:pointer;">
+        <div class="card-body">
+          <h5 class="card-title">Manage Your Existing Volunteer Shifts</h5>
+          <p class="card-text">See your current volunteer shifts and manage them including the ability to reverse your signup.</p>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="w-100"></div>
-  <div class="d-lg-none d-xl-none col-sm-12">
-    <button type="button" class="btn btn-info" onClick="unhideFilters();">Filters</button>
+  <div class="row">
+    <div class="col">
+      <div class="card flipside" id="flipsideGuided" style="display: none;">
+        <div class="card-body">
+          <h5 class="card-title">Flipside Guided Volunteer Sign-Up</h5>
+          <p class="card-text">Use a guided process to sign up for one or more volunteer shifts at the Burning Flipside event.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card flipside" id="flipsideTimeline" style="display: none;">
+        <div class="card-body">
+          <h5 class="card-title">Flipside Timeline Volunteer Sign-Up</h5>
+          <p class="card-text">Use a timeline of all volunteer shifts to sign up for one or more volunteer shifts at the Burning Flipside event.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card flipside" id="flipsideManage" style="display: none;">
+        <div class="card-body">
+          <h5 class="card-title">Manage Your Existing Flipside Shifts</h5>
+          <p class="card-text">See your current volunteer shifts at Flipside and manage them including the ability to reverse your signup.</p>
+        </div>
+      </div>
+    </div>
   </div>
-  <label for="departments" class="d-none d-lg-block col-sm-2 col-form-label">Departments:</label>
-  <div class="d-none d-lg-block col-sm-10">
-    <select class="form-control" id="departments" multiple></select>
-  </div>
-  <div class="w-100"></div>
-  <label for="shiftTypes" class="d-none d-lg-block col-sm-2 col-form-label">Shift Status:</label>
-  <div class="d-none d-lg-block col-sm-10">
-    <select class="form-control" id="shiftTypes" multiple>
-      <option value="unfilled" title="Shift is unfilled and available for you to sign up" selected>Unfilled</option>
-      <option value="filled" title="Shift is filled. Maybe one of your friends already has it?" selected>Filled</option>
-      <option value="unavailable" title="This shift is unavailable either because it is invite only or requires training the system doesn\'t know you have." selected>Unavailable</option>
-      <option value="mine" title="This is a shift you are signed up for." selected>Mine</option>
-      <option value="overlap" title="This shift overlaps with one you are signed up for." selected>Overlapping</option>
-    </select>
-  </div>
-  <div class="w-100"></div>
-  <div id="calendar" class="w-100"></div>
-  <div class="w-100"></div>
-  <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts?$format=text/calendar"><i class="far fa-calendar-alt"></i> Download My Shifts</a>
-  <a role="button" class="btn btn-primary" href="api/v1/participants/me/shifts?$format=application/pdf"><i class="fas fa-print"></i> Print My Shifts</a>
-</div>
-<style type="text/css">
-  .select2-container--default .select2-selection--multiple .select2-selection__choice[title="Shift is unfilled and available for you to sign up"] {
-    background-color: #3788d8;
-    color: #fff;
-  }
-  
-  .select2-container--default .select2-selection--multiple .select2-selection__choice[title="Shift is filled. Maybe one of your friends already has it?"] {
-    background-color: firebrick;
-    color: #fff;
-  }
-
-  .select2-container--default .select2-selection--multiple .select2-selection__choice[title="This shift overlaps with one you are signed up for."] {
-    background-color: gold;
-    color: #fff;
-  }
-
-  .select2-container--default .select2-selection--multiple .select2-selection__choice[title="This is a shift you are signed up for."] {
-    background-color: springgreen;
-    color: #fff;
-  }
-</style>';
+</div>';
 
 $page->printPage();

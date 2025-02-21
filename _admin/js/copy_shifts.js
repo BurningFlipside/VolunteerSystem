@@ -38,6 +38,8 @@ function gotSrcAndDstEvents(results) {
   let dst = results.shift().value;
   let srcLen = getEventLength(src);
   let dstLen = getEventLength(dst);
+  console.log("Source", srcLen);
+  console.log("Dest", dstLen);
   if(srcLen !== dstLen) {
     $('#nextStep').append('<div class="alert alert-danger" role="alert">'+src.name+' and '+dst.name+' are different lengths so copy will not work!</div>');
   } else {
@@ -75,6 +77,11 @@ function gotEvents(jqXHR) {
     return;
   }
   let events = jqXHR.responseJSON;
+  events.sort(function(a, b){
+    var aDate = new Date(a.startTime);
+    var bDate = new Date(b.startTime);
+    return bDate.getTime() - aDate.getTime();
+  });
   let eventsWithDeptShifts = this;
   let now = new Date();
   $('#src').empty();

@@ -4,6 +4,7 @@ use \Flipside\Data\Filter as DataFilter;
 use \Flipside\ODataParams;
 use \Volunteer\Schedules\SimplePDF as SimpleSchedulePDF;
 use \Volunteer\Schedules\GridSchedule;
+use \Volunteer\Schedules\ActualSchedule;
 
 class DepartmentAPI extends VolunteerAPI
 {
@@ -254,6 +255,8 @@ class DepartmentAPI extends VolunteerAPI
                 return $this->generateGridSchedule($departments[0], $shifts, $response, 'PDF');
             case 'gridPDFWithCamps':
                 return $this->generateGridSchedule($departments[0], $shifts, $response, 'PDF', true);
+            case 'actualSchedule':
+                return $this->generateActualSchedule($departments[0], $shifts, $response);
         }
         return $response->withJson($shifts);
     }
@@ -276,6 +279,16 @@ class DepartmentAPI extends VolunteerAPI
         $data = $spreadSheet->getBuffer($type);
         $response = $response->withHeader('Content-Type', $data['content-type']);
         $response = $response->withHeader('Content-Disposition', 'attachment; filename='.$dept['departmentName'].$data['extension']);
+        $response->getBody()->write($data['buffer']);
+        return $response;
+    }
+
+    public function generateActualSchedule($dept, $shifts, $response)
+    {
+        $doc = new ActualSchedule($dept, $shifts);
+        $data = $doc->getBuffer();
+        $response = $response->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        $response = $response->withHeader('Content-Disposition', 'attachment; filename='.$dept['departmentName'].'ActualSchedule.docx');
         $response->getBody()->write($data['buffer']);
         return $response;
     }

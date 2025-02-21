@@ -9,8 +9,6 @@ $page->addWellKnownJS(JS_BOOTBOX);
 $page->addJS('js/privateConst.js');
 $page->addJS('../js/wizard.js');
 $page->addJS('//cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js');
-$page->addAsyncJS('//apis.google.com/js/api.js', 'gApiLoaded()');
-$page->addAsyncJS('//accounts.google.com/gsi/client', 'gisLoaded()');
 
 $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'certifications');
 $certText = '';
