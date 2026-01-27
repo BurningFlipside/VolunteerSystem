@@ -123,6 +123,7 @@ function initPage() {
     });
   });
   document.getElementById('simplePDF').addEventListener('click', generatePDF);
+  document.getElementById('simplePDFWithEmail').addEventListener('click', generatePDF);
   document.getElementById('gridXLSX').addEventListener('click', generatePDF);
   document.getElementById('gridPDF').addEventListener('click', generatePDF);
   isGoogleConnected(addGoogleLinks);

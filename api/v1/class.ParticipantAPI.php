@@ -30,6 +30,7 @@ class ParticipantAPI extends VolunteerAPI
         $app->get('/{uid}/ticketStatus', array($this, 'getTicketStatus'));
         $app->post('/Actions/BulkTicketStatus', array($this, 'bulkTicketStatus'));
         $app->post('/Actions/HasProfile', array($this, 'hasProfile'));
+        $app->post('/Actions/DoBulkExpensiveEmailSearch', array($this, 'bulkEmailSearch'));
     }
 
     protected function canCreate($request)
@@ -576,6 +577,45 @@ class ParticipantAPI extends VolunteerAPI
         return $response->withJson($ret);
     }
 
+    public function bulkEmailSearch($request, $response)
+    {
+        $this->validateLoggedIn($request);
+        if($this->canRead($request) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $obj = $request->getBody()->getContents();
+        var_dump($obj);
+        $emails = json_decode($obj);
+        var_dump($emails);
+        $count = count($emails);
+        if($count === 0)
+        {
+            return $response->withJson(array());
+        }
+        // Get all participants...
+        $dataTable = $this->getDataTable();
+        $users = $dataTable->read(false, array('email', 'uid'));
+        $allCount = count($users);
+        if($allCount === 0)
+        {
+            return $response->withJson(array());
+        }
+        $ret = array();
+        for($i = 0; $i < $count; $i++)
+        {
+            for($j = 0; $j < $allCount; $j++)
+            {
+                if(doEmailCompare($users[$j]['email'], $emails[$i]))
+                {
+                    $ret[$emails[$i]] = array('uid' => $users[$j]['uid'], 'email' => $users[$j]['email']);
+                    break;
+                }
+            }
+        }
+        return $response->withJson($ret);
+    }
+
     private function isUserWithEmailInArray(string $email, array &$users) : bool
     {
         $count = count($users);
@@ -618,5 +658,30 @@ class ParticipantAPI extends VolunteerAPI
         }
         return $response->withJson($ret);
     }
+}
+
+function doEmailCompare($email1, $email2) {
+    $e1 = strtolower($email1);
+    $e2 = strtolower($email2);
+    if(!filter_var($e1, \FILTER_VALIDATE_EMAIL) || !filter_var($e2, \FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    $e1 = str_replace('.', '', $e1);
+    $e2 = str_replace('.', '', $e2);
+    $e1 = removeEmailSubaddress($e1);
+    $e2 = removeEmailSubaddress($e2);
+    return $e1 == $e2;
+}
+
+function removeEmailSubaddress($email) {
+    $pos = strpos($email, '+');
+    if($pos === false) {
+        return $email;
+    }
+    $endPos = strpos($email, '@');
+    if($endPos === false) {
+        return substr($email, 0, $pos);
+    }
+    return substr($email, 0, $pos).substr($email, $endPos);
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */

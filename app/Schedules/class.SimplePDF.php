@@ -8,11 +8,12 @@ class SimplePDF extends \Flipside\PDF\PDF
     protected $department;
     protected $deptName;
     protected $shifts;
+		protected $includeEmails;
 
-    public function __construct($department, $shifts)
+    public function __construct($department, $shifts, $includeEmails = false)
     {
         parent::__construct();
-		$this->deptName = $department;
+		    $this->deptName = $department;
         $this->department = false;
         if(!is_string($department))
         {
@@ -20,6 +21,7 @@ class SimplePDF extends \Flipside\PDF\PDF
             $this->deptName = $this->department['departmentName'];
         }
         $this->shifts = $shifts;
+				$this->includeEmails = $includeEmails;
         $this->createPDFBody();
     }
 
@@ -67,26 +69,31 @@ class SimplePDF extends \Flipside\PDF\PDF
 			    foreach($shifts as $shift)
 			    {
 				    $shift = new \Volunteer\VolunteerShift(false, $shift);
-					try
-					{
-				    	$participant = $shift->participantObj;
-						if($participant !== false)
-						{ 
-							$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$participant->getDisplayName('paperName').'</td><td>'.$participant->campName.'</td></tr>';
+						try
+						{
+							$participant = $shift->participantObj;
+							if($participant !== false)
+							{
+								$name = $participant->getDisplayName('paperName');
+								if($this->includeEmails)
+								{
+									$name .= '<br/>'.$participant->email;
+								}
+								$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$name.'</td><td>'.$participant->campName.'</td></tr>';
+							}
+							else if($shift->participant)
+							{
+								$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$shift->participant.'</td><td><i>Unknown</i></td></tr>';
+							}
+							else
+							{
+								$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td></td><td></td></tr>';
+							}
 						}
-						else if($shift->participant)
+						catch(\Exception $e)
 						{
 							$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$shift->participant.'</td><td><i>Unknown</i></td></tr>';
 						}
-						else
-						{
-							$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td></td><td></td></tr>';
-						}
-					}
-					catch(\Exception $e)
-					{
-						$html .= '<tr><td>'.$this->getRoleNameFromID($shift->roleID).'</td><td>'.$shift->participant.'</td><td><i>Unknown</i></td></tr>';
-					}
 			    }
 			    $html .= '</table>';
 		    }

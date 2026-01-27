@@ -24,7 +24,10 @@ class VolunteerPage extends \Flipside\Secure\SecurePage
         $this->setTemplateName('@Volunteer/main.html');
         $this->addCSS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css');
         $this->addJS('https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.min.js', false);
-        if($this->isAdmin() || $this->isLead())
+        if($this->isAdmin() || $this->isLead() || $this->isLT())
+        {
+            $this->addLink('Admin', '_admin/');
+        }
         {
             $this->addLink('Admin', '_admin/');
         }
@@ -75,6 +78,38 @@ class VolunteerPage extends \Flipside\Secure\SecurePage
         if($this->user->isInGroupNamed('Leads'))
         {
             return true;
+        }
+        return false;
+    }
+
+    public function isLT()
+    {
+        if($this->user === false || $this->user === null)
+        {
+            return false;
+        }
+        $dataTable = \Flipside\DataSetFactory::getDataTableByNames('fvs', 'departments');
+        $depts = $dataTable->read();
+        $count = count($depts);
+        if($count === 0)
+        {
+            return false;
+        }
+        for($i = 0; $i < $count; $i++)
+        {
+            if(!isset($depts[$i]['others']) || $depts[$i]['others'] == '') 
+            {
+                continue;
+            }
+            $others = explode(',', $depts[$i]['others']);
+            $othersCount = count($others);
+            for($j = 0; $j < $othersCount; $j++)
+            {
+                if(trim($others[$j]) == trim($this->user->mail))
+                {
+                    return true;
+                }
+            }
         }
         return false;
     }

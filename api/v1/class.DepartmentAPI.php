@@ -247,6 +247,8 @@ class DepartmentAPI extends VolunteerAPI
         {
             case 'simplePDF':
                 return $this->generateSimplePDFSchedule($departments[0], $shifts, $response);
+            case 'simplePDFWithEmail':
+                return $this->generateSimplePDFSchedule($departments[0], $shifts, $response, true);
             case 'gridXLSX':
                 return $this->generateGridSchedule($departments[0], $shifts, $response, 'XLSX');
             case 'gridXLSXWithCamps':
@@ -261,9 +263,9 @@ class DepartmentAPI extends VolunteerAPI
         return $response->withJson($shifts);
     }
 
-    public function generateSimplePDFSchedule($dept, $shifts, $response)
+    public function generateSimplePDFSchedule($dept, $shifts, $response, $includeEmail = false)
     {
-        $pdf = new SimpleSchedulePDF($dept, $shifts);
+        $pdf = new SimpleSchedulePDF($dept, $shifts, $includeEmail);
         $response = $response->withHeader('Content-Type', 'application/pdf');
         $response->getBody()->write($pdf->toPDFBuffer());
         return $response;

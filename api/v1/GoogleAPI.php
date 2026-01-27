@@ -134,7 +134,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     {
         // Ignore the return code cause if we are asking this we don't care if we are already logged in or not
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }
@@ -146,7 +146,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     public function OAuth2Callback($request, $response, $args)
     {
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }
@@ -166,7 +166,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     public function getLoginStatus($request, $response, $args)
     {
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }
@@ -182,7 +182,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     public function getSpreadsheets($request, $response, $args)
     {
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }
@@ -204,7 +204,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     public function getSpreadsheet($request, $response, $args)
     {
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }
@@ -220,7 +220,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     public function getSpreadsheetSheet($request, $response, $args)
     {
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }
@@ -255,7 +255,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     public function exportShifts($request, $response, $args)
     {
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }
@@ -420,7 +420,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     public function importShifts($request, $response, $args)
     {
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }
@@ -602,7 +602,7 @@ class GoogleAPI extends \Flipside\Http\Rest\RestAPI
     public function generateShiftScheduleToDrive($request, $response, $args)
     {
         $this->validateLoggedIn($request);
-        if(!$this->user->isInGroupNamed('VolunteerAdmins'))
+        if(!$this->user->isInGroupNamed('VolunteerAdmins') && !$this->user->isInGroupNamed('Leads'))
         {
             return $response->withStatus(401);
         }

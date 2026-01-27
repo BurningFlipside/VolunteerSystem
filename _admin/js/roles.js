@@ -796,6 +796,22 @@ function showDialog2(emails, roleId, extraAlerts, googleLoggedIn) {
   if(promises.length === 0) {
     promises.push(Promise.resolve({email: '', value: [], status: 2}));
   }
+  let settled = Promise.allSettled(promises);
+  settled.then((results) => {
+    let notFound = [];
+    for(let result of results) {
+      if(result.status === 'rejected' || result.value.email === '') {
+        continue;
+      }
+      if(result.value.status === 2) {
+        notFound.push(result.value.email);
+      }
+    }
+    if(notFound.length === 0) {
+      return;
+    }
+    console.log(notFound);
+  });
   return new Promise((resolve) => {
     Promise.allSettled(promises).then((results) => {
       let res = createTableForDialog(results);
@@ -996,9 +1012,9 @@ function gotCerts(jqXHR) {
         return element.isAdmin;
       });
     },
-    columns: cols,
-    cellEdited: dataChanged
+    columns: cols
   });
+  table.on('cellEdited', dataChanged);
   table.on('tableBuilt', () => {
     table.setData();
   });

@@ -29,6 +29,8 @@ $page->body .= '
   <ul id="list">
     <li id="simple">Simple Schedule: <button type="button" class="btn btn-link" id="simplePDF"><i class="far fa-file-pdf"></i>PDF</button>
     </li>
+    <li id="simple">Simple Schedule With Email: <button type="button" class="btn btn-link" id="simplePDFWithEmail"><i class="far fa-file-pdf"></i>PDF</button>
+    </li>
     <li>Schedule Grid: <button type="button" class="btn btn-link" id="gridXLSX"><i class="far fa-file-excel"></i>XLSX</button> <button type="button" class="btn btn-link" id="gridPDF"><i class="far fa-file-pdf"></i>PDF</button>
     </li>
   </ul>
