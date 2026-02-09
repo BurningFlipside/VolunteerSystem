@@ -28,6 +28,7 @@ class EventAPI extends VolunteerAPI
         $app->get('/{event}/Actions/GetEEShiftReport', array($this, 'getEEShiftReportForEvent'));
         $app->post('/{event}/Actions/GetEEShiftReport', array($this, 'getEEShiftReportForEvent'));
         $app->post('/{event}/Actions/ApproveEE', array($this, 'approveEEForEvent'));
+        $app->post('/Actions/CreateFlipsideEvents', array($this, 'createFlipsideEvents'));
     }
 
     protected function getFilterForPrimaryKey($value)
@@ -315,6 +316,68 @@ class EventAPI extends VolunteerAPI
         $ret = $event->approveEE($uid, (int)$obj['eeList'], $obj['approvalType']);
         $this->logger->writeEntry($this->user->uid, $ret, 'Approved EE', $request->getServerParam('REMOTE_ADDR'), 'Early Entry', $obj);
         return $response->withJson($ret);
+    }
+
+    public function createFlipsideEvents($request, $response, $args)
+    {
+        if($this->canUpdate($request, null) === false)
+        {
+            return $response->withStatus(401);
+        }
+        $obj = $this->getParsedBody($request);
+        $startDate = DateTimeImmutable::createFromFormat('Y-m-d', $obj['startDate']);
+        // Make sure this is a Tuesday. The Javascript should have handled it, but make sure.
+        $dayAbbr = $startDate->format('D');
+        if($dayAbbr !== 'Tue')
+        {
+            return $response->withStatus(400);
+        }
+        // There are 3 events we need to create:
+        // Load-Out: Saturday before Flipside, 8am-6pm. alias: loadout
+        // Flipside: Tuesday-Tuesday of Flipside, 9am-11:59am. alias: flipside
+        // Load-In: Saturday after Flipside, 8am-6pm. alias: loadin
+        $yearStr = $startDate->format('Y');
+        $loadOutStart = $startDate->modify('last saturday')->setTime(8, 0);
+        $loadOutEnd = $loadOutStart->setTime(18, 0);
+        $flipsideStart = $startDate->setTime(9, 0);
+        $flipsideEnd = $startDate->modify('+7 days')->setTime(11, 59);
+        $loadInStart = $flipsideEnd->modify('next saturday')->setTime(8, 0);
+        $loadInEnd = $loadInStart->setTime(18, 0);
+        // Remove existing aliases (if any)...
+        $dataTable = $this->getDataTable();
+        $this->removeFlipsideAliases($dataTable);
+        $events = array(
+            array('name' => "Burning Flipside $yearStr Load-Out (Warehouse to Land)", 'alias' => "loadout", 'startTime' => $loadOutStart->format(DateTime::ATOM), 'endTime' => $loadOutEnd->format(DateTime::ATOM)),
+            array('name' => "Burning Flipside $yearStr", 'tickets'=>true, 'alias' => "flipside", 'startTime' => $flipsideStart->format(DateTime::ATOM), 'endTime' => $flipsideEnd->format(DateTime::ATOM)),
+            array('name' => "Burning Flipside $yearStr Cleanup/Load-In", 'alias' => "loadin", 'startTime' => $loadInStart->format(DateTime::ATOM), 'endTime' => $loadInEnd->format(DateTime::ATOM))
+        );
+        $count = count($events);
+        $ret = true;
+        for($i = 0; $i < $count; $i++)
+        {
+            $events[$i]['departments'] = array();
+            $tmpRet = $dataTable->create($events[$i]);
+            if($tmpRet === false) {
+                $ret = false;
+            }
+        }
+        return $response->withJson($ret);
+    }
+
+    protected function removeFlipsideAliases($dataTable)
+    {
+        $filter = new DataFilter("alias eq 'flipside' or alias eq 'loadout' or alias eq 'loadin'");
+        $events = $dataTable->read($filter);
+        if($events === false)
+        {
+            return;
+        }
+        $count = count($events);
+        for($i = 0; $i < $count; $i++)
+        {
+            $events[$i]['alias'] = '';
+            $dataTable->update(new DataFilter('_id eq '.$events[$i]['_id']), $events[$i]);
+        }
     }
 }
 /* vim: set tabstop=4 shiftwidth=4 expandtab: */

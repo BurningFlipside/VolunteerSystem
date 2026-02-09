@@ -13,7 +13,7 @@ $page->content['table'] = array('id' => 'events');
 $page->content['selectors'] = '';
 if($page->user && $page->user->isInGroupNamed('VolunteerAdmins'))
 {
-    $page->content['selectors'] = '<button type="button" class="btn btn-primary" onclick="showEventWizard();">New Event</button><div class="w-100"></div>';
+    $page->content['selectors'] = '<div class="col"><button type="button" class="btn btn-primary w-100" onclick="showEventWizard();">New Event</button></div><div class="col"><button type="button" class="btn btn-primary w-100" onclick="makeFlipsideEvents();">Make Flipside and ajacent events for this year</button></div><div class="w-100"></div>';
 }
 $page->content['selectors'] .= '<div class="form-check"><input type="checkbox" class="form-check-input" id="hideOld" checked><label class="form-check-label" for="hideEmpty">Hide Past Events</label></div>';
 $page->content['body'] = '
@@ -22,7 +22,7 @@ $page->content['body'] = '
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="profileWizardTitle">New Event</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -105,6 +105,27 @@ $page->content['body'] = '
         <button type="button" class="btn btn-secondary mr-auto" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-outline-primary" id="prevStep" disabled onClick="prevWizardStep(this);">Previous</button>
         <button type="button" class="btn btn-outline-primary" id="nextStep" onClick="nextWizardStep(this);">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" tabindex="-1" id="flipsideEventModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Flipside and adjacent events</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>This will create the Burning Flipside event, Load-Out, and Load-In events for the current year.</p>
+        <div class="mb-3">
+          <label for="flipsideStartDate" class="form-label">What day does Flipside start?</label>
+          <input type="date" class="form-control" id="flipsideStartDate">
+      </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onClick="createFlipsideEvents();">Create Events</button>
       </div>
     </div>
   </div>

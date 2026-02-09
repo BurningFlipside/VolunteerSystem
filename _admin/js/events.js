@@ -1,5 +1,5 @@
 /* global $, bootbox, Tabulator, browser_supports_input_type */
-/* exported newEvent, privateEventChange, showEventWizard */
+/* exported newEvent, privateEventChange, showEventWizard, makeFlipsideEvents, createFlipsideEvents */
 function editDone(jqXHR) {
   if(jqXHR.status !== 200) {
     alert('Unable to edit value!');
@@ -80,6 +80,60 @@ function showEventWizard() {
     $('[type="datetime-local"]').flatpickr({enableTime: true});
   }
   $('#eventWizard').modal('show');
+}
+
+function makeFlipsideEvents() {
+  // Get the flipside event to make sure we don't already have it
+  fetch('../api/v1/events?$filter=alias eq "flipside"').then((response) => {
+    if(!response.ok) {
+      alert('Unable to check for existing Flipside event!');
+      return;
+
+    }
+    response.json().then((data) => {
+      if (data.length > 0) {
+        let startDate = new Date(data[0].startTime);
+        if(startDate.getYear() === (new Date()).getYear()) {
+          alert('Flipside event already exists for this year!');
+          return;
+        }
+      }
+      showFlipsideEventsDialog();
+    });
+  });
+}
+
+function createFlipsideEvents() {
+  let startDateStr = document.getElementById('flipsideStartDate').value;
+  // Forse the date to be in CDT timezone sinse that is the timezone of the event.
+  let startDate = new Date(startDateStr+"T09:00:00-05:00");
+  let dayOfWeek = startDate.getDay();
+  // We want the Tuesday of the week to include pre/post flipside shifts, so adjust the date if it's not already Tuesday
+  if(dayOfWeek !== 2) {
+    let diff = (2 - dayOfWeek) % 7;
+    startDate.setDate(startDate.getDate() + diff);
+  }
+  const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+  const formattedDate = startDate.toLocaleDateString('en-CA', options);
+  fetch('../api/v1/events/Actions/CreateFlipsideEvents', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({startDate: formattedDate})
+  }).then((response) => {
+    if(!response.ok) {
+      alert('Unable to create Flipside events!');
+      console.log(response);
+      return;
+    }
+    location.reload();
+  });
+}
+
+function showFlipsideEventsDialog() {
+  const myModal = new bootstrap.Modal('#flipsideEventModal');
+  myModal.show();
 }
 
 function delIcon() {
