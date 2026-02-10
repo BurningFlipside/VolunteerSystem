@@ -329,6 +329,9 @@ function gotRoles(jqXHR) {
   }
   var array = jqXHR.responseJSON;
   for(let role in array) {
+    if(role.retired) {
+      continue;
+    }
     let newOption = new Option(role.display_name, role.short_name, false, false);
     $('#grouped_with').append(newOption);
   }
@@ -358,11 +361,26 @@ function gotShiftsBeforeDelete(jqXHR) {
     return;
   }
   var shifts = jqXHR.responseJSON;
+  let roleId = this.short_name;
   if(shifts.length > 0) {
-    bootbox.alert('This role has one or more shifts. The shifts must be deleted first!');
+    bootbox.confirm({
+      message: 'This role has one or more shifts. Would you like to retire this role so that you will not see it when creating shifts?',
+      buttons: {
+        confirm: {
+          label: 'Yes'
+        },
+        cancel: {
+          label: 'No'
+        }
+      },
+      callback: (result) => {
+        if(result) {
+          doRetire(roleId);
+        }
+      }
+    });
     return;
   }
-  var data = this;
   bootbox.confirm({
     message: 'Are you sure you want to delete the role "'+this.display_name+'"?',
     buttons: {
@@ -376,7 +394,7 @@ function gotShiftsBeforeDelete(jqXHR) {
     callback: function(result){
       if(result) {
         $.ajax({
-          url: '../api/v1/roles/'+data.short_name,
+          url: '../api/v1/roles/'+roleId,
           method: 'DELETE',
           complete: deleteDone
         });
@@ -384,6 +402,20 @@ function gotShiftsBeforeDelete(jqXHR) {
     }
   });
 }
+
+function doRetire(roleId) {
+  fetch('../api/v1/roles/'+roleId, {
+    method: 'PATCH',
+    body: JSON.stringify({retired: true})
+  }).then((response) => {
+    if(response.ok) {
+      location.reload();
+      return;
+    }
+    alert('Unable to retire role!');
+  })
+}
+
 
 function delRole(e, cell) {
   var data = cell.getRow().getData();
@@ -1009,7 +1041,7 @@ function gotCerts(jqXHR) {
     ajaxURL: this,
     ajaxResponse: function(url, params, response) {
       return response.filter(function(element) {
-        return element.isAdmin;
+        return element.isAdmin && !element.retired;
       });
     },
     columns: cols

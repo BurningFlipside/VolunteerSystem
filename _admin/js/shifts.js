@@ -82,6 +82,9 @@ function gotDepartmentRoles(jqXHR) {
     if(input.id === 'roleID') {
       input.options = [];
       for(let role of array) {
+        if(role.retired) {
+          continue;
+        }
         input.options.push({value: role.short_name, text: role.display_name});
       }
     }
