@@ -220,10 +220,13 @@ function groupEventChanged(elem) {
     end.set('maxDate', myEvent.endTime);
     return;
   }
-  $('#groupStartTime').attr('min', myEvent.startTime);
-  $('#groupStartTime').attr('max', myEvent.endTime);
-  $('#groupEndTime').attr('min', myEvent.startTime);
-  $('#groupEndTime').attr('max', myEvent.endTime);
+  let startTime = new Date(myEvent.startTime);
+  let endTime = new Date(myEvent.endTime);
+  console.log(startTime.toISOString().substring(0, 16));
+  $('#groupStartTime').attr('min', startTime.toISOString().substring(0, 16));
+  $('#groupStartTime').attr('max', endTime.toISOString().substring(0, 16));
+  $('#groupEndTime').attr('min', startTime.toISOString().substring(0, 16));
+  $('#groupEndTime').attr('max', endTime.toISOString().substring(0, 16));
 }
 
 function shiftDeleted(jqXHR) {

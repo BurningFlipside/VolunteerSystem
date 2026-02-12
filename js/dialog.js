@@ -86,7 +86,7 @@ window.flipDialog.dialog = function(options) {
     body.append('<div class="w-100"></div>');
   }
   var footer = $('<div class="modal-footer">');
-  footer.append('<button type="button" class="btn btn-secondary col-sm-2" data-dismiss="modal">Close</button>');
+  footer.append('<button type="button" class="btn btn-secondary col-sm-2" data-bs-dismiss="modal">Close</button>');
   if(options.buttons === undefined) {
     options.buttons = [];
   }

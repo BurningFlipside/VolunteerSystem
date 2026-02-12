@@ -1,5 +1,6 @@
 /*global $*/
 function gotShifts(data) {
+  console.log(data);
   let participants = {};
   let unfilled = 0;
   for(let shift of data) {
@@ -88,10 +89,12 @@ function minShiftsChanged(e) {
 }
 
 function rolesChanged() {
-  var selectedRoles = $('#roles').select2('data');
+  const element = document.getElementById('roles');
+  const selectedOptions = Array.from(element.selectedOptions);
+  const selectedRoles = selectedOptions.map(option => option.value);
   var filter = '$filter=';
   for(let role of selectedRoles) {
-    filter+='roleID eq '+role.id;
+    filter+='roleID eq '+role;
     filter+=' or ';
   }
   //Remove last or...
@@ -100,6 +103,7 @@ function rolesChanged() {
   //BUGBUG I currently don't handle () in mongodb queries so this needs to get all the shifts then filter for the event on the client
   fetch('../api/v1/shifts?'+filter).then((response) => {
     response.json().then((data) => {
+      console.log(data);
       let eventID = document.getElementById('event').value;
       data = data.filter((shift) => {
         return shift.eventID === eventID;

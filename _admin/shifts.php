@@ -24,9 +24,7 @@ $page->content['body'] = '
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="groupWizardTitle">New Shift Set</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="row flex-xl-nowrap">
@@ -63,12 +61,12 @@ $page->content['body'] = '
                 <div class="w-100"></div>
                 <label for="groupEnabled" class="col-sm-2 col-form-label">Enabled:</label>
                 <div class="col-sm-10">
-                  <input type="checkbox" name="groupEnabled" id="groupEnabled" class="form-control" checked="checked">
+                  <input type="checkbox" name="groupEnabled" id="groupEnabled" class="form-check-input" checked="checked">
                 </div>
                 <div class="w-100"></div>
                 <label for="groupApprovalNeeded" class="col-sm-2 col-form-label">Requires Approval:</label>
                 <div class="col-sm-10">
-                  <input type="checkbox" name="groupApprovalNeeded" id="groupApprovalNeeded" class="form-control">
+                  <input type="checkbox" name="groupApprovalNeeded" id="groupApprovalNeeded" class="form-check-input">
                 </div>
                 <div class="w-100"></div>
                 <label for="groupName" class="col-sm-2 col-form-label">Shift Name:</label>
